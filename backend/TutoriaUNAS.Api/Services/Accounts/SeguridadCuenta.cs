@@ -27,7 +27,7 @@ public sealed class SeguridadCuenta(IOptions<CuentasOptions> options)
     }
     public static void Password(string valor, string confirmacion)
     {
-        TutoriaError.Exigir(valor.Length is >= 15 and <= 128 && !string.IsNullOrWhiteSpace(valor), "Usa una contraseña de 15 a 128 caracteres. Puedes usar una frase larga.");
+        TutoriaError.Exigir(valor.Length is >= 10 and <= 128 && !string.IsNullOrWhiteSpace(valor), "Usa una contraseña de 10 a 128 caracteres. Puedes usar una frase larga.");
         TutoriaError.Exigir(valor == confirmacion, "Las contraseñas no coinciden.");
     }
 }

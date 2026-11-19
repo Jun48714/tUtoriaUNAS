@@ -165,7 +165,7 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
               iconVariant="classic"
               type="password"
               autoComplete="new-password"
-              minLength={15}
+              minLength={10}
               maxLength={128}
               required
               disabled={c.ocupado}
@@ -179,14 +179,14 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
               iconVariant="classic"
               type="password"
               autoComplete="new-password"
-              minLength={15}
+              minLength={10}
               maxLength={128}
               required
               disabled={c.ocupado}
               value={c.confirmacion}
               onChange={(e) => c.setConfirmacion(e.target.value)}
             />
-            <p className="small">De 15 a 128 caracteres.</p>
+            <p className="small">De 10 a 128 caracteres.</p>
             <button type="submit" className="btn w-100 d01__cta" disabled={c.ocupado}>
               {c.ocupado
                 ? 'Guardando…'
