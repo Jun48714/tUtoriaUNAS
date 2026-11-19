@@ -17,6 +17,10 @@ public sealed class ConfigurationTests
     [InlineData("https://portal.example", true)]
     [InlineData("*", false)]
     [InlineData("https://portal.example/path", false)]
+    [InlineData("https://150.136.73.218:443", true)]
+    [InlineData("https://portal.example:8443", true)]
+    [InlineData("https://portal.example/", false)]
+    [InlineData("https://user@portal.example", false)]
     public void CorsRequiresExplicitOrigin(string origin, bool valid) =>
         Assert.Equal(valid, new CorsOptions { AllowedOrigins = [origin] }.IsValid());
 }
