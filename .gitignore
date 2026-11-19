@@ -26,7 +26,6 @@ tools/
 artifacts/
 .cursor/
 .vercel/
-AGENTS.md
 
 # --- Ruido del sistema ---
 *.log
