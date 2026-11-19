@@ -1,0 +1,188 @@
+# Tutoría UNAS · despliegue en una sola máquina (VM) con Docker Compose.
+#   1) cp .env.example .env   y completa los valores
+#   2) docker compose up -d --build
+#   3) docker compose run --rm bootstrap      (una sola vez: crea la estructura y el primer administrador)
+# Detalles: deploy/README.md
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+x-api: &api
+  build: { context: ./backend }
+  image: tutoria-unas-api:latest
+  environment: &api-env
+    ASPNETCORE_ENVIRONMENT: Production
+    # Detrás de Caddy: respeta X-Forwarded-For / X-Forwarded-Proto (límite por IP y redirección HTTPS correctos).
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    AllowedHosts: "${TUTORIA_DOMAIN:?Define TUTORIA_DOMAIN en .env};localhost"
+    Database__Enabled: "true"
+    ConnectionStrings__Tutoria: "Host=db;Port=5432;Database=tutoria_unas;Username=tutoria_app;Password=${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env};Include Error Detail=false"
+    Cors__AllowedOrigins__0: "https://${TUTORIA_DOMAIN:?Define TUTORIA_DOMAIN en .env}:${HTTPS_PORT:-443}"
+    Cuentas__Enabled: "true"
+    Cuentas__CodigoKey: "${CUENTAS_CODIGO_KEY:?Define CUENTAS_CODIGO_KEY en .env}"
+    Cuentas__KeyRingPath: /keys
+    Cuentas__UrlAcceso: "https://${TUTORIA_DOMAIN:?Define TUTORIA_DOMAIN en .env}:${HTTPS_PORT:-443}/login"
+    Cuentas__Dominios__0: "${TUTORIA_EMAIL_DOMINIO:-unas.edu.pe}"
+    Cuentas__AliasPrueba: "${TUTORIA_ALIAS_PRUEBA:-false}"
+    # La pantalla dice al instante si el correo existe (true) o responde igual siempre (false, recomendado por TI)
+    Cuentas__RevelarExistencia: "${TUTORIA_REVELAR_EXISTENCIA:-false}"
+    # Recordatorios de pendientes por correo: off | simulacion (solo cuenta) | activo (envia)
+    Recordatorios__Modo: "${TUTORIA_RECORDATORIOS:-off}"
+    Recordatorios__DiasPlazo: "${TUTORIA_RECORDATORIOS_PLAZO_DIAS:-7}"
+    # Correo por Microsoft Graph (tiene prioridad sobre SMTP si las cuatro variables están definidas).
+    GraphCuentas__TenantId: "${GRAPH_TENANT_ID:-}"
+    GraphCuentas__ClientId: "${GRAPH_CLIENT_ID:-}"
+    GraphCuentas__ClientSecret: "${GRAPH_CLIENT_SECRET:-}"
+    GraphCuentas__Remitente: "${GRAPH_REMITENTE:-}"
+    GraphCuentas__Nombre: "${GRAPH_NOMBRE:-Tutoría UNAS Notificaciones}"
+    SmtpCuentas__Host: "${SMTP_HOST:-smtp.gmail.com}"
+    SmtpCuentas__Port: "587"
+    SmtpCuentas__Usuario: "${SMTP_USUARIO:-}"
+    SmtpCuentas__Remitente: "${SMTP_REMITENTE:-}"
+    SmtpCuentas__Nombre: "Tutoría UNAS"
+    SmtpCuentas__Password: "${SMTP_PASSWORD:-}"
+  volumes:
+    - keys:/keys
+  logging: *logging
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tutoria_unas
+      POSTGRES_USER: tutoria_app
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}"
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c work_mem=8MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=100
+      -c log_min_duration_statement=1000
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tutoria_app -d tutoria_unas"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 1g
+    logging: *logging
+
+  # Aplica las migraciones SQL (idempotente) antes de iniciar la API.
+  migrate:
+    <<: *api
+    command: ["--migrate"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    <<: *api
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 1g
+
+  web:
+    build: { context: ./frontend }
+    image: tutoria-unas-web:latest
+    restart: unless-stopped
+    mem_limit: 128m
+    volumes:
+      - web_assets:/usr/share/nginx/html/assets   # conserva los archivos de despliegues anteriores (pestañas abiertas)
+    logging: *logging
+
+  # Entrada única: HTTPS automático. Solo este servicio publica puertos.
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
+    environment:
+      TUTORIA_DOMAIN: "${TUTORIA_DOMAIN:?Define TUTORIA_DOMAIN en .env}"
+      TUTORIA_TLS: "${TUTORIA_TLS:-internal}"
+      HTTPS_PORT: "${HTTPS_PORT:-443}"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
+      web: { condition: service_healthy }
+    logging: *logging
+
+  # Copia de seguridad diaria de PostgreSQL (se conservan 14 días) en ./backups
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: tutoria_app
+      PGPASSWORD: "${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}"
+      PGDATABASE: tutoria_unas
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          pg_dump --format=custom --file="/backups/tutoria_$$(date +%Y-%m-%d_%H%M).dump" && echo "copia creada"
+          find /backups -name 'tutoria_*.dump' -mtime +14 -delete
+          sleep 86400
+        done
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 256m
+    logging: *logging
+
+  # Uso manual, una sola vez:  docker compose run --rm bootstrap
+  bootstrap:
+    <<: *api
+    profiles: ["tools"]
+    command: ["--bootstrap"]
+    restart: "no"
+    environment:
+      <<: *api-env
+      TUTORIA_ADMIN_EMAIL: "${TUTORIA_ADMIN_EMAIL:-}"
+      TUTORIA_ADMIN_PASSWORD: "${TUTORIA_ADMIN_PASSWORD:-}"
+      TUTORIA_ADMIN_NOMBRES: "${TUTORIA_ADMIN_NOMBRES:-}"
+      TUTORIA_ADMIN_APELLIDOS: "${TUTORIA_ADMIN_APELLIDOS:-}"
+      TUTORIA_ADMIN_ESCUELA: "${TUTORIA_ADMIN_ESCUELA:-E-IIS}"
+      TUTORIA_SEMESTRE_ACTIVO: "${TUTORIA_SEMESTRE_ACTIVO:-2026-II}"
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+  # Alta de una cuenta ya verificada, sin correo (útil si no hay SMTP). Ejemplo:
+  #   docker compose run --rm -e CUENTA_ROL=tutor -e CUENTA_CORREO=nombre@unas.edu.pe -e CUENTA_PASSWORD='frase-larga-de-15+' cuenta
+  cuenta:
+    <<: *api
+    profiles: ["tools"]
+    command: ["--crear-cuenta"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+  # Cuentas de prueba para todos los usuarios de la semilla (estudiantes, tutores, coordinación):
+  #   docker compose run --rm -e CUENTA_PASSWORD='frase-de-15+' cuentas-prueba
+  cuentas-prueba:
+    <<: *api
+    profiles: ["tools"]
+    command: ["--crear-cuentas-prueba"]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:
+  keys:
+  caddy_data:
+  caddy_config:
+  web_assets:

@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+test-results
+playwright-report
+pnpm-lock.yaml
+src/assets/vendor
+src/assets/webfonts
+public/assets/celebraciones/F*.json
+public/assets/celebraciones/lottie-light-*.min.js

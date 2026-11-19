@@ -1,0 +1,231 @@
+.informe-revision__estado {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 13px;
+}
+.informe-revision__vacio {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink-600);
+  font-size: 13px;
+}
+.informe-fuentes {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.informe-fuentes__cabecera {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 12px;
+}
+.informe-fuentes__cabecera .informe-fuentes__nota {
+  grid-column: 1 / -1;
+}
+.informe-fuentes__cabecera h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.informe-fuentes__cabecera .btn {
+  min-height: 30px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.sheet--informe-revision #panel-informe-resumen {
+  gap: 12px;
+}
+.informe-fuentes__cifras {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+.informe-fuentes__cifras > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: baseline;
+  gap: 2px 16px;
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.informe-fuentes__cifras dt {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  color: var(--ink-800);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.informe-fuentes__cifras dd {
+  grid-column: 2;
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.informe-fuentes__cifras dd strong {
+  color: var(--ink-800);
+  font-size: 14px;
+  font-weight: 600;
+}
+.informe-fuentes__detalles > summary {
+  color: var(--ink-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.informe-fuentes__contenido {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  font-size: 13px;
+}
+.informe-fuentes__nota {
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
+.informe-respuestas {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.informe-respuestas__navegacion,
+.informe-registro__cabecera {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.informe-respuestas__navegacion .select {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.informe-respuestas__contador,
+.informe-respuestas__seccion {
+  color: var(--ink-600);
+  font-size: 12px;
+}
+.informe-respuestas__botones {
+  display: flex;
+  gap: 6px;
+}
+.informe-respuestas__botones .btn {
+  width: 36px;
+  min-width: 36px;
+  padding: 8px;
+  justify-content: center;
+}
+.informe-respuestas__pregunta {
+  min-width: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.informe-respuestas__pregunta h3 {
+  margin: 4px 0 16px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.informe-respuestas__valor,
+.informe-respuestas__vacio {
+  color: var(--ink-800);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.informe-registro__cabecera {
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.informe-registro__cabecera strong {
+  font-weight: 500;
+}
+.informe-registro__campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 24px;
+  margin: 14px 0 0;
+}
+.informe-registro__campos dt {
+  color: var(--ink-600);
+  font-size: 12px;
+  font-weight: 500;
+}
+.informe-registro__campos dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .informe-fuentes {
+    gap: 10px;
+  }
+  .informe-fuentes__cifras > div {
+    padding: 8px 0;
+  }
+  .informe-fuentes__cifras dt,
+  .informe-fuentes__cifras dd {
+    font-size: 12px;
+  }
+  .sheet--informe-revision .sheet__head {
+    padding: 12px;
+    gap: 8px;
+  }
+  .sheet--informe-revision .sheet__head h2 {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+  .sheet--informe-revision .sheet__head p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sheet--informe-revision .sheet__body {
+    padding: 12px;
+  }
+  .sheet--informe-revision .sheet__body > .stack {
+    gap: 10px;
+  }
+  .sheet--informe-revision .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sheet--informe-revision .tabs button {
+    justify-content: center;
+    padding: 8px 3px;
+    font-size: 12px;
+  }
+  .sheet--informe-revision .sheet__foot {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  .sheet--informe-revision .sheet__foot .btn {
+    justify-content: center;
+    min-width: 0;
+    padding: 8px 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .informe-registro__campos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .informe-respuestas__navegacion {
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  .informe-respuestas__navegacion .select {
+    flex-basis: 80px;
+  }
+  .informe-respuestas__pregunta {
+    padding: 10px 0;
+  }
+}

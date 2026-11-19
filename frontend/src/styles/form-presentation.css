@@ -1,0 +1,298 @@
+.tutoring-form {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  scroll-margin-top: 90px;
+  overflow-anchor: none;
+}
+.tutoring-form__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.tutoring-form .tutoring-form__progress {
+  gap: 6px;
+  min-width: 0;
+}
+.tutoring-form__progress .small {
+  color: var(--ink-600);
+  font-size: 0.7rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tutoring-form .tutoring-section-picker {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  min-width: 0;
+  color: var(--ink-500);
+  font-size: 0.73rem;
+}
+.tutoring-section-picker .select {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-color: transparent;
+  padding-left: 0;
+}
+.tutoring-section-picker .select:focus-visible {
+  border-color: var(--green);
+}
+.tutoring-form:not(.tutoring-form--read) .tutoring-fields {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px;
+  padding-bottom: 8px;
+}
+.tutoring-form:not(.tutoring-form--read) .tutoring-field {
+  position: relative;
+  gap: 6px;
+}
+.tutoring-form .tutoring-field__label {
+  line-height: 1.5;
+}
+.tutoring-form .tutoring-form__heading p {
+  font-size: 0.73rem;
+}
+.tutoring-form .tutoring-options {
+  gap: 8px;
+}
+.tutoring-form .tutoring-option {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+  font-size: 0.78rem;
+  padding: 9px 11px;
+  min-height: 44px;
+}
+.tutoring-option--face {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tutoring-option--face .form-choice-face {
+  color: var(--green-800);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.tutoring-option:has(input:checked) {
+  background: var(--green-soft);
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+.form-optional summary {
+  cursor: pointer;
+  color: var(--green-800);
+  padding: 10px 0;
+  min-height: 40px;
+}
+.form-optional {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 0.78rem;
+}
+.form-optional[open] {
+  padding-bottom: 14px;
+}
+.form-read-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+}
+.tutoring-form .tutoring-form__actions {
+  position: relative;
+  margin-top: 4px;
+  padding-top: 14px;
+}
+.form-review-list {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+.form-review-list .tutoring-review-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.form-review-list .tutoring-review-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px 4px;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--ink-700);
+}
+.form-review-list summary::-webkit-details-marker {
+  display: none;
+}
+.form-review-list summary > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.form-review-chevron {
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+}
+.form-review-list details[open] > summary {
+  color: var(--green-800);
+}
+.form-review-list details[open] > summary .form-review-chevron {
+  transform: rotate(90deg);
+}
+.form-review-state {
+  color: var(--green-800);
+  display: inline-flex;
+  align-items: center;
+}
+.form-review-state .portal-icon {
+  width: 13px;
+  height: 13px;
+}
+.form-review-pending {
+  font-size: 0.68rem;
+  color: var(--warn, #8a5800);
+}
+.tutoring-form--review {
+  gap: 12px;
+}
+.tutoring-form--review .tutoring-form__toolbar {
+  padding-bottom: 10px;
+}
+.form-review-list .tutoring-fields {
+  margin: 0;
+  padding: 0 4px !important;
+  gap: 0 !important;
+}
+.form-review-list .tutoring-field {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 4px 16px !important;
+  border-top: 1px solid var(--line);
+  padding: 9px 0;
+}
+.form-review-list .tutoring-field:has(.tutoring-rows) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.form-review-list .tutoring-field__label,
+.form-review-list .tutoring-answer {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.form-review-list .tutoring-answer {
+  color: var(--ink-600);
+}
+.form-review-list .btn-link {
+  min-height: 40px;
+  padding: 8px 4px;
+  margin: 0;
+  font-size: 0.72rem;
+}
+.tutoring-form--review .tutoring-confirm {
+  min-height: 44px;
+  font-size: 0.75rem;
+  margin: 0;
+}
+.tutoring-form--review .tutoring-form__actions {
+  margin-top: 0;
+  gap: 8px;
+  padding-top: 12px;
+}
+.tutoring-form--review .tutoring-form__actions .btn {
+  font-size: 0.78rem;
+  padding: 8px 12px;
+}
+.tutoring-read-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tutoring-read-navigation .select {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+}
+.tutoring-read-navigation > span {
+  font-size: 12px;
+  margin-right: auto;
+}
+.tutoring-read-navigation .btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+}
+.tutoring-save-status {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  line-height: 18px;
+}
+.tutoring-save-status .success-notice {
+  font-size: 0.68rem;
+}
+.tutoring-field[data-reduced-motion='true'] .tutoring-option {
+  transition: none;
+}
+@media (max-width: 480px) {
+  .tutoring-form--review .tutoring-form__actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+    gap: 6px;
+  }
+  .tutoring-form--review .tutoring-form__actions .btn {
+    padding-inline: 8px;
+  }
+  .tutoring-form--review .tutoring-form__actions .portal-icon {
+    width: 12px;
+    height: 12px;
+  }
+  .tutoring-form__toolbar {
+    grid-template-columns: minmax(0, 1fr) 76px;
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+  .tutoring-form .tutoring-options {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .tutoring-form .tutoring-option {
+    width: auto;
+    min-width: 0;
+    flex: 0 1 auto;
+    margin: 0;
+    padding: 9px;
+    gap: 6px;
+  }
+  .tutoring-form .tutoring-option--face {
+    flex-basis: 100%;
+  }
+  .tutoring-option > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tutoring-form .tutoring-option {
+    transition: none;
+  }
+}

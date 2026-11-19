@@ -1,0 +1,129 @@
+.ri-tabla-contenedor {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dce7df;
+  border-radius: 6px;
+}
+.ri-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ri-tabla th,
+.ri-tabla td {
+  min-width: 100px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #e8eee9;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.ri-tabla th {
+  background: #f1f6f2;
+  color: #355540;
+  font-weight: 700;
+}
+.ri-tabla tr:last-child td {
+  border-bottom: 0;
+}
+.ri-respuesta {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+body.ri-ventana {
+  margin: 0;
+  background: #edf2ee;
+}
+.ri-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px max(20px, calc((100% - 794px) / 2));
+  background: white;
+  border-bottom: 1px solid #dce7df;
+}
+.ri-cabecera > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.ri-cabecera span {
+  color: #52695b;
+  font-size: 13px;
+}
+.ri-cabecera button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #17613a;
+  color: white;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ri-cabecera button:focus-visible,
+.ri-tabla-contenedor:focus-visible {
+  outline: 3px solid #3d805b;
+  outline-offset: 3px;
+}
+body.ri-ventana .fo-impresion.ri-contenido {
+  display: block;
+  max-width: 100%;
+  padding: 20px 12px 40px;
+}
+.ri-estado {
+  width: min(210mm, 100%);
+  margin: 0 auto 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff4d7;
+  color: #694f16;
+  font-size: 13px;
+  font-weight: 650;
+}
+.ri-apoyo h2 {
+  margin: 0 0 4mm;
+  font-size: 14pt;
+}
+.ri-apoyo h3 {
+  margin: 6mm 0 2mm;
+  font-size: 10pt;
+}
+.ri-apoyo header p {
+  margin: 0 0 3mm;
+}
+.ri-apoyo .fo-tabla caption {
+  padding: 3mm 0;
+  font-weight: 700;
+  text-align: left;
+}
+@media screen and (max-width: 820px) {
+  body.ri-ventana .fo-hoja {
+    width: 100%;
+    min-height: 0;
+    padding: 6%;
+  }
+}
+@media print {
+  body.ri-ventana {
+    background: white;
+  }
+  .ri-cabecera {
+    display: none;
+  }
+  body.ri-ventana .fo-impresion.ri-contenido {
+    padding: 0;
+  }
+  .ri-estado {
+    width: auto;
+    margin: 0 0 3mm;
+    padding: 1mm 2mm;
+    border: 1px solid #555;
+    background: white;
+    color: black;
+  }
+}

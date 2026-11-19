@@ -1,0 +1,115 @@
+import { useEffect, useId, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { X } from './icons';
+
+interface SheetProps {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  onClose(): void;
+  wide?: boolean;
+  className?: string;
+}
+
+/**
+ * Ventana modal sobre el elemento `dialog` nativo: gestiona el foco, el cierre
+ * con Escape y el bloqueo del fondo sin dependencias adicionales.
+ */
+export function Sheet({
+  title,
+  description,
+  children,
+  footer,
+  onClose,
+  wide = false,
+  className = '',
+}: SheetProps) {
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const tituloId = useId();
+
+  useEffect(() => {
+    const elemento = dialogo.current;
+    const focoPrevio = document.activeElement;
+    elemento?.showModal();
+    return () => {
+      elemento?.close();
+      if (focoPrevio instanceof HTMLElement) focoPrevio.focus();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogo}
+      className={`sheet${wide ? ' sheet--wide' : ''} ${className}`}
+      aria-labelledby={tituloId}
+      onKeyDown={(evento) => {
+        if (evento.key !== 'Tab') return;
+        const elemento = evento.currentTarget;
+        const controles = Array.from(
+          elemento.querySelectorAll<HTMLElement>(
+            'a[href], button, input, select, textarea, [tabindex]',
+          ),
+        ).filter(
+          (control) =>
+            control.tabIndex >= 0 &&
+            !control.matches(':disabled') &&
+            control.getClientRects().length > 0,
+        );
+        const primero = controles[0];
+        const ultimo = controles.at(-1);
+        if (!primero || !ultimo) {
+          evento.preventDefault();
+          return;
+        }
+        if (evento.shiftKey && document.activeElement === primero) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primero.focus();
+        }
+      }}
+      onCancel={(evento) => {
+        evento.preventDefault();
+        onClose();
+      }}
+      onClose={(evento) => {
+        // StrictMode vuelve a abrir el diálogo antes de entregar el evento close
+        // de la limpieza inicial. Ese evento no debe cerrar la nueva apertura.
+        if (!evento.currentTarget.open) onClose();
+      }}
+      onClick={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
+        const limites = evento.currentTarget.getBoundingClientRect();
+        if (
+          evento.clientX < limites.left ||
+          evento.clientX > limites.right ||
+          evento.clientY < limites.top ||
+          evento.clientY > limites.bottom
+        ) {
+          onClose();
+        }
+      }}
+    >
+      <header className="sheet__head">
+        <div>
+          <h2 id={tituloId}>{title}</h2>
+          {description && <p>{description}</p>}
+        </div>
+        <button
+          type="button"
+          className="icon-btn icon-btn--bordered"
+          aria-label="Cerrar ventana"
+          onClick={onClose}
+        >
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      <div className="sheet__body app-scroll" tabIndex={0}>
+        {children}
+      </div>
+      {footer && <footer className="sheet__foot">{footer}</footer>}
+    </dialog>
+  );
+}

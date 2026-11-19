@@ -1,0 +1,149 @@
+dialog.sheet.chart-data-sheet {
+  width: min(920px, calc(100vw - 32px));
+  height: min(480px, calc(100dvh - 40px));
+  max-height: min(480px, calc(100dvh - 40px));
+}
+.chart-data-sheet .sheet__head {
+  padding: 14px 24px;
+}
+.chart-data-sheet .sheet__head h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.chart-data-sheet .sheet__body {
+  padding: 8px 24px 16px;
+}
+.chart-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: var(--ink-800);
+  font-size: 14px;
+}
+.chart-data-table th {
+  padding: 12px 16px;
+  background: #f2f6f3;
+  color: #496151;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.chart-data-table th:first-child {
+  border-radius: 8px 0 0 8px;
+  text-align: left;
+}
+.chart-data-table th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+.chart-data-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e7ede8;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.chart-data-table tr:last-child td {
+  border-bottom: 0;
+}
+.chart-data-table td:first-child {
+  font-weight: 600;
+}
+.chart-data-table .chart-data-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.chart-data-records {
+  display: none;
+}
+.chart-data-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+.chart-data-pagination > span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #52695b;
+}
+.chart-data-pagination nav {
+  display: flex;
+  gap: 8px;
+}
+.chart-data-pagination .btn {
+  min-height: 40px;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  dialog.sheet.chart-data-sheet {
+    width: calc(100vw - 20px);
+    height: min(420px, calc(100dvh - 24px));
+    max-height: min(420px, calc(100dvh - 24px));
+  }
+  .chart-data-sheet .sheet__head {
+    padding: 16px;
+  }
+  .chart-data-sheet .sheet__head h2 {
+    font-size: 16px;
+  }
+  .chart-data-sheet .sheet__body {
+    padding: 0 16px;
+  }
+  .chart-data-table {
+    display: none;
+  }
+  .chart-data-records {
+    display: grid;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .chart-data-records li {
+    padding: 12px 0;
+    border-bottom: 1px solid #e7ede8;
+  }
+  .chart-data-records li:last-child {
+    border-bottom: 0;
+  }
+  .chart-data-records h3 {
+    margin: 0 0 8px;
+    color: #294b37;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .chart-data-records dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    margin: 0;
+  }
+  .chart-data-records dt {
+    font-size: 11px;
+    font-weight: 500;
+    color: #52695b;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .chart-data-records dd {
+    margin: 4px 0 0;
+    color: #203e2d;
+    font-size: 15px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart-data-sheet .sheet__foot {
+    padding: 12px 16px;
+  }
+  .chart-data-pagination .btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .chart-data-pagination .btn span {
+    display: none;
+  }
+}

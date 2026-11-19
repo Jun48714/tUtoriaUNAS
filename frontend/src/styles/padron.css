@@ -1,0 +1,26 @@
+.padron-page,
+.padron-page > *,
+.padron-page label {
+  min-width: 0;
+}
+.padron-page label.field {
+  display: grid;
+  gap: 6px;
+}
+.padron-page {
+  gap: 14px;
+}
+.padron-page .directory-controls {
+  padding-bottom: 0;
+}
+.padron-page a {
+  overflow-wrap: anywhere;
+}
+.padron-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="**/*.local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+    <EmbeddedResource Include="Data/formatos.json" />
+    <EmbeddedResource Include="Data/*.sql" />
+    <!-- El SDK Web ya incluye los .json como Content; Remove evita el error NETSDK1022 por duplicados. -->
+    <Content Remove="Data/semilla-desarrollo.json;Data/semilla-sistema.json" />
+    <Content Include="Data/semilla-desarrollo.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data/semilla-sistema.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

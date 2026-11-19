@@ -1,0 +1,43 @@
+# Proxy de entrada: HTTPS, /api y /health al backend, el resto al frontend.
+# TUTORIA_DOMAIN: nombre DNS o IP del servidor (p. ej. tutoria.unas.edu.pe o 192.168.10.122).
+# HTTPS_PORT: puerto HTTPS (443 por defecto; usa otro, p. ej. 8443, si el 443 ya está ocupado).
+# TUTORIA_TLS: "internal" (certificado propio de Caddy, red interna) o un correo para Let's Encrypt (dominio público, puerto 443).
+{
+	# Solo se publica el puerto HTTPS; no hay redirección desde el 80.
+	auto_https disable_redirects
+	# Acceso por IP: el navegador no envía SNI y, tras el NAT de Docker, Caddy no
+	# reconoce la IP destino. Sin esto el handshake falla (ERR_SSL_PROTOCOL_ERROR).
+	default_sni {$TUTORIA_DOMAIN}
+}
+
+https://{$TUTORIA_DOMAIN}:{$HTTPS_PORT:443}, https://tutoria.unas.edu.pe:{$HTTPS_PORT:443} {
+	tls {$TUTORIA_TLS:internal}
+	encode zstd gzip
+
+	header -Server
+
+	# Certificado raíz público (solo root.crt, nunca la clave) para instalarlo como confiable en los equipos
+	# de la red: https://<dominio>:<puerto>/ca.crt. Con el certificado confiable el navegador ofrece guardar contraseñas.
+	handle /ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		header Content-Disposition `attachment; filename="tutoria-unas-ca.crt"`
+		file_server
+	}
+
+	@backend path /api/* /health /health/*
+	handle @backend {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy api:8080 {
+			# El backend todavía valida el host original configurado en Compose.
+			header_up Host {$TUTORIA_DOMAIN}:{$HTTPS_PORT:443}
+		}
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}
