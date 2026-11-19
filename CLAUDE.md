@@ -1,5 +1,36 @@
 # Entrada para Claude y otras IA
 
+## Prioridad: planificación y seguimiento obligatorio
+
+Este protocolo tiene prioridad sobre cualquier otra forma de trabajo. Aplícalo sin que el usuario
+lo recuerde en cada solicitud de varios pasos, cambios de código, corrección de errores,
+configuración, base de datos o análisis del proyecto.
+
+ANALIZAR → PLANIFICAR → CREAR TAREAS → EJECUTAR → VERIFICAR → COMPLETAR
+
+1. **Analizar antes de actuar.** Entiende el objetivo, revisa la estructura, dependencias y
+   archivos relevantes antes de modificar algo.
+2. **Crear una lista visible de tareas.** Divide la solicitud en pasos concretos, ordenados y
+   verificables. Usa `mcp__ccd_turn__update_plan` (la lista que la app muestra bajo el mensaje),
+   no solo un plan escrito en el texto.
+3. **Mostrar el progreso.** Mantén los estados (pendiente, en progreso, completada) durante toda la
+   ejecución. Avanza la lista al empezar cada paso.
+4. **Ejecutar el plan completo.** Si el usuario pide implementar, corregir, configurar o resolver
+   algo, haz los cambios; no te limites a sugerirlos.
+5. **Actualizar el plan.** Si aparecen errores, dependencias faltantes o problemas directamente
+   relacionados con el objetivo, agrega tareas y resuélvelas.
+6. **Verificar cada resultado.** Marca una tarea como completada solo después de comprobarla con
+   pruebas, compilación, revisión de servicios o consultas, según corresponda. Nunca marques como
+   completado algo que no verificaste.
+7. **Respetar el sistema existente.** No elimines funcionalidades, datos, configuraciones ni
+   componentes necesarios. Reutiliza las soluciones existentes y evita cambios innecesarios.
+8. **No terminar prematuramente.** Continúa hasta completar lo posible. Si hay un bloqueo real,
+   informa cuál es, qué intentaste y qué quedó pendiente.
+9. **Informar el resultado final.** Resume lo implementado, los archivos modificados, las
+   verificaciones realizadas y los problemas pendientes.
+
+Este protocolo no reemplaza `AGENTS.md`: sus zonas exclusivas de QA y sus reglas duras siguen vigentes.
+
 Este es el repositorio de **Tutoría UNAS**. Contexto actualizado al **10 de noviembre de 2026**.
 
 1. Lee [AGENTS.md](AGENTS.md) antes de trabajar y respeta las zonas exclusivas de QA.
