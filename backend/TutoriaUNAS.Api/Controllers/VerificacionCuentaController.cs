@@ -12,7 +12,7 @@ namespace TutoriaUNAS.Api.Controllers;
 public sealed class VerificacionCuentaController(IOptions<CuentasOptions> options) : ControllerBase
 {
     [HttpGet("capacidades")]
-    public object Capacidades() => new { registro = options.Value.Enabled, dominios = options.Value.Dominios, passwordMinimo = 15, revelarExistencia = options.Value.RevelarExistencia };
+    public object Capacidades() => new { registro = options.Value.Enabled, dominios = options.Value.Dominios, passwordMinimo = 10, revelarExistencia = options.Value.RevelarExistencia };
     [HttpPost("correo/validar"), EnableRateLimiting("account-check")]
     public Task<EstadoCorreoDto> Validar(ValidarCorreoInput input, [FromServices] VerificacionCuentaService cuentas, CancellationToken ct) => cuentas.ValidarCorreo(input, ct);
     [HttpPost("codigo"), EnableRateLimiting("account-mail")]

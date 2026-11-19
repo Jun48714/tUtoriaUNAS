@@ -115,8 +115,8 @@ export function useCuentaSetup(modo: ModoCuenta) {
   function completar() {
     return ejecutar(async () => {
       if (!reto || !ticket) throw new Error('Vuelve a verificar tu correo.');
-      if (password.length < 15 || password.length > 128)
-        throw new Error('Usa de 15 a 128 caracteres.');
+      if (password.length < 10 || password.length > 128)
+        throw new Error('Usa de 10 a 128 caracteres.');
       if (password !== confirmacion) throw new Error('Las contraseñas no coinciden.');
       const result = await completarCuenta({ retoId: reto.retoId, ticket, password, confirmacion });
       borrarActivacion();

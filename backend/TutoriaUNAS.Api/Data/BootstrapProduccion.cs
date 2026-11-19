@@ -82,7 +82,7 @@ public static class BootstrapProduccion
 
     /// <summary>
     /// Crea una cuenta ya verificada (sin enviar correo) para una persona del padrón.
-    /// Variables: CUENTA_ROL (estudiante|tutor|coordinacion), CUENTA_CORREO, CUENTA_PASSWORD (15+ caracteres),
+    /// Variables: CUENTA_ROL (estudiante|tutor|coordinacion), CUENTA_CORREO, CUENTA_PASSWORD (10+ caracteres),
     /// opcionales CUENTA_PERSONA_ID (si el correo coincide con varias fichas) y CUENTA_ESCUELA (si la ficha no tiene escuela).
     /// </summary>
     public static async Task CrearCuenta(IServiceProvider services, IConfiguration config, CancellationToken ct = default)
@@ -126,7 +126,7 @@ public static class BootstrapProduccion
     /// <summary>
     /// Crea cuentas verificadas del portal para las personas de la semilla de desarrollo (estudiantes, tutores y
     /// coordinación de prueba) con una misma contraseña. Ninguna recibe administración institucional.
-    /// Variable: CUENTA_PASSWORD (15+ caracteres). Idempotente: omite las que ya existen.
+    /// Variable: CUENTA_PASSWORD (10+ caracteres). Idempotente: omite las que ya existen.
     /// </summary>
     public static async Task CrearCuentasPrueba(IServiceProvider services, IConfiguration config, CancellationToken ct = default)
     {
@@ -134,7 +134,7 @@ public static class BootstrapProduccion
         var credenciales = services.GetRequiredService<CredencialesCuentaService>();
         var seguridad = services.GetRequiredService<SeguridadCuenta>();
         var password = Requerido(config, "CUENTA_PASSWORD");
-        // Solo cuentas de prueba: se admite una clave corta (la política de 15+ caracteres sigue vigente para el resto).
+        // Solo cuentas de prueba: se admite una clave corta (la política de 10+ caracteres sigue vigente para el resto).
         if (password.Length is < 8 or > 128) throw new InvalidOperationException("CUENTA_PASSWORD debe tener entre 8 y 128 caracteres.");
         var reiniciar = config.GetValue<bool>("CUENTA_RESET");
 

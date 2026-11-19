@@ -159,7 +159,7 @@ services:
       migrate: { condition: service_completed_successfully }
 
   # Alta de una cuenta ya verificada, sin correo (útil si no hay SMTP). Ejemplo:
-  #   docker compose run --rm -e CUENTA_ROL=tutor -e CUENTA_CORREO=nombre@unas.edu.pe -e CUENTA_PASSWORD='frase-larga-de-15+' cuenta
+  #   docker compose run --rm -e CUENTA_ROL=tutor -e CUENTA_CORREO=nombre@unas.edu.pe -e CUENTA_PASSWORD='frase-de-10+' cuenta
   cuenta:
     <<: *api
     profiles: ["tools"]
@@ -170,7 +170,7 @@ services:
       migrate: { condition: service_completed_successfully }
 
   # Cuentas de prueba para todos los usuarios de la semilla (estudiantes, tutores, coordinación):
-  #   docker compose run --rm -e CUENTA_PASSWORD='frase-de-15+' cuentas-prueba
+  #   docker compose run --rm -e CUENTA_PASSWORD='frase-de-10+' cuentas-prueba
   cuentas-prueba:
     <<: *api
     profiles: ["tools"]
