@@ -99,3 +99,4 @@ es arreglarlo, no agregar más pantallas.
 6. **Buenas prácticas de ingeniería.** Código legible, nombres claros, sin duplicación, con estados y errores manejados explícitamente.
 7. **Comentarios.** Prohibido escribir comentarios que expliquen lo obvio o que describan el código como malo. Solo se comenta el porqué cuando no es evidente.
 8. **Datos personales.** No publicar ni subir datos personales de estudiantes o docentes. Antes de cualquier subida a GitHub, se verifica que no existan.
+9. **Confirmación por tarea.** Antes de ejecutar cada tarea y antes de cada subida a GitHub (commit que se publique, push o PR), se pregunta al usuario y se espera su respuesta en el chat. Una autorización anterior no cubre tareas nuevas.

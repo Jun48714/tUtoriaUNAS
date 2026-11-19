@@ -31,6 +31,8 @@ ANALIZAR → PLANIFICAR → CREAR TAREAS → EJECUTAR → VERIFICAR → COMPLETA
 
 Este protocolo no reemplaza `AGENTS.md`: sus zonas exclusivas de QA y sus reglas duras siguen vigentes.
 
+**Confirmación por tarea.** Antes de ejecutar cada tarea y antes de cada subida a GitHub (commit que se publique, push o PR), pregunta al usuario y espera su respuesta en el chat. Una autorización anterior no cubre tareas nuevas.
+
 Este es el repositorio de **Tutoría UNAS**. Contexto actualizado al **10 de noviembre de 2026**.
 
 1. Lee [AGENTS.md](AGENTS.md) antes de trabajar y respeta las zonas exclusivas de QA.
