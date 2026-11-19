@@ -133,8 +133,8 @@ function Contenido({ datos, ayudas }: { datos: MonitoreoApi; ayudas: Ayudas }) {
                 Formato {formatoElegido.slice(1)} · {TITULOS_OFICIALES[formatoElegido].titulo}
               </h2>
               <p>
-                {documentos.length} enviado(s)
-                {enCurso ? ` · ${enCurso} en curso (aún sin contenido visible)` : ''}
+                {documentos.length} {documentos.length === 1 ? 'enviado' : 'enviados'}
+                {enCurso ? ` · ${enCurso} en curso` : ''}
               </p>
             </div>
             <button
@@ -171,8 +171,7 @@ function Contenido({ datos, ayudas }: { datos: MonitoreoApi; ayudas: Ayudas }) {
                 />
                 {activo && (
                   <p className="compact-note">
-                    <StatusBadge estado={activo.estado} contexto="formulario" /> Se muestra tal como
-                    lo llenó la persona. Es solo lectura.
+                    <StatusBadge estado={activo.estado} contexto="formulario" />
                   </p>
                 )}
               </CardBody>
@@ -188,11 +187,7 @@ function Contenido({ datos, ayudas }: { datos: MonitoreoApi; ayudas: Ayudas }) {
             <Card>
               <EmptyState
                 title="Aún no hay formatos enviados"
-                description={
-                  enCurso
-                    ? 'Hay formatos en curso; podrás verlos cuando se envíen.'
-                    : 'Aparecerán cuando el estudiante o el docente los envíen.'
-                }
+                description={enCurso ? 'Disponibles cuando se envíen.' : undefined}
               />
             </Card>
           )}

@@ -84,7 +84,7 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
             personas.Where(p => p.Tipo == "tutor").Select(p => Persona(p, contactos.GetValueOrDefault(p.Id))).ToArray(),
             asignaciones.Select(Asignacion).ToArray(), matriculas.Select(m => JsonDatos.Elemento(SinHorariosOriginales(m.DatosJson))).ToArray(),
             horarios.Select(h => JsonDatos.Elemento(h.DatosJson)).ToArray(), registros.ToArray(),
-            actor.Puede("sesiones", "ver") ? sesiones.Select(s => JsonDatos.Dto(s, actor.Rol == "estudiante" ? actor.Id : null)).ToArray() : [], precargas,
+            actor.Puede("sesiones", "ver") ? sesiones.Select(s => JsonDatos.Dto(s, actor.Rol == "estudiante" ? actor.Id : null, actor.Rol == "tutor" && s.TutorId == actor.Id)).ToArray() : [], precargas,
             await sistema.Obtener(actor, periodo, ct), historial.ToArray(), actor.EscuelaId, escuelasAdministrables, institucional);
     }
 

@@ -110,7 +110,6 @@ export function StudentHealth() {
       <PageHeading
         eyebrow="Estudiante · Mi información"
         title="Salud y bienestar"
-        description="Tus atenciones y los servicios que tienes disponibles."
         actions={
           <button
             type="button"
@@ -137,9 +136,7 @@ export function StudentHealth() {
           <i className="fa-solid fa-chevron-down health-page__chevron" aria-hidden="true" />
         </summary>
         <div className="health-page__sis-detail">
-          Afiliación ficticia de demostración, pendiente de validación con el padrón institucional.
-          Corte: {formatFecha(sis?.fechaCorte ?? null)}. El seguimiento al SIS es una función
-          complementaria a la Resolución N.º 500-2022-CU-R-UNAS.
+          Afiliación de demostración. Pendiente de validar con el padrón institucional.
         </div>
       </details>
 
@@ -312,10 +309,7 @@ export function StudentHealth() {
 
       <TabPanel id="servicios" activo={pestana}>
         <Card>
-          <CardHead
-            title="Servicios y contactos"
-            description="Consulta los horarios, requisitos y canales de atención."
-          />
+          <CardHead title="Servicios y contactos" />
           <CardBody>
             <ul className="health-page__services">
               {serviciosBienestar.map((item) => (

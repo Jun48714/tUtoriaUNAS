@@ -46,12 +46,13 @@ for (const caso of [
     const modal = page.getByRole('dialog');
     await modal.getByLabel('Tipo de tutoría').selectOption(caso.tipo);
     await modal.getByLabel('Fecha', { exact: true }).fill('2026-11-01');
-    await modal.getByLabel('Hora de inicio').fill('18:00');
-    await modal.getByLabel('Hora de fin').fill('19:00');
+    await modal.getByLabel('Inicio', { exact: true }).fill('18:00');
+    await modal.getByLabel('Fin', { exact: true }).fill('19:00');
     const tema = `Sesión ${caso.tipo} de prueba`;
-    await modal.getByLabel('Tema o título de la sesión').fill(tema);
+    await modal.getByLabel('Tema', { exact: true }).fill(tema);
+    await modal.getByLabel('Objetivo', { exact: true }).fill('Revisar el avance del grupo.');
     if (caso.tipo === 'individual' && caso.asistio) await revisarAnchos(page, 'programar-sesion');
-    await modal.getByRole('button', { name: 'Guardar programación', exact: true }).click();
+    await modal.getByRole('button', { name: 'Programar', exact: true }).click();
     await expect(modal).toContainText(tema);
     const enlace = await modal
       .getByRole('link', { name: 'Registrar asistencia' })

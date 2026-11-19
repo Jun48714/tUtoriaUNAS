@@ -82,8 +82,16 @@ public sealed class SesionEntity
     public bool AsistenciaConfirmada { get; set; }
     public string AcuerdosJson { get; set; } = "[]";
     public string? InstrumentoId { get; set; }
+    public string? EvidenciaNombre { get; set; }
     public int Version { get; set; } = 1;
     public List<AsistenciaEntity> Asistentes { get; set; } = [];
+}
+public sealed class EvidenciaSesionEntity
+{
+    public string SesionId { get; set; } = "";
+    public string Tipo { get; set; } = "";
+    public byte[] Contenido { get; set; } = [];
+    public bool Comprimido { get; set; }
 }
 public sealed class AsistenciaEntity
 {

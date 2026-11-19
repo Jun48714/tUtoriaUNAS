@@ -18,9 +18,16 @@ public sealed class TutoriaController(EstadoTutoriaService estado, AgendaService
     [HttpPost("sesiones")]
     [RequierePermiso("sesiones", "crear")]
     public Task<SesionDto> Programar(ProgramarSesionDto input, CancellationToken ct) => agenda.Programar(input, ct);
+    [HttpPost("sesiones/disponibilidad")]
+    [RequierePermiso("sesiones", "crear")]
+    public Task<DisponibilidadTutoriaDto> Disponibilidad(ConsultarDisponibilidadDto input, CancellationToken ct) => agenda.Disponibilidad(input, ct);
     [HttpPut("sesiones/{id}/asistencia")]
     [RequierePermiso("sesiones", "editar")]
+    [RequestSizeLimit(12_000_000)]
     public Task<SesionDto> Asistencia(string id, RegistrarAsistenciaDto input, CancellationToken ct) => agenda.Asistencia(id, input, ct);
+    [HttpGet("sesiones/{id}/evidencia")]
+    [RequierePermiso("sesiones", "editar")]
+    public Task<EvidenciaAsistenciaDto> Evidencia(string id, CancellationToken ct) => agenda.Evidencia(id, ct);
     [HttpPost("formularios")]
     [RequierePermiso("formularios", "crear")]
     public Task<InstrumentoDto> Crear(CrearInstrumentoDto input, CancellationToken ct) => documentos.Crear(input, ct);

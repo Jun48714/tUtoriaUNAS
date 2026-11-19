@@ -92,11 +92,6 @@
 .d01 .d01__pitch {
   margin-top: 112px;
 }
-.d01 .d01__tag {
-  margin-bottom: 14px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
 .d01 .d01__headline {
   max-width: 15ch;
   color: #fff;
@@ -105,18 +100,6 @@
   font-weight: 600;
   line-height: 1.34;
   letter-spacing: -0.03em;
-}
-.d01 .d01__brand-description {
-  max-width: 32ch;
-  margin-top: 18px;
-  color: rgb(255 255 255 / 88%);
-  font-size: 0.84rem;
-  line-height: 1.7;
-}
-.d01 .d01__motto {
-  margin-top: 30px;
-  color: rgb(255 255 255 / 82%);
-  font-size: 0.78rem;
 }
 .d01 .d01__panel {
   display: flex;
@@ -603,10 +586,6 @@ body.modal-open {
   .d01 .d01__pitch {
     margin-top: 0;
   }
-  .d01 .d01__tag {
-    margin-bottom: 8px;
-    font-size: 0.78rem;
-  }
   .d01 .d01__headline {
     max-width: 26ch;
     font-size: 1.17rem;
@@ -618,10 +597,6 @@ body.modal-open {
   }
   .d01 .d01__brand-name {
     font-size: 0.92rem;
-  }
-  .d01 .d01__brand-description,
-  .d01 .d01__motto {
-    display: none;
   }
   .d01 .d01__panel {
     gap: 22px;

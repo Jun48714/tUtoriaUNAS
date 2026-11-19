@@ -168,7 +168,7 @@ export function CoordExports() {
       <PageHeading
         eyebrow="Coordinación"
         title="Exportar formatos"
-        description="Formatos 01–12 con el diseño de la Resolución N.º 500-2022-CU-R-UNAS, llenados con las respuestas enviadas y listos para guardar en PDF."
+        description="Formatos 01–12 · Resolución N.º 500-2022-CU-R-UNAS"
         actions={
           !API_MODE && (
             <button
@@ -418,11 +418,11 @@ export function CoordExports() {
             <header className="fx-previa__cabecera">
               <div>
                 <h2 id={`${idFormato}-previa`}>{tituloVista}</h2>
-                <p>
-                  {enVista.length
-                    ? `${enVista.length} formato(s) · ${hojasDe(enVista)} hoja(s) A4`
-                    : 'Elige un formato de la lista.'}
-                </p>
+                {enVista.length > 0 && (
+                  <p>
+                    {enVista.length} formatos · {hojasDe(enVista)} páginas A4
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -444,15 +444,11 @@ export function CoordExports() {
               <VistaPreviaFormatos documentos={enVista} etiqueta={`Vista previa: ${tituloVista}`} />
             ) : (
               <Card>
-                <EmptyState
-                  title="Nada que mostrar"
-                  description="Selecciona un formato o un estudiante para ver cómo quedará el PDF."
-                />
+                <EmptyState title="Selecciona un formato o estudiante" />
               </Card>
             )}
             <p className="compact-note">
-              Al exportar se abre la ventana de impresión: elige «Guardar como PDF», tamaño A4 y sin
-              encabezados del navegador.
+              En la ventana de impresión, elige «Guardar como PDF», A4 y sin encabezados.
             </p>
           </section>
         </div>

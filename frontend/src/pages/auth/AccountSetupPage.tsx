@@ -31,23 +31,12 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
   return (
     <div className="d01__form-wrap account-access">
       <h2 className="d01__title">{titulo}</h2>
-      <p className="d01__sub">
-        {c.fase === 'correo' ? (
-          modo === 'activacion' ? (
-            `Verifica ${c.correo}.`
-          ) : (
-            'Usa tu correo institucional.'
-          )
-        ) : c.fase === 'codigo' ? (
-          <>
-            Si está registrado, enviamos un código a <strong>{c.correo.trim()}</strong>.
-          </>
-        ) : c.fase === 'password' ? (
-          'Elige tu contraseña.'
-        ) : (
-          'Cuenta verificada'
-        )}
-      </p>
+      {c.fase === 'correo' && modo === 'activacion' && <p className="d01__sub">{c.correo}</p>}
+      {c.fase === 'codigo' && (
+        <p className="d01__sub">
+          Si está registrado, enviamos un código a <strong>{c.correo.trim()}</strong>.
+        </p>
+      )}
       {c.fase !== 'terminado' && (
         <p className="small muted" aria-label="Paso actual">
           Paso {c.fase === 'correo' ? 1 : c.fase === 'codigo' ? 2 : 3} de 3

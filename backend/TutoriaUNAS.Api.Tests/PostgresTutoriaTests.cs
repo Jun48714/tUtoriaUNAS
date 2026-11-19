@@ -170,6 +170,9 @@ public sealed class PostgresTutoriaTests(PostgresFixture fixture) : IClassFixtur
         Assert.Equal(HttpStatusCode.Conflict, (await student.PutAsJsonAsync(path, new { version = evaluation.Version, respuestas = new { }, enviar = false })).StatusCode);
         var session = (await Estado(tutor)).Sesiones.Single(s => s.Id == "SES-PRUEBA-individual");
         var attendees = session.Asistentes.Select(a => a with { Estado = "tarde", HoraRegistro = session.HoraInicio }).ToArray();
+        var foto = new EvidenciaAsistenciaDto("asistencia.jpg", "image/jpeg", [0xff, 0xd8, 0xff, 0xd9]);
+        var intento = await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new RegistrarAsistenciaDto(session.Version, attendees, Evidencia: foto));
+        Assert.Equal(HttpStatusCode.BadRequest, intento.StatusCode);
         await Ok<SesionDto>(await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = session.Version, asistentes = attendees, tipoTutoria = "Personal" }));
         Assert.Equal(HttpStatusCode.BadRequest, (await student.PutAsJsonAsync(path, new { version = evaluation.Version, respuestas = new { }, enviar = true })).StatusCode);
         var sent = await Ok<InstrumentoDto>(await student.PutAsJsonAsync(path, new { version = evaluation.Version, respuestas = RespuestasValidas("F10"), enviar = true }));
@@ -242,8 +245,22 @@ public sealed class PostgresTutoriaTests(PostgresFixture fixture) : IClassFixtur
         var session = (await Estado(tutor)).Sesiones.Single(s => s.Id == "SES-PRUEBA-grupal");
         var attendees = session.Asistentes.Select(a => a with { Estado = a.EstudianteId == before.Usuario.Id ? "asistio" : "falto" }).ToArray();
         Assert.Equal(HttpStatusCode.Forbidden, (await student.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = session.Version, asistentes = attendees })).StatusCode);
-        var confirmed = await Ok<SesionDto>(await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = session.Version, asistentes = attendees, mensaje = "Acuerdo ficticio persistente" }));
+        var pdf = System.Text.Encoding.ASCII.GetBytes("%PDF-1.7\n%" + new string(' ', 2048) + "\n%%EOF\n");
+        var evidencia = new EvidenciaAsistenciaDto("constancia.pdf", "application/pdf", pdf);
+        var confirmed = await Ok<SesionDto>(await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new RegistrarAsistenciaDto(session.Version, attendees, "Acuerdo ficticio persistente", Evidencia: evidencia)));
         Assert.True(confirmed.AsistenciaConfirmada);
+        Assert.Equal("constancia.pdf", confirmed.EvidenciaNombre);
+        var archivo = $"/api/sesiones/{session.Id}/evidencia";
+        Assert.Equal(pdf, (await Ok<EvidenciaAsistenciaDto>(await tutor.GetAsync(archivo))).Contenido);
+        await using (var scope = fixture.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
+            var guardada = await db.EvidenciasSesion.FindAsync(session.Id);
+            Assert.True(guardada!.Comprimido);
+            Assert.True(guardada.Contenido.Length < pdf.Length);
+        }
+        Assert.Equal(HttpStatusCode.Forbidden, (await student.GetAsync(archivo)).StatusCode);
+        Assert.Null((await Estado(student)).Sesiones.Single(s => s.Id == session.Id).EvidenciaNombre);
         var official = (await Estado(tutor)).Registros.Single(r => r.SesionId == session.Id && r.Formato == "F07");
         Assert.Single(CatalogoFormatos.Filas(official.Respuestas["asistentes"]));
         var values = Enumerable.Range(1, 13).ToDictionary(n => $"p{n:00}", _ => "Sí");
@@ -258,6 +275,7 @@ public sealed class PostgresTutoriaTests(PostgresFixture fixture) : IClassFixtur
         var altered = attendees.Select(a => a with { Estado = "falto" }).ToArray();
         Assert.Equal(HttpStatusCode.Conflict, (await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = confirmed.Version, asistentes = altered })).StatusCode);
         var revised = await Ok<SesionDto>(await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = confirmed.Version, asistentes = attendees }));
+        Assert.Equal("constancia.pdf", revised.EvidenciaNombre);
         Assert.Single((await Estado(tutor)).Registros, r => r.SesionId == session.Id && r.Formato == "F07");
         using var coordinator = await fixture.Login("coordinacion.tutoria", "coordinacion");
         var ready = (await Estado(coordinator)).Registros.Single(r => r.Id == official.Id);
@@ -305,20 +323,24 @@ public sealed class PostgresTutoriaTests(PostgresFixture fixture) : IClassFixtur
         Assert.Equal(HttpStatusCode.BadRequest, (await tutor.PostAsJsonAsync("/api/sesiones", input with { Fecha = "2020-01-01" })).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await tutor.PostAsJsonAsync("/api/sesiones", input with { HoraInicio = "03:00", HoraFin = "03:30", Estudiantes = ["EST-NO-PERTENECE"] })).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await tutor.PutAsJsonAsync($"/api/sesiones/{session.Id}/asistencia", new { version = session.Version, asistentes = session.Asistentes })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await tutor.PostAsJsonAsync("/api/sesiones", input with { Modalidad = "virtual", Lugar = "javascript:alert(1)" })).StatusCode);
+        var virtualSesion = await Ok<SesionDto>(await tutor.PostAsJsonAsync("/api/sesiones", input with { Modalidad = "virtual", Lugar = "https://example.test/tutoria", HoraInicio = "02:00", HoraFin = "02:30" }));
+        Assert.Equal("https://example.test/tutoria", virtualSesion.Lugar);
     }
     [PostgresFact]
     public async Task ReferralAndExpedienteCommitAtomicallyWithValidation()
     {
         using var tutor = await fixture.Login("DOC-0421", "tutor");
         var d = await Ok<InstrumentoDto>(await tutor.PostAsJsonAsync("/api/formularios", new { formato = "F08", estudianteId = "EST-2023010456" }));
-        var input = new Dictionary<string, string> { ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Situación personal", ["resultado"] = "Se deriva a:" };
+        var input = new Dictionary<string, string> { ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Estudiantes becados", ["resultado"] = "Se deriva a:" };
         Assert.Equal(HttpStatusCode.BadRequest, (await tutor.PutAsJsonAsync("/api/formularios/" + d.Id, new { version = d.Version, respuestas = input, enviar = true })).StatusCode);
         Assert.DoesNotContain((await Estado(tutor)).Registros, r => r.Id == "INST-F12-desde-" + d.Id);
         input["areaDerivacion"] = "Psicología";
         await Ok<InstrumentoDto>(await tutor.PutAsJsonAsync("/api/formularios/" + d.Id, new { version = d.Version, respuestas = input, enviar = true }));
         var referral = (await Estado(tutor)).Registros.Single(r => r.Id == "INST-F12-desde-" + d.Id);
         Assert.Equal("no-iniciado", referral.Estado);
-        Assert.Equal("Psicología", referral.Respuestas["area"]); Assert.Equal("Apoyo emocional", referral.Respuestas["motivo"]);
+        Assert.Equal("Psicología", referral.Respuestas["area"]); Assert.Equal("Otro", referral.Respuestas["motivo"]);
+        Assert.Equal("Estudiantes becados", referral.Respuestas["motivo__otro"]);
     }
     [PostgresFact]
     public async Task CoordinatorChangesAreVersionedScopedAndRevokeFormerTutor()

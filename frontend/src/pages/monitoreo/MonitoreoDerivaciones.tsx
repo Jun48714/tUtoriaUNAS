@@ -176,10 +176,7 @@ export function MonitoreoDerivaciones() {
     <MonitoreoMarco vista="derivaciones">
       {(datos, ayudas) => (
         <Card>
-          <CardHead
-            title="Derivaciones"
-            description="Estudiantes derivados por los docentes a áreas de apoyo y cómo avanza cada caso."
-          />
+          <CardHead title="Derivaciones" />
           <CardBody>
             <Tabla datos={datos} ayudas={ayudas} />
           </CardBody>

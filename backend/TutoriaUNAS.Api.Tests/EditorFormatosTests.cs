@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -57,13 +58,14 @@ public sealed class EditorFormatosTests(PostgresFixture fixture) : IClassFixture
         var inicial = await Ok<EditorFormatoDto>(await admin.GetAsync("/api/formatos/F07/editor"));
         var nodo = JsonNode.Parse(inicial.Publicada.GetRawText())!;
         nodo["secciones"]![0]!["campos"]!.AsArray().Add(new JsonObject { ["codigo"] = "acuerdoAdicional", ["etiqueta"] = "Acuerdo adicional de la sesión", ["tipo"] = "texto", ["obligatorio"] = true });
-        var borrador = await Ok<EditorFormatoDto>(await admin.PutAsJsonAsync("/api/formatos/F07/borrador", new GuardarFormatoInput(inicial.Version, inicial.VersionPublicada, JsonSerializer.SerializeToElement(nodo))));
-        var publicada = await Ok<EditorFormatoDto>(await admin.PostAsJsonAsync("/api/formatos/F07/publicar", new PublicarFormatoInput(borrador.Version, borrador.VersionPublicada)));
+        var publicada = await Ok<EditorFormatoDto>(await admin.PostAsJsonAsync("/api/formatos/F07/publicar", new PublicarFormatoInput(inicial.Version, inicial.VersionPublicada, JsonSerializer.SerializeToElement(nodo))));
+        Assert.Null(publicada.Borrador);
         const string sesionId = "SES-EDITOR-ADICIONAL";
         await using (var scope = fixture.App.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
-            db.Sesiones.Add(new SesionEntity { Id = sesionId, TutorId = "DOC-0421", EscuelaId = "E-IIS", SemestreId = "2026-II", Tipo = "grupal", Fecha = JsonDatos.Fecha(DateTimeOffset.UtcNow.AddDays(-1)), HoraInicio = "09:00", HoraFin = "10:00", FinUtc = DateTimeOffset.UtcNow.AddDays(-1), Tema = "Prueba ficticia del editor", Asistentes = [new() { EstudianteId = "EST-2023010456" }] });
+            var fecha = JsonDatos.Fecha(DateTimeOffset.UtcNow.AddDays(-2));
+            db.Sesiones.Add(new SesionEntity { Id = sesionId, TutorId = "DOC-0421", EscuelaId = "E-IIS", SemestreId = "2026-II", Tipo = "grupal", Fecha = fecha, HoraInicio = "09:00", HoraFin = "10:00", FinUtc = DateTimeOffset.Parse($"{fecha}T10:00:00-05:00", CultureInfo.InvariantCulture).ToUniversalTime(), Tema = "Prueba ficticia del editor", Asistentes = [new() { EstudianteId = "EST-2023010456" }] });
             await db.SaveChangesAsync();
         }
         var estado = await Ok<EstadoTutoriaDto>(await tutor.GetAsync("/api/tutoria/estado"));

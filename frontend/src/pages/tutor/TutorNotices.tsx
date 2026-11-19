@@ -202,7 +202,7 @@ export function TutorNotices() {
       <PageHeading
         eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Cuenta institucional`}
         title="Avisos"
-        description={`${docente.correo} · Comunicaciones de tutoría`}
+        description={docente.correo}
         actions={
           <>
             <button
@@ -339,8 +339,8 @@ export function TutorNotices() {
         </CardBody>
         <CardFoot>
           <span>Comunicación del sistema de tutoría · demostración</span>
-          <Link className="tutor-notices__text-button" to="/tutor/instrumentos">
-            Formularios observados <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+          <Link className="tutor-notices__text-button" to="/tutor/instrumentos?estado=pendiente">
+            Formularios pendientes <i className="fa-solid fa-arrow-right" aria-hidden="true" />
           </Link>
         </CardFoot>
       </Card>

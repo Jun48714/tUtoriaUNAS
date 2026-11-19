@@ -437,10 +437,10 @@ test('los formularios permanecen abiertos y las acciones de tabla permiten abrir
   await expect(page).toHaveURL('/tutor/sesiones');
   const abrir = page.getByRole('button', { name: 'Programar sesión', exact: true });
   await abrir.click();
-  const formulario = page.getByRole('dialog', { name: 'Programar sesión de tutoría', exact: true });
-  await formulario
-    .getByLabel('Tema o título de la sesión', { exact: true })
-    .fill('Sesión de prueba');
+  const formulario = page.getByRole('dialog', { name: 'Programar sesión', exact: true });
+  await expect(formulario.getByLabel('Tema', { exact: true })).toHaveValue('');
+  await expect(formulario.getByLabel('Objetivo', { exact: true })).toHaveValue('');
+  await formulario.getByLabel('Tema', { exact: true }).fill('Sesión de prueba');
   await expect(formulario).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(formulario).not.toBeVisible();

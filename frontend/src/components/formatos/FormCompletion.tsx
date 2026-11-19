@@ -98,6 +98,7 @@ export function FormCompletion({
       : respuestas.resultado?.includes('cita')
         ? 'seguimiento'
         : 'resuelto';
+  const derivacionDibu = formato === 'F12' || (formato === 'F08' && outcome === 'derivar');
   return (
     <section
       className="form-completion"
@@ -134,6 +135,13 @@ export function FormCompletion({
         <p className="fc-detail sr-only" role="status">
           {detalleFinal(formato, respuestas)}
         </p>
+        {derivacionDibu && (
+          <p className="fc-detail">
+            {formato === 'F08'
+              ? 'Ficha de derivación preparada. Complétala desde Mis registros.'
+              : 'La transmisión al sistema de DIBU está pendiente.'}
+          </p>
+        )}
         {formato === 'F09' && (
           <p className="fc-balance sr-only">
             {realizadas} realizadas · {noRealizadas} no realizadas

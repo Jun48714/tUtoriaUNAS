@@ -16,6 +16,7 @@ public sealed class TutoriaDbContext(DbContextOptions<TutoriaDbContext> options)
     public DbSet<MatriculaEntity> Matriculas => Set<MatriculaEntity>();
     public DbSet<SesionEntity> Sesiones => Set<SesionEntity>();
     public DbSet<AsistenciaEntity> Asistencias => Set<AsistenciaEntity>();
+    public DbSet<EvidenciaSesionEntity> EvidenciasSesion => Set<EvidenciaSesionEntity>();
     public DbSet<InstrumentoEntity> Instrumentos => Set<InstrumentoEntity>();
     public DbSet<BorradorFormatoEntity> BorradoresFormato => Set<BorradorFormatoEntity>();
     public DbSet<PublicacionFormatoEntity> PublicacionesFormato => Set<PublicacionFormatoEntity>();
@@ -72,6 +73,8 @@ public sealed class TutoriaDbContext(DbContextOptions<TutoriaDbContext> options)
         model.Entity<SesionEntity>().HasMany(e => e.Asistentes).WithOne().HasForeignKey(e => e.SesionId).OnDelete(DeleteBehavior.Cascade);
         model.Entity<AsistenciaEntity>().ToTable("Asistencias").HasKey(e => new { e.SesionId, e.EstudianteId });
         model.Entity<AsistenciaEntity>().HasOne<PersonaEntity>().WithMany().HasForeignKey(e => e.EstudianteId).OnDelete(DeleteBehavior.Restrict);
+        model.Entity<EvidenciaSesionEntity>().ToTable("EvidenciasSesion").HasKey(e => e.SesionId);
+        model.Entity<EvidenciaSesionEntity>().HasOne<SesionEntity>().WithOne().HasForeignKey<EvidenciaSesionEntity>(e => e.SesionId).OnDelete(DeleteBehavior.Cascade);
         model.Entity<InstrumentoEntity>().ToTable("Instrumentos").HasKey(e => e.Id);
         model.Entity<InstrumentoEntity>().HasIndex(e => new { e.SesionId, e.EstudianteId, e.Formato }).IsUnique().HasFilter("\"SesionId\" IS NOT NULL");
         model.Entity<InstrumentoEntity>().HasOne<PersonaEntity>().WithMany().HasForeignKey(e => e.TutorId).OnDelete(DeleteBehavior.Restrict);

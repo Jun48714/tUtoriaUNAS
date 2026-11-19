@@ -370,7 +370,7 @@ public sealed class DocumentosService(TutoriaDbContext db, TutoriaContext contex
                 var derivadas = g.Count(r => r.GetValueOrDefault("resultado") == "Se deriva a:");
                 var resultado = $"{resueltas} con asesoría; {seguimiento} con seguimiento; {derivadas} derivadas.";
                 var dificultad = $"{g.Key}: {g.Count()} atenciones";
-                if (g.Key is "Dificultades de estudio" or "Organización del tiempo" or "Riesgo académico") academicas.Add(new { dificultad, actividad = "Tutoría personalizada y orientación académica", resultado });
+                if (g.Key is "Estudiantes académicos" or "Dificultades de estudio" or "Organización del tiempo" or "Riesgo académico") academicas.Add(new { dificultad, actividad = "Tutoría personalizada y orientación académica", resultado });
                 else if (g.Key is "Situación personal" or "Situación familiar") personales.Add(new { dificultad, atencion = "Acompañamiento y orientación a servicios de apoyo", resultado });
                 else sinClasificar.Add(dificultad);
             }
@@ -405,15 +405,25 @@ public sealed class DocumentosService(TutoriaDbContext db, TutoriaContext contex
     }
     private async Task Recordar(InstrumentoEntity d, Dictionary<string, string> values, CancellationToken ct)
     {
-        foreach (var field in catalogo.Reutilizables.Where(values.ContainsKey))
+        var campos = catalogo.Reutilizables.Where(values.ContainsKey).Select(field => new
         {
-            var campo = field == "motivacion" ? d.Formato == "F04" ? "motivacionEstudio" : "motivacionCarrera" : field == "expectativas" && d.Formato == "F03" ? "expectativasIngreso" : field;
-            var periodo = CatalogoFormatos.CamposEstables.Contains(field) ? "permanente" : d.SemestreId;
+            Campo = field == "motivacion" ? d.Formato == "F04" ? "motivacionEstudio" : "motivacionCarrera"
+                : field == "expectativas" && d.Formato == "F03" ? "expectativasIngreso" : field,
+            Origen = field,
+            Periodo = CatalogoFormatos.CamposEstables.Contains(field) ? "permanente" : d.SemestreId
+        }).ToArray();
+        if (campos.Length == 0) return;
+        var nombres = campos.SelectMany(campo => new[] { campo.Campo, campo.Campo + "__otro" }).ToArray();
+        var existentes = await db.Expediente.Where(e => e.EstudianteId == d.EstudianteId &&
+            (e.Periodo == "permanente" || e.Periodo == d.SemestreId) && nombres.Contains(e.Campo))
+            .ToDictionaryAsync(e => (e.Periodo, e.Campo), ct);
+        foreach (var campo in campos)
+        {
             foreach (var suffix in new[] { "", "__otro" })
             {
-                var dato = await db.Expediente.FindAsync([d.EstudianteId!, periodo, campo + suffix], ct);
-                if (dato is null) { dato = new() { EstudianteId = d.EstudianteId!, Periodo = periodo, Campo = campo + suffix }; db.Expediente.Add(dato); }
-                dato.Valor = values.GetValueOrDefault(field + suffix, ""); dato.DocumentoId = d.Id; dato.Actualizado = context.Ahora;
+                var dato = existentes.GetValueOrDefault((campo.Periodo, campo.Campo + suffix));
+                if (dato is null) { dato = new() { EstudianteId = d.EstudianteId!, Periodo = campo.Periodo, Campo = campo.Campo + suffix }; db.Expediente.Add(dato); }
+                dato.Valor = values.GetValueOrDefault(campo.Origen + suffix, ""); dato.DocumentoId = d.Id; dato.Actualizado = context.Ahora;
             }
         }
     }

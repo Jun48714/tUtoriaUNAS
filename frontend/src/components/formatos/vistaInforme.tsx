@@ -18,6 +18,7 @@ export function abrirVistaInforme(
   instrumento: Instrumento,
   definicion?: DefinicionFormato,
   consolidacion?: ConsolidacionInforme,
+  titulo = 'Informe',
 ): boolean {
   const ventana = window.open('', '_blank');
   if (!ventana) return false;
@@ -37,7 +38,7 @@ export function abrirVistaInforme(
   };
   const pagina = ventana.document;
   pagina.documentElement.lang = 'es';
-  pagina.title = `Informe ${instrumento.formato.slice(1)} · ${instrumento.semestreId}`;
+  pagina.title = `${titulo} ${instrumento.formato.slice(1)} · ${instrumento.semestreId}`;
   const viewport = pagina.createElement('meta');
   viewport.name = 'viewport';
   viewport.content = 'width=device-width, initial-scale=1';
@@ -59,7 +60,9 @@ export function abrirVistaInforme(
     <>
       <header className="ri-cabecera">
         <div>
-          <strong>Informe {instrumento.formato.slice(1)}</strong>
+          <strong>
+            {titulo} {instrumento.formato.slice(1)}
+          </strong>
           <span>{instrumento.semestreId}</span>
         </div>
         <button type="button" onClick={() => ventana.print()}>

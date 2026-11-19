@@ -5,7 +5,6 @@ import type { EstadoEditorFormato } from '../../../types/editorFormatos';
 import {
   cargarEditorFormato,
   cargarVersionFormato,
-  guardarDefinicion,
   publicarDefinicion,
 } from '../../../services/editorFormatos';
 import { refrescarApi } from '../../../services/apiTutoria';
@@ -31,7 +30,11 @@ export function FormatoEditor({ codigo, onClose }: { codigo: CodigoFormato; onCl
   });
   if (consulta.data) return <ContenidoEditor inicial={consulta.data} onClose={onClose} />;
   return (
-    <Sheet title={`Editar formato ${codigo.slice(1)}`} onClose={onClose} wide className="fe-sheet">
+    <Sheet
+      title={`Editar formato ${codigo.slice(1)}`}
+      onClose={onClose}
+      className="sheet--instrumento fe-sheet"
+    >
       {consulta.error ? (
         <Alert tone="riesgo" title="No se pudo abrir el editor">
           {consulta.error.message}
@@ -86,16 +89,11 @@ function ContenidoEditor({ inicial, onClose }: { inicial: EstadoEditorFormato; o
       setOcupado(false);
     }
   }
-  const guardar = () =>
-    ejecutar(async () => {
-      aceptar(await guardarDefinicion(estado, definicion));
-      setMensaje('Borrador guardado. Los portales conservan la versión publicada.');
-    });
   const publicar = () =>
     ejecutar(async () => {
-      const siguiente = await publicarDefinicion(estado);
+      const siguiente = await publicarDefinicion(estado, definicion);
       aceptar(siguiente);
-      await refrescarApi().catch(() => undefined);
+      void refrescarApi().catch(() => undefined);
       setMensaje(`Versión ${siguiente.versionPublicada} publicada para todos los portales.`);
     });
   const recuperar = (revision: number) =>
@@ -103,14 +101,13 @@ function ContenidoEditor({ inicial, onClose }: { inicial: EstadoEditorFormato; o
       const anterior = await cargarVersionFormato(definicion.codigo, revision);
       setDefinicion({ ...anterior, revision: estado.versionPublicada });
       setTab('editar');
-      setMensaje(`Versión ${revision} recuperada como edición. Guarda y publica para aplicarla.`);
+      setMensaje(`Versión ${revision} recuperada como edición. Publica para aplicarla.`);
     });
   return (
     <Sheet
       title={`Editar formato ${definicion.numero}`}
       onClose={cerrar}
-      wide
-      className="fe-sheet"
+      className="sheet--instrumento fe-sheet"
       footer={
         <div className="fe-actions">
           <span role="status">
@@ -119,19 +116,12 @@ function ContenidoEditor({ inicial, onClose }: { inicial: EstadoEditorFormato; o
               : cambios
                 ? 'Sin guardar'
                 : pendientePublicar
-                  ? 'Borrador guardado'
+                  ? 'Edición pendiente'
                   : 'Publicado'}
           </span>
           <button
-            className="btn btn-falcon-default"
-            disabled={ocupado || !cambios}
-            onClick={() => void guardar()}
-          >
-            Guardar borrador
-          </button>
-          <button
             className="btn btn-primary"
-            disabled={ocupado || cambios || !pendientePublicar}
+            disabled={ocupado || (!cambios && !pendientePublicar)}
             onClick={() => setConfirmacion('publicar')}
           >
             Publicar cambios
@@ -192,7 +182,7 @@ function ContenidoEditor({ inicial, onClose }: { inicial: EstadoEditorFormato; o
                 ? '¿Publicar los cambios para todos los usuarios?'
                 : confirmacion === 'cerrar'
                   ? 'Hay cambios sin guardar. ¿Cerrar y descartarlos?'
-                  : '¿Recargar el borrador guardado? Se descartarán los cambios sin guardar.'}
+                  : '¿Recargar el formulario? Se descartarán los cambios sin publicar.'}
             </p>
             <div className="fe-actions">
               <button

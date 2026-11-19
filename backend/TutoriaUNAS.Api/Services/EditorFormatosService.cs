@@ -70,27 +70,32 @@ public sealed class EditorFormatosService(TutoriaDbContext db, TutoriaContext co
         var actor = await Administrador(ct);
         await using var tx = await context.Transaccion(actor, ct, "catalogo-formatos");
         var publicada = await Catalogo(codigo, ct);
-        var borrador = await db.BorradoresFormato.SingleOrDefaultAsync(b => b.Codigo == codigo, ct)
-            ?? throw new TutoriaError(409, "Guarda el borrador antes de publicar.");
-        TutoriaContext.Version(input.Version, borrador.Version);
+        var borrador = await db.BorradoresFormato.SingleOrDefaultAsync(b => b.Codigo == codigo, ct);
+        TutoriaContext.Version(input.Version, borrador?.Version ?? 0);
         TutoriaContext.Version(input.VersionPublicada, publicada.Version);
-        TutoriaContext.Version(borrador.VersionPublicada, publicada.Version);
-        Validar(JsonDatos.Elemento(borrador.DefinicionJson), publicada);
+        var definicion = input.Definicion ?? (borrador is null
+            ? throw new TutoriaError(409, "Completa la definición del formato antes de publicar.")
+            : JsonDatos.Elemento(borrador.DefinicionJson));
+        if (input.Definicion is null) TutoriaContext.Version(borrador!.VersionPublicada, publicada.Version);
+        Validar(definicion, publicada);
         if (!await db.PublicacionesFormato.AnyAsync(p => p.Codigo == codigo && p.Revision == publicada.Version, ct))
             RegistrarPublicacion(publicada, actor);
         // Incluye envíos antiguos y asistencias generadas. Las respuestas jamás se modifican.
         await db.Instrumentos.Where(i => i.Formato == codigo && i.Enviado != null && i.DefinicionJson == null)
             .ExecuteUpdateAsync(set => set.SetProperty(i => i.DefinicionJson, publicada.DatosJson), ct);
         publicada.Version++;
-        var nueva = JsonNode.Parse(borrador.DefinicionJson)!.AsObject();
+        var nueva = JsonNode.Parse(definicion.GetRawText())!.AsObject();
         nueva["revision"] = publicada.Version;
         publicada.DatosJson = nueva.ToJsonString(JsonDatos.Options);
         RegistrarPublicacion(publicada, actor);
-        // Se conserva el contador del borrador: un cliente antiguo nunca vuelve a ser vigente (ABA).
-        borrador.DefinicionJson = publicada.DatosJson;
-        borrador.VersionPublicada = publicada.Version;
-        borrador.Version++;
-        borrador.Actualizado = context.Ahora;
+        if (borrador is not null)
+        {
+            // Se conserva el contador para rechazar escrituras de clientes anteriores.
+            borrador.DefinicionJson = publicada.DatosJson;
+            borrador.VersionPublicada = publicada.Version;
+            borrador.Version++;
+            borrador.Actualizado = context.Ahora;
+        }
         context.Auditar(actor, "publicar-formato", codigo, publicada.Version);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);

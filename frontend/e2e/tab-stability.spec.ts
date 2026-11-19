@@ -56,7 +56,7 @@ for (const width of [320, 375, 390, 768, 1024, 1440]) {
     await page.evaluate(() => window.scrollTo(0, 40));
     const before = await geometry(filters);
     expect(before.scroll).toBe(40);
-    for (const label of ['Pendientes', 'Por corregir', 'Enviados', 'Todos']) {
+    for (const label of ['Enviados', 'Pendientes', 'Todos']) {
       const button = filters.getByRole('button', { name: new RegExp(`^${label}`) });
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
@@ -80,7 +80,7 @@ for (const width of [375, 1440]) {
     const filters = page.getByRole('group', { name: 'Filtrar mis registros', exact: true });
     await expect(filters).toBeAttached();
     const before = await geometry(filters);
-    for (const label of ['Por corregir', 'Enviados', 'Revisados', 'Todos']) {
+    for (const label of ['Enviados', 'Pendientes', 'Todos']) {
       const button = filters.getByRole('button', { name: new RegExp(`^${label}`) });
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');

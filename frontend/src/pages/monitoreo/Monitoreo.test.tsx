@@ -192,7 +192,7 @@ describe('monitoreo de escuela (solo lectura)', () => {
     expect(
       await screen.findByRole('heading', { name: /Formato 03 · Entrevista inicial/ }),
     ).toBeVisible();
-    expect(screen.getByText(/1 enviado\(s\) · 1 en curso/)).toBeVisible();
+    expect(screen.getByText('1 enviado · 1 en curso')).toBeVisible();
     await waitFor(() => expect(screen.getAllByText(/Ana Quispe Rojas/).length).toBeGreaterThan(0));
     expect(screen.getAllByText(/RESOLUCIÓN N° 500-2022-CU-R-UNAS/i).length).toBeGreaterThan(0);
     // otro formato sin envíos

@@ -230,7 +230,6 @@ export function StudentDocuments() {
       <PageHeading
         eyebrow="Estudiante · Mi información"
         title="Mis documentos"
-        description="Formularios, constancias y fichas de tu tutoría."
         actions={
           <button
             type="button"
@@ -280,12 +279,11 @@ export function StudentDocuments() {
           <i className="fa-solid fa-circle-info" aria-hidden="true" /> Acerca de las descargas
         </summary>
         <p>
-          Las descargas de demostración contienen los datos del documento en formato CSV. Los
-          archivos oficiales en PDF o Word aún no están disponibles.
+          Las descargas son fichas CSV de demostración. Los archivos oficiales están pendientes.
         </p>
         <p>
-          Las constancias requieren la firma del docente tutor o de la autoridad correspondiente.
-          Las notas personales y la información de salud no forman parte de este repositorio.
+          Las constancias requieren firma. Este repositorio excluye notas personales y datos de
+          salud.
         </p>
       </details>
 
@@ -340,16 +338,12 @@ export function StudentDocuments() {
                 <dd>{semestreActual}</dd>
               </div>
             </dl>
-            {!abierto.descargable ? (
+            {!abierto.descargable && (
               <Alert tone="alerta" title="Descarga no disponible">
                 {abierto.tipo === 'constancia'
-                  ? 'La constancia requiere la firma del docente tutor o de la autoridad correspondiente para habilitar la descarga.'
-                  : 'La descarga se habilitará cuando la versión aprobada del documento esté disponible.'}
+                  ? 'La constancia requiere firma.'
+                  : 'El documento está pendiente de aprobación.'}
               </Alert>
-            ) : (
-              <p className="small muted">
-                Descarga de demostración: contiene los datos del documento en formato CSV.
-              </p>
             )}
           </div>
         </Sheet>

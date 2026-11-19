@@ -393,7 +393,7 @@ export function CoordPlan() {
         <Sheet
           title="Informe del semestre"
           description="Formato 01"
-          wide
+          className="sheet--instrumento"
           onClose={() => setPanel(null)}
         >
           <div className="stack">

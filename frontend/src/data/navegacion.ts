@@ -68,19 +68,14 @@ export const navigation: Record<Role, NavigationGroup[]> = {
           icon: ClipboardList,
           counter: 'pendientes',
           children: [
-            { path: 'instrumentos', label: 'Todos los formularios', icon: ClipboardList },
+            { path: 'instrumentos?estado=enviado', label: 'Enviados', icon: ClipboardList },
             {
               path: 'instrumentos?estado=pendiente',
               label: 'Pendientes',
               icon: FileText,
               counter: 'pendientes',
             },
-            {
-              path: 'instrumentos?estado=observado',
-              label: 'Por corregir',
-              icon: ListChecks,
-              counter: 'observados',
-            },
+            { path: 'instrumentos', label: 'Todos', icon: ClipboardList },
           ],
         },
         { path: 'sesiones', label: 'Sesiones', icon: CalendarDays, counter: 'sesiones' },

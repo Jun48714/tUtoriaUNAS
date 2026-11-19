@@ -268,7 +268,6 @@ export function CoordTutors() {
       <PageHeading
         eyebrow={`Coordinación de tutoría · ${portal.institucional ? 'Todas las escuelas' : escuelaDe(portal.escuelaId)}`}
         title="Tutores"
-        description="Equipo docente, disponibilidad y atención tutorial."
         actions={
           <>
             <AccionesCuentas rol="tutor" />
@@ -432,10 +431,7 @@ export function CoordTutors() {
           </Card>
 
           <Card accent>
-            <CardHead
-              title="Estado del horario de atención"
-              description="Bloques publicados por los tutores"
-            />
+            <CardHead title="Estado del horario de atención" />
             <CardBody>
               <div className="stack">
                 {activos.slice(0, 8).map((fila) => (

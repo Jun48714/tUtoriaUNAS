@@ -5,6 +5,7 @@ import { guardarInstrumento, revisarInstrumento } from './instrumentWorkspace';
 import { guardarAsistencia } from './sessionAttendance';
 import { programarSesion } from './sessionWorkspace';
 import type { ProgramacionSesion } from './sessionWorkspace';
+import { prepararEvidencia } from './evidenciaAsistencia';
 import {
   guardarFormularioApi,
   revisarFormularioApi,
@@ -45,7 +46,10 @@ export async function persistirAsistencia(
   asistentes: Sesion['asistentes'],
   mensaje: string,
   tipoTutoria: string,
+  archivo?: File,
 ) {
-  if (API_MODE) await guardarAsistenciaApi(sesion, asistentes, mensaje, tipoTutoria);
-  else guardarAsistencia(usuario, sesion, asistentes, mensaje);
+  if (API_MODE) {
+    const evidencia = archivo ? await prepararEvidencia(archivo, sesion.tipo) : undefined;
+    await guardarAsistenciaApi(sesion, asistentes, mensaje, tipoTutoria, evidencia);
+  } else guardarAsistencia(usuario, sesion, asistentes, mensaje);
 }

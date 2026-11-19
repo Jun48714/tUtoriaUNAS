@@ -5,6 +5,12 @@ import { definicionPorCodigo } from '../../data/formatos';
 import { estudiantePorId, nombreCompleto } from '../../data/personas';
 import type { CodigoFormato, Estudiante, Instrumento, Sesion } from '../../types/domain';
 import { esEvaluacionSesion } from '../../utils/evaluacionesSesion';
+import {
+  coincideFiltroFormulario,
+  filtroFormulario,
+  filtrosFormularios,
+  formularioEnviado,
+} from '../../utils/filtrosFormularios';
 import { formatFecha } from '../../utils/fechas';
 import { puedeEnviarFormato } from '../../utils/instrumentos';
 import type { MomentoTutoria } from '../../utils/instrumentos';
@@ -42,7 +48,7 @@ export function TeacherFormsPanel({
   const [parametros, setParametros] = useSearchParams();
   const { key: rutaActual } = useLocation();
   const estudiantes = parametros.get('ambito') === 'estudiantes';
-  const estado = parametros.get('estado') ?? '';
+  const estado = filtroFormulario(parametros.get('estado'));
   const estudianteId = parametros.get('estudiante') ?? 'todos';
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -57,31 +63,10 @@ export function TeacherFormsPanel({
       (!esEvaluacionSesion(r.formato) || ['enviado', 'aprobado'].includes(r.estado)),
   );
   const bandeja = estudiantes ? entregas : propios;
-  function coincide(registro: Instrumento, filtro: string) {
-    if (filtro === 'pendiente')
-      return (
-        ['no-iniciado', 'borrador', 'observado'].includes(registro.estado) &&
-        puedeEnviarFormato(registro.formato, momento)
-      );
-    if (filtro === 'por-revisar') return registro.estado === 'enviado' && esEntrevista(registro);
-    return !filtro || registro.estado === filtro;
-  }
-  const pendientes = propios.filter((r) => coincide(r, 'pendiente')).length;
-  const recibidas = entregas.filter((r) => coincide(r, 'por-revisar')).length;
-  const filtros = estudiantes
-    ? [
-        { id: '', nombre: 'Todas' },
-        { id: 'por-revisar', nombre: 'Por revisar' },
-        { id: 'observado', nombre: 'Por corregir' },
-        { id: 'aprobado', nombre: 'Revisadas' },
-      ]
-    : [
-        { id: '', nombre: 'Todos' },
-        { id: 'pendiente', nombre: 'Pendientes' },
-        { id: 'observado', nombre: 'Por corregir' },
-        { id: 'enviado', nombre: 'Enviados' },
-        { id: 'aprobado', nombre: 'Revisados' },
-      ];
+  const porRevisar = (registro: Instrumento) =>
+    registro.estado === 'enviado' && esEntrevista(registro);
+  const pendientes = propios.filter((r) => coincideFiltroFormulario(r.estado, 'pendiente')).length;
+  const recibidas = entregas.filter(porRevisar).length;
   function actualizarParametro(nombre: string, valor: string) {
     const nuevos = new URLSearchParams(parametros);
     if (valor && valor !== 'todos') nuevos.set(nombre, valor);
@@ -105,16 +90,14 @@ export function TeacherFormsPanel({
       const sesion = sesiones.find((s) => s.id === r.sesionId);
       const texto = `${tituloFormulario(r.formato)} ${definicionPorCodigo(r.formato)?.nombre} ${r.formato} ${r.formato.slice(1)} ${estudiante ? nombreCompleto(estudiante) : ''} ${estudiante?.codigo ?? ''} ${sesion?.tema ?? ''} ${sesion?.codigo ?? ''}`;
       return (
-        coincide(r, estado) &&
+        coincideFiltroFormulario(r.estado, estado) &&
         (estudianteId === 'todos' || r.estudianteId === estudianteId) &&
         texto.toLocaleLowerCase('es-PE').includes(busqueda.trim().toLocaleLowerCase('es-PE'))
       );
     })
     .sort((a, b) => {
       const prioridad = (r: Instrumento) =>
-        estudiantes
-          ? Number(coincide(r, 'por-revisar'))
-          : Number(['borrador', 'observado'].includes(r.estado));
+        estudiantes ? Number(porRevisar(r)) : Number(['borrador', 'observado'].includes(r.estado));
       return (
         prioridad(b) - prioridad(a) ||
         b.actualizado.localeCompare(a.actualizado) ||
@@ -180,9 +163,9 @@ export function TeacherFormsPanel({
       <div className="teacher-register__controls">
         <FormsFilters
           label={estudiantes ? 'Filtrar respuestas de estudiantes' : 'Filtrar mis registros'}
-          options={filtros.map((f) => ({
+          options={filtrosFormularios.map((f) => ({
             ...f,
-            cantidad: bandeja.filter((r) => coincide(r, f.id)).length,
+            cantidad: bandeja.filter((r) => coincideFiltroFormulario(r.estado, f.id)).length,
           }))}
           value={estado}
           onChange={(valor) => actualizarParametro('estado', valor)}
@@ -272,9 +255,11 @@ export function TeacherFormsPanel({
                     aria-label={`Abrir formato ${def.numero}${estudiante ? ` de ${nombreCompleto(estudiante)}` : ''}`}
                   >
                     <span className="teacher-register__action-label">
-                      {estudiantes && coincide(registro, 'por-revisar')
+                      {estudiantes && porRevisar(registro)
                         ? 'Revisar'
-                        : !estudiantes && ['borrador', 'observado'].includes(registro.estado)
+                        : !estudiantes &&
+                            !formularioEnviado(registro.estado) &&
+                            puedeEnviarFormato(registro.formato, momento)
                           ? 'Continuar'
                           : 'Ver'}
                     </span>
@@ -389,7 +374,7 @@ export function TeacherFormsPanel({
             <div className="forms-panel__section-heading">
               <h2 id="teacher-closing-title">Cierre del semestre</h2>
               <span>
-                {momento === 'cierre' ? 'Envío disponible' : 'Puedes preparar tus borradores'}
+                {momento === 'cierre' ? 'Envío disponible' : 'Envío al cierre del semestre'}
               </span>
             </div>
             <div className="teacher-forms__tasks">

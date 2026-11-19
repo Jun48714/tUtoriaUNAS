@@ -57,7 +57,6 @@ function StudentPanel({ scope }: { scope: DashboardScopeData }) {
             </div>
           </>
         }
-        description="Revisa tus próximas sesiones, formularios y solicitudes de apoyo."
       />
       <div className="dashboard-metrics">
         <Stat
@@ -96,7 +95,7 @@ function StudentPanel({ scope }: { scope: DashboardScopeData }) {
             {
               label: 'Observaciones por corregir',
               count: porCorregir,
-              href: '/estudiante/instrumentos?estado=observado',
+              href: '/estudiante/instrumentos?estado=pendiente',
               urgent: true,
             },
             {

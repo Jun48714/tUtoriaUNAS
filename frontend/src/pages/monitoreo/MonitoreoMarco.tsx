@@ -10,10 +10,11 @@ import { formatFechaHora } from '../../utils/fechas';
 import { useMonitoreo } from '../../hooks/useMonitoreo';
 import type { MonitoreoApi } from '../../types/monitoreo';
 
-export type VistaMonitoreo = 'avance' | 'formatos' | 'derivaciones';
+export type VistaMonitoreo = 'avance' | 'sesiones' | 'formatos' | 'derivaciones';
 
 const RUTAS: Record<VistaMonitoreo, string> = {
   avance: '/tutor/monitoreo',
+  sesiones: '/tutor/monitoreo/sesiones',
   formatos: '/tutor/monitoreo/formatos',
   derivaciones: '/tutor/monitoreo/derivaciones',
 };
@@ -36,8 +37,8 @@ export function MonitoreoMarco({
         title="Monitoreo de escuela"
         description={
           datos
-            ? `${escuelaDe(datos.escuelaId)} · semestre ${datos.semestreId} · solo lectura · actualizado ${formatFechaHora(datos.generado)}`
-            : 'Avance de estudiantes y docentes, formatos y derivaciones.'
+            ? `${escuelaDe(datos.escuelaId)} · ${datos.semestreId} · Solo lectura · ${formatFechaHora(datos.generado)}`
+            : undefined
         }
       />
       <Tabs
@@ -46,6 +47,7 @@ export function MonitoreoMarco({
         onChange={(id) => navigate(RUTAS[id as VistaMonitoreo])}
         items={[
           { id: 'avance', label: 'Avance' },
+          { id: 'sesiones', label: 'Sesiones' },
           { id: 'formatos', label: 'Formatos' },
           { id: 'derivaciones', label: 'Derivaciones', count: datos?.derivaciones.length },
         ]}

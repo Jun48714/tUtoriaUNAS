@@ -30,6 +30,6 @@ describe('destinatarios del aviso', () => {
     expect(within(lista).getByRole('checkbox', { name: /Ana Prueba/ })).toBeChecked();
     expect(within(lista).getByRole('checkbox', { name: /Luis Ejemplo/ })).toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'Limpiar selección' }));
-    expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publicar aviso' })).toBeDisabled();
   });
 });

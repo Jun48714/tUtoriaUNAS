@@ -1,0 +1,68 @@
+CONTEXTO PARA LA IA QUE TRABAJA EN LA MAQUINA VIRTUAL · Tutoria UNAS (SGT)
+Actualizado: 17-11-2026
+
+1. QUE ES
+Sistema de Gestion de Tutoria de la UNAS. Backend .NET 10 (API) + frontend React/Vite + PostgreSQL 17.
+Desplegado con Docker Compose en la VM institucional (192.168.10.122, host "cert-qr"), usuario SSH restringido
+"viceacademico" (sin privilegios administrativos). Directorio del proyecto en la VM: ~/tutoria
+No guardes ni repitas contrasenas en archivos de texto ni en el repositorio.
+
+2. ARQUITECTURA (docker-compose.yml en ~/tutoria)
+- proxy   : Caddy 2. UNICO servicio que publica puerto: HTTPS_PORT (8443) -> contenedor 8443. Certificado propio ("tls internal").
+            Enruta /api/*, /health, /health/* -> api:8080 ; todo lo demas -> web:80. (deploy/Caddyfile)
+- web     : Nginx 1.27 sirviendo el build de Vite (frontend/nginx.conf). Sin proxy; solo estaticos.
+- api     : ASP.NET Core 10 (imagen tutoria-unas-api:latest), usuario no root, healthcheck /health/ready.
+- migrate : mismo imagen, comando --migrate; aplica migraciones SQL (backend/TutoriaUNAS.Api/Data/0*.sql) y termina.
+- db      : postgres:17-alpine, volumen pgdata, usuario tutoria_app, base tutoria_unas. No publica puertos.
+- backup  : pg_dump diario (formato custom) a ~/tutoria/backups, conserva 14 dias.
+- bootstrap (perfil "tools"): docker compose run --rm bootstrap -> crea catalogos estructurales (facultades, escuelas,
+            semestres, reglas), periodos del semestre activo y el primer administrador institucional (variables TUTORIA_ADMIN_*).
+Volumenes: pgdata, keys (claves Data Protection: NO borrar), caddy_data, caddy_config.
+Configuracion: archivo ~/tutoria/.env (chmod 600, no esta en git). Plantilla: .env.example.
+
+3. ESTADO ACTUAL
+- Imagenes construidas; db, api, web, proxy y backup en ejecucion; api y web "healthy"; migrate termino OK.
+- Puertos 80 y 443 de la VM los usa otro proyecto -> por eso se usa HTTPS_PORT=8443.
+- Acceso: https://192.168.10.122:8443/login   (DEBE ser https://, no http://. Con http el navegador muestra
+  "Client sent an HTTP request to an HTTPS server" porque el puerto 8443 solo habla TLS.)
+  El navegador avisara de certificado no confiable (certificado interno de Caddy): aceptar la excepcion.
+- SMTP: NO configurado (SMTP_* vacios). El administrador inicial entra sin correo; las cuentas nuevas de
+  estudiantes/tutores no podran activarse (requieren codigo por correo) hasta configurar SMTP.
+
+4. PENDIENTE / A VERIFICAR
+a) Confirmar que se ejecuto: docker compose run --rm bootstrap  (debe decir "Administrador institucional creado").
+   Es idempotente. Requiere en .env: TUTORIA_ADMIN_EMAIL (@unas.edu.pe), TUTORIA_ADMIN_PASSWORD (>=15 caracteres),
+   TUTORIA_ADMIN_NOMBRES, TUTORIA_ADMIN_APELLIDOS. Luego borrar TUTORIA_ADMIN_PASSWORD de .env.
+b) Probar: curl -sk https://localhost:8443/health/ready  -> "Healthy"; y login desde un equipo de la red.
+c) Si el puerto 8443 no abre desde otros equipos pero curl local funciona: firewall de red/servidor (lo abre TI).
+d) SMTP: cuando haya cuenta Gmail con contrasena de aplicacion (2FA), poner SMTP_USUARIO, SMTP_REMITENTE, SMTP_PASSWORD
+   en .env y ejecutar: docker compose up -d
+e) Verificar copia: ls ~/tutoria/backups (debe aparecer tutoria_*.dump). Sacar copias fuera de la VM periodicamente.
+f) Importar el padron de estudiantes/tutores desde el propio sistema (rol coordinacion).
+
+5. COMANDOS UTILES (en ~/tutoria)
+docker compose ps
+docker compose logs --tail 80 api        (tambien proxy, db, web, migrate)
+docker compose up -d --build             (aplica cambios; migra el esquema solo)
+docker compose restart api
+docker compose exec db psql -U tutoria_app -d tutoria_unas
+Restaurar: docker compose exec -T db pg_restore -U tutoria_app -d tutoria_unas --clean --if-exists < backups/ARCHIVO.dump
+
+6. VARIABLES IMPORTANTES (.env -> docker-compose.yml)
+TUTORIA_DOMAIN=192.168.10.122   HTTPS_PORT=8443   TUTORIA_TLS=internal   TUTORIA_EMAIL_DOMINIO=unas.edu.pe
+POSTGRES_PASSWORD, CUENTAS_CODIGO_KEY (base64 >= 32 bytes)  -> NO cambiar CUENTAS_CODIGO_KEY tras crear cuentas.
+El api recibe: ASPNETCORE_FORWARDEDHEADERS_ENABLED=true, AllowedHosts=<dominio>;localhost,
+Cors__AllowedOrigins__0=https://<dominio>:<puerto>, Cuentas__UrlAcceso=https://<dominio>:<puerto>/login,
+Cuentas__KeyRingPath=/keys, SmtpCuentas__* (Password directo por variable; DPAPI no existe en Linux).
+Si cambia el dominio o el puerto, actualizar .env y hacer docker compose up -d.
+
+7. DECISIONES Y GOTCHAS
+- El frontend llama a /api en el mismo origen (sin VITE_API_BASE_URL en produccion), por eso Caddy enruta ambos.
+- Caddy envia X-Forwarded-Proto/For; la API los respeta (limite de peticiones por IP y redireccion HTTPS correctos).
+- El healthcheck de la API envia X-Forwarded-Proto: https y Host localhost (por eso AllowedHosts incluye localhost).
+- Politica de contrasenas de cuentas: 15-128 caracteres. Correos deben ser del dominio TUTORIA_EMAIL_DOMINIO.
+- El SDK .NET 10.0.404 de la imagen daba NETSDK1022 (Content duplicado de semilla-*.json); corregido en el .csproj
+  con <Content Remove=...> antes de <Content Include=...>.
+- La semilla ficticia (SeedDemo) NO debe usarse en produccion: solo existe en Development.
+- Archivos clave: docker-compose.yml, deploy/Caddyfile, deploy/README.md, backend/Dockerfile, frontend/Dockerfile,
+  frontend/nginx.conf, backend/TutoriaUNAS.Api/Program.cs, backend/TutoriaUNAS.Api/Data/BootstrapProduccion.cs.

@@ -107,11 +107,6 @@
   color: var(--ink-600);
   background: var(--surface);
 }
-.forms-panel__context {
-  margin: 0;
-  color: var(--ink-500);
-  font-size: var(--text-ui-small);
-}
 .forms-panel__stage-note {
   margin: 0;
   padding: 12px 14px;
@@ -331,9 +326,6 @@
 .tutoring-workspace--compact .sheet__head {
   background: var(--ink-50);
   border-color: var(--ink-200);
-}
-.tutoring-search-sheet .sheet__body {
-  min-height: min(275px, 40dvh);
 }
 .tutoring-workspace--compact .tutoring-option {
   border-color: var(--ink-200);

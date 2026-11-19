@@ -107,12 +107,12 @@ public sealed class SistemaPersistenteTests(PostgresFixture fixture) : IClassFix
         await SinContenido(await tutor.DeleteAsync($"/api/formularios/{draft.Id}?version={draft.Version}"));
         Assert.Equal(HttpStatusCode.NotFound, (await tutor.GetAsync("/api/formularios/" + draft.Id)).StatusCode);
         var doc = await Ok<InstrumentoDto>(await tutor.PostAsJsonAsync("/api/formularios", new { formato = "F08", estudianteId = "EST-2023010456" }));
-        doc.Respuestas["motivo"] = "Dificultades de estudio"; doc.Respuestas["resultado"] = "Se resuelve con la asesoría"; doc.Respuestas["detalleMotivo"] = "Relato privado ficticio que no debe copiarse al informe";
+        doc.Respuestas["motivo"] = "Estudiantes académicos"; doc.Respuestas["resultado"] = "Se resuelve con la asesoría"; doc.Respuestas["detalleMotivo"] = "Relato privado ficticio que no debe copiarse al informe";
         var sent = await Ok<InstrumentoDto>(await tutor.PutAsJsonAsync("/api/formularios/" + doc.Id, new { version = doc.Version, respuestas = doc.Respuestas, enviar = true }));
         Assert.Equal(HttpStatusCode.Conflict, (await tutor.DeleteAsync($"/api/formularios/{doc.Id}?version={sent.Version}")).StatusCode);
         var report = await Ok<InstrumentoDto>(await tutor.PostAsJsonAsync("/api/formularios", new { formato = "F02" }));
         var saved = await Ok<InstrumentoDto>(await tutor.PutAsJsonAsync("/api/formularios/" + report.Id, new { version = report.Version, respuestas = new { }, enviar = false }));
-        Assert.Contains("Dificultades de estudio", saved.Respuestas["dificultadesAcademicas"]);
+        Assert.Contains(CatalogoFormatos.Filas(saved.Respuestas["dificultadesAcademicas"]), fila => fila["dificultad"].Contains("Estudiantes académicos", StringComparison.Ordinal));
         Assert.DoesNotContain("Relato privado", saved.Respuestas["dificultadesAcademicas"]);
     }
 

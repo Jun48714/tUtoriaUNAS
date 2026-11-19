@@ -76,11 +76,7 @@ export function PreferencesPage() {
 
   return (
     <>
-      <PageHeading
-        eyebrow="Cuenta · Apariencia"
-        title="Ajustes de pantalla"
-        description="Elige cómo quieres ver el menú, las tablas y el contenido."
-      />
+      <PageHeading eyebrow="Cuenta · Apariencia" title="Ajustes de pantalla" />
       {mensaje && <SuccessNotice>{mensaje}</SuccessNotice>}
       {error && (
         <Alert tone="riesgo" title="No se guardaron las preferencias">

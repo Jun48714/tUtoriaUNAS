@@ -42,7 +42,7 @@ for (const width of [320, 375, 390, 768, 1024, 1440]) {
     expect(bounds!.width).toBeLessThanOrEqual(680);
     const filters = panel.getByRole('group', { name: 'Filtrar mis registros' });
     const before = await filters.boundingBox();
-    for (const label of ['Por corregir', 'Enviados', 'Revisados', 'Todos']) {
+    for (const label of ['Enviados', 'Pendientes', 'Todos']) {
       const button = filters.getByRole('button', { name: new RegExp(`^${label}`) });
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
@@ -124,9 +124,9 @@ test('el enlace a pendientes abre el panel y la bandeja de estudiantes conserva 
     'aria-pressed',
     'true',
   );
-  await panel.getByRole('button', { name: /^Por corregir/ }).click();
-  await expect(page).toHaveURL(/estado=observado/);
-  await expect(panel.getByRole('button', { name: /^Por corregir/ })).toHaveAttribute(
+  await panel.getByRole('button', { name: /^Enviados/ }).click();
+  await expect(page).toHaveURL(/estado=enviado/);
+  await expect(panel.getByRole('button', { name: /^Enviados/ })).toHaveAttribute(
     'aria-pressed',
     'true',
   );

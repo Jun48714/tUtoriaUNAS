@@ -105,3 +105,8 @@
     padding: 12px;
   }
 }
+@media (pointer: fine) {
+  .attendance-camera {
+    display: none;
+  }
+}

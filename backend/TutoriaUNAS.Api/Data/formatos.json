@@ -1646,22 +1646,19 @@
           "campos": [
             {
               "codigo": "motivo",
-              "etiqueta": "¿Qué motivó la atención?",
+              "etiqueta": "Motivo de atención",
               "tipo": "escala",
               "obligatorio": true,
               "opciones": [
-                "Dificultades de estudio",
-                "Organización del tiempo",
-                "Riesgo académico",
-                "Situación personal",
-                "Situación familiar",
-                "Necesidad de apoyo especializado",
+                "Estudiantes académicos",
+                "Estudiantes sobresalientes",
+                "Estudiantes becados",
                 "Otro"
               ]
             },
             {
               "codigo": "detalleMotivo",
-              "etiqueta": "Detalle que ayude al acompañamiento",
+              "etiqueta": "Detalle de la atención",
               "tipo": "texto-largo",
               "obligatorio": false
             }

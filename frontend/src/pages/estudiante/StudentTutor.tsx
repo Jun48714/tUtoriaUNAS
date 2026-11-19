@@ -42,11 +42,7 @@ export function StudentTutor() {
   if (!tutor) {
     return (
       <>
-        <PageHeading
-          eyebrow="Estudiante · Mi tutoría"
-          title="Mi tutor"
-          description="Aún no se ha registrado la asignación tutorial de tu escuela."
-        />
+        <PageHeading eyebrow="Estudiante · Mi tutoría" title="Mi tutor" />
         <EmptyState
           title="Sin tutor asignado"
           description="La comisión de tutoría de tu escuela valida la asignación al inicio del semestre."
@@ -68,7 +64,6 @@ export function StudentTutor() {
       <PageHeading
         eyebrow="Estudiante · Mi tutoría"
         title="Mi tutor"
-        description="Tu contacto para acompañarte durante el semestre."
         actions={
           <Link className="student-tutor__link" to="/estudiante/sesiones">
             Ver mis sesiones <i className="fa-solid fa-arrow-right" aria-hidden="true" />

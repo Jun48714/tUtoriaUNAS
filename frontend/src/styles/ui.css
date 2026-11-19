@@ -1252,6 +1252,21 @@ dialog.sheet--wide {
 dialog.sheet--form {
   height: min(560px, calc(100dvh - 48px));
 }
+dialog.sheet--instrumento {
+  --instrumento-inline: clamp(16px, 3vw, 24px);
+  width: min(760px, calc(100vw - 24px));
+  max-width: none;
+  height: min(460px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+}
+.sheet--instrumento .sheet__head,
+.sheet--instrumento .sheet__foot {
+  padding: 12px var(--instrumento-inline);
+}
+.sheet--instrumento .sheet__body {
+  padding: 16px var(--instrumento-inline);
+  scrollbar-gutter: stable;
+}
 .sheet--form .sheet__body {
   scrollbar-gutter: stable;
   overscroll-behavior: contain;

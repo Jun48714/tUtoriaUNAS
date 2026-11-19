@@ -351,11 +351,6 @@ export function CoordTutees() {
       <PageHeading
         eyebrow={`Coordinación de tutoría · ${institucional ? 'Todas las escuelas' : escuelaDe(portal.escuelaId)}`}
         title="Estudiantes"
-        description={
-          institucional
-            ? 'Directorio y seguimiento tutorial de todas las escuelas.'
-            : 'Padrón académico y seguimiento del acompañamiento tutorial.'
-        }
         actions={
           <>
             <AccionesCuentas rol="estudiante" />

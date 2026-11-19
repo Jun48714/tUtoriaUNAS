@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiJson } from './apiClient';
-import {
-  cargarEditorFormato,
-  cargarVersionFormato,
-  guardarDefinicion,
-  publicarDefinicion,
-} from './editorFormatos';
+import { cargarEditorFormato, cargarVersionFormato, publicarDefinicion } from './editorFormatos';
 import { definicionPorCodigo } from '../data/formatos';
 import type { EstadoEditorFormato } from '../types/editorFormatos';
 
@@ -21,17 +16,12 @@ describe('contrato del editor con la API', () => {
     historial: [],
     camposIntegrados: [],
   };
-  it('transmite las dos versiones al guardar y al publicar', async () => {
-    await guardarDefinicion(estado, estado.publicada);
-    expect(apiJson).toHaveBeenLastCalledWith('/api/formatos/F03/borrador', 'PUT', {
-      version: 4,
-      versionPublicada: 2,
-      definicion: estado.publicada,
-    });
-    await publicarDefinicion(estado);
+  it('publica la definición y las dos versiones en una sola solicitud', async () => {
+    await publicarDefinicion(estado, estado.publicada);
     expect(apiJson).toHaveBeenLastCalledWith('/api/formatos/F03/publicar', 'POST', {
       version: 4,
       versionPublicada: 2,
+      definicion: estado.publicada,
     });
   });
   it('cancela cargas al cerrar y recupera la revisión elegida', async () => {

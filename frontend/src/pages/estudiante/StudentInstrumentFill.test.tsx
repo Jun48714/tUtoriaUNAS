@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, beforeAll } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Instrumento, Sesion } from '../../types/domain';
 import { estudiantes } from '../../data/personas';
@@ -53,24 +53,33 @@ function abrir(id: string) {
   );
 }
 
-describe('Página para responder un formulario', () => {
+describe('Modal para responder un formulario', () => {
+  beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function () {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function () {
+      this.open = false;
+    };
+  });
   beforeEach(() => {
     portal.instrumentos = [];
     portal.sesiones = [];
   });
 
-  it('abre la entrevista en su propia página, editable y con vuelta a la lista', () => {
+  it('abre la entrevista en el modal común y vuelve a la lista al cerrarlo', () => {
     portal.instrumentos = [instrumento({ id: 'ENT' })];
     abrir('ENT');
-    expect(screen.getByRole('heading', { level: 1, name: 'Entrevista de ingreso' })).toBeVisible();
-    expect(screen.getByRole('link', { name: /Mis formularios/ })).toHaveAttribute(
-      'href',
-      '/estudiante/instrumentos',
+    expect(screen.getByRole('dialog', { name: 'Entrevista de ingreso' })).toHaveClass(
+      'sheet--instrumento',
     );
     expect(screen.getByText(`Formato 03 · ${semestreActual}`)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Guardar borrador' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
     // La cabecera ya dice el formato: el paso no lo repite.
     expect(screen.queryByText(/Paso 1 de \d+ · Formato/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar ventana' }));
+    expect(screen.getByText('Lista')).toBeVisible();
   });
 
   it('una evaluación aún no habilitada se muestra como vista previa, sin guardar', () => {
@@ -101,7 +110,7 @@ describe('Página para responder un formulario', () => {
     portal.instrumentos = [instrumento({ id: 'EV', formato: 'F10', sesionId: 'SES-1' })];
     abrir('EV');
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Evaluación de la tutoría individual' }),
+      screen.getByRole('dialog', { name: 'Evaluación de la tutoría individual' }),
     ).toBeVisible();
     expect(screen.getByText(/Técnicas de estudio/)).toBeInTheDocument();
     expect(screen.getByText('Aún no puedes responder')).toBeInTheDocument();

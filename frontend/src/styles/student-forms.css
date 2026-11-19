@@ -197,12 +197,6 @@
 .sf-grupo--plegado[open] .sf-grupo__chevron {
   transform: rotate(90deg);
 }
-.sf-grupo__nota {
-  margin: 0;
-  padding: 0 20px 12px;
-  color: var(--muted);
-  font-size: var(--text-ui-small);
-}
 @media (prefers-reduced-motion: no-preference) {
   /* Apertura suave donde el navegador lo admite; si no, abre sin animación. */
   .sf-grupo--plegado {
@@ -332,67 +326,6 @@ a.sf-fila:hover .sf-fila__accion .portal-icon {
   font-size: var(--text-ui-secondary);
 }
 
-/* —— Página de llenado —— */
-.sf-llenado {
-  max-width: 860px;
-  gap: 14px;
-}
-.sf-volver {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  color: var(--ink-700);
-  font-size: var(--text-ui-secondary);
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 160ms ease;
-}
-.sf-volver:hover {
-  color: var(--green-800);
-}
-.sf-volver:focus-visible {
-  outline: 2px solid var(--green-700);
-  outline-offset: 2px;
-}
-.sf-cabecera {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.sf-cabecera__texto {
-  min-width: 0;
-}
-.sf-cabecera > .badge {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.sf-cabecera h1 {
-  margin: 4px 0 6px;
-  color: var(--ink-900);
-  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
-.sf-cabecera__contexto {
-  margin: 0;
-  color: var(--ink-700);
-  overflow-wrap: anywhere;
-  font-size: var(--text-ui-small);
-}
-.sf-cabecera__destino {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: var(--text-ui-small);
-}
-.sf-hoja {
-  min-width: 0;
-  padding: 20px 24px 30px;
-  border-radius: var(--r-lg);
-  background: var(--surface);
-}
-
 @media (max-width: 640px) {
   .sf-entrevista {
     flex-direction: column;
@@ -418,12 +351,5 @@ a.sf-fila:hover .sf-fila__accion .portal-icon {
     flex-basis: 100%;
     justify-content: flex-end;
     gap: 10px;
-  }
-  .sf-cabecera {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-  .sf-hoja {
-    padding: 16px 16px 30px;
   }
 }

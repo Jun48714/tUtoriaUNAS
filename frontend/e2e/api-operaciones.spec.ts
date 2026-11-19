@@ -275,10 +275,11 @@ test('el docente reprograma una convocatoria y conserva la anterior como histori
   expect(hora).toBeTruthy();
   const modal = page.getByRole('dialog');
   await modal.getByLabel('Fecha', { exact: true }).fill(fecha);
-  await modal.getByLabel('Hora de inicio', { exact: true }).fill(hora);
-  await modal.getByLabel('Hora de fin', { exact: true }).fill(`${hora.slice(0, 2)}:20`);
-  await modal.getByLabel('Tema o título de la sesión', { exact: true }).fill(titulo);
-  await modal.getByRole('button', { name: 'Guardar programación', exact: true }).click();
+  await modal.getByLabel('Inicio', { exact: true }).fill(hora);
+  await modal.getByLabel('Fin', { exact: true }).fill(`${hora.slice(0, 2)}:20`);
+  await modal.getByLabel('Tema', { exact: true }).fill(titulo);
+  await modal.getByLabel('Objetivo', { exact: true }).fill('Verificar la reprogramación.');
+  await modal.getByRole('button', { name: 'Programar', exact: true }).click();
   await expect(modal.getByRole('heading', { level: 2 })).toHaveText(titulo);
   await modal.getByText('Cancelar o reprogramar esta sesión', { exact: true }).click();
   await modal.getByRole('combobox', { name: 'Acción', exact: true }).selectOption('reprogramar');

@@ -367,7 +367,7 @@ export function TutorTutees() {
       <PageHeading
         eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Semestre ${semestreActual}`}
         title="Mis estudiantes"
-        description={`${semestreActual} · ${escuelaDe(docente.escuelaId)} · Seguimiento de tus tutorados`}
+        description={`${semestreActual} · ${escuelaDe(docente.escuelaId)}`}
         actions={
           <>
             <Link className="btn btn-falcon-default" to="/tutor/sesiones">

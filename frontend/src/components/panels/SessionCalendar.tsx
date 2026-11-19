@@ -12,10 +12,12 @@ export function SessionCalendar({
   sesiones,
   onAbrir,
   compact = false,
+  resolverTutor = nombreTutor,
 }: {
   sesiones: Sesion[];
   onAbrir(sesion: Sesion): void;
   compact?: boolean;
+  resolverTutor?(id: string): string;
 }) {
   const [parametros, setParametros] = useSearchParams();
   const vista = parametros.get('vista') === 'historial' ? 'historial' : 'agenda';
@@ -35,12 +37,12 @@ export function SessionCalendar({
           hora: `${sesion.horaInicio}–${sesion.horaFin}`,
           tono:
             sesion.tipo === 'grupal' ? 'dorado' : sesion.modalidad === 'virtual' ? 'info' : 'verde',
-          detalle: `${sesion.tipo === 'grupal' ? 'Tutoría grupal' : 'Tutoría individual'} · ${nombreTutor(sesion.tutorId)}`,
+          detalle: `${sesion.tipo === 'grupal' ? 'Tutoría grupal' : 'Tutoría individual'} · ${resolverTutor(sesion.tutorId)}`,
           lugar: sesion.lugar,
           modalidad: sesion.modalidad,
           etiqueta: sesion.estado,
         })),
-    [sesiones, vista],
+    [sesiones, vista, resolverTutor],
   );
 
   return (

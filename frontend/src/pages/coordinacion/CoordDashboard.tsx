@@ -59,11 +59,6 @@ function CoordPanel({ scope }: { scope: DashboardScopeData }) {
       <PageHeading
         eyebrow="Coordinación"
         title="Resumen de tutoría"
-        description={
-          portal.institucional
-            ? 'Sesiones, formularios y tareas de todas las escuelas.'
-            : 'Sesiones, formularios y tareas de la escuela seleccionada.'
-        }
         actions={
           <>
             {scope.filtros}
@@ -101,7 +96,6 @@ function CoordPanel({ scope }: { scope: DashboardScopeData }) {
         <Stat
           label="Informes por revisar"
           value={enviados}
-          note="Listos para tu revisión"
           tone="dorado"
           icon={<ClipboardList />}
         />
@@ -118,20 +112,17 @@ function CoordPanel({ scope }: { scope: DashboardScopeData }) {
           items={[
             {
               label: 'Informes recibidos',
-              description: 'Revisa, aprueba o deja observaciones.',
               count: enviados,
               href: '/coordinacion/revisiones',
             },
             {
               label: 'Estudiantes con alertas',
-              description: 'Revisa quién necesita más apoyo.',
               count: alertas,
               href: '/coordinacion/tutorados',
               urgent: true,
             },
             {
               label: 'Solicitudes de apoyo abiertas',
-              description: 'Consulta el seguimiento de los casos.',
               count: abiertas,
               href: '/coordinacion/reportes',
             },
@@ -140,7 +131,6 @@ function CoordPanel({ scope }: { scope: DashboardScopeData }) {
         <Card className="dashboard-focus-card dashboard-coverage">
           <CardHead
             title="Estudiantes atendidos por escuela"
-            description="Compara cuántos estudiantes fueron atendidos en cada escuela."
             actions={
               <Link className="dashboard-text-link" to="/coordinacion/reportes">
                 Ver reporte <ArrowRight />

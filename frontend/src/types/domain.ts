@@ -209,6 +209,7 @@ export interface Sesion {
   asistenciaConfirmada?: boolean;
   totalConvocados?: number;
   totalAsistentes?: number;
+  evidenciaNombre?: string | null;
 }
 
 export interface AsistenciaSesion {

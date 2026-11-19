@@ -167,7 +167,7 @@ export function Topbar({ menuOpen, menuExpanded, onToggleMenu, scopeHostRef }: T
             leida: false,
             destino:
               user.role === 'tutor'
-                ? '/tutor/instrumentos?estado=observado'
+                ? '/tutor/instrumentos?estado=pendiente'
                 : '/coordinacion/revisiones',
           },
           {

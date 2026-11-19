@@ -666,16 +666,13 @@ export const definicionesFormato: DefinicionFormato[] = [
         c('grupo', 'Grupo'),
       ]),
       s('Motivo de atención', [
-        opciones('motivo', '¿Qué motivó la atención?', [
-          'Dificultades de estudio',
-          'Organización del tiempo',
-          'Riesgo académico',
-          'Situación personal',
-          'Situación familiar',
-          'Necesidad de apoyo especializado',
+        opciones('motivo', 'Motivo de atención', [
+          'Estudiantes académicos',
+          'Estudiantes sobresalientes',
+          'Estudiantes becados',
           'Otro',
         ]),
-        c('detalleMotivo', 'Detalle que ayude al acompañamiento', 'texto-largo', false),
+        c('detalleMotivo', 'Detalle de la atención', 'texto-largo', false),
       ]),
       s('Proceso de atención', [
         opciones('resultado', '¿Cómo continúa la atención?', [

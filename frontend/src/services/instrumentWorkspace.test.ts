@@ -219,7 +219,7 @@ describe('automatización de la derivación', () => {
       f08,
       {
         ...precargarInstrumento(f08),
-        motivo: 'Situación personal',
+        motivo: 'Estudiantes becados',
         detalleMotivo: 'Requiere acompañamiento emocional.',
         resultado: 'Se deriva a:',
         areaDerivacion: 'Psicología',
@@ -235,7 +235,8 @@ describe('automatización de la derivación', () => {
     expect(derivacion?.respuestas.codigo).toBe(estudiante.codigo);
     expect(derivacion?.respuestas.ciclo).toBe(String(estudiante.ciclo));
     expect(derivacion?.respuestas.nombreTutor).toBeTruthy();
-    expect(derivacion?.respuestas.motivo).toBe('Apoyo emocional');
+    expect(derivacion?.respuestas.motivo).toBe('Otro');
+    expect(derivacion?.respuestas.motivo__otro).toBe('Estudiantes becados');
     expect(derivacion?.respuestas.detalle).toBe('Requiere acompañamiento emocional.');
     expect(derivacion?.avance).toBeGreaterThan(0);
   });

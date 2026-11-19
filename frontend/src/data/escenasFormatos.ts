@@ -59,7 +59,7 @@ export const escenasFormato = {
   },
   F12: {
     nombre: 'Enlace con el área de apoyo',
-    titulo: 'Registrado',
+    titulo: 'Derivación registrada para DIBU',
     detalle: 'La ficha quedó registrada. Puedes consultar el estado de la solicitud de apoyo.',
   },
 } satisfies Record<CodigoFormato, { nombre: string; titulo: string; detalle: string }>;
@@ -67,7 +67,7 @@ export const escenasFormato = {
 export function detalleFinal(formato: CodigoFormato, respuestas: Record<string, string>) {
   if (formato === 'F08') {
     if (respuestas.resultado === 'Se deriva a:')
-      return 'Se preparó el borrador del formato 12. Revísalo y envíalo desde Mis registros.';
+      return 'Se preparó el formato 12. Revísalo y envíalo desde Mis registros.';
     if (respuestas.resultado === 'Se programa nueva cita para seguimiento')
       return 'La nueva cita de seguimiento ya aparece en las agendas de tutoría.';
     return 'Se registró que la atención se resolvió con la asesoría.';

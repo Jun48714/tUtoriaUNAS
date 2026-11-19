@@ -1,8 +1,10 @@
 import { SuccessNotice } from '../../components/ui/SuccessNotice';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
+import { useAhora } from '../../hooks/useAhora';
 import { persistirProgramacion } from '../../services/mutacionesTutoria';
 import { TriangleAlert } from '../../components/ui/icons';
 import { PageHeading } from '../../components/ui/PageHeading';
@@ -16,27 +18,31 @@ import { usePortal } from '../../hooks/usePortal';
 import { SessionCalendar } from '../../components/panels/SessionCalendar';
 import { SessionDetails } from '../../components/panels/SessionDetails';
 import { AccionesSesion } from '../../components/panels/AccionesTutoria';
+import { DisponibilidadSemanal } from '../../components/panels/DisponibilidadSemanal';
 
 import { semestreActual } from '../../data/catalogos';
 import { estudiantePorId, nombreCompleto } from '../../data/personas';
-import { hayCruce } from '../../data/academico';
+import { API_MODE } from '../../services/apiConfig';
+import {
+  consultarDisponibilidad,
+  crucesDeBloque,
+  disponibilidadDemo,
+  lunesDeSemana,
+} from '../../services/disponibilidadTutoria';
+import { consultarSesiones } from '../../services/sessionWorkspace';
 import type { ModalidadSesion, Sesion } from '../../types/domain';
 import { fechaActualLima, formatFechaLarga, formatHora, formatRangoHora } from '../../utils/fechas';
-import '../../styles/coord-modals.css';
+import { admiteRegistroAsistencia, enlaceVirtualSesion } from '../../utils/evaluacionesSesion';
 
 /** Sesiones del docente: un solo calendario con detalle y programación. */
 
 type Ventana = { tipo: 'detalle'; sesionId: string } | { tipo: 'programar' } | null;
 
-/** Día de la semana del bloque horario (1 = lunes … 7 = domingo). */
-function diaDeFecha(fecha: string): number {
-  return ((new Date(`${fecha}T12:00:00`).getDay() + 6) % 7) + 1;
-}
-
 export function TutorSessions() {
   const portal = usePortal();
   const { user } = useAuth();
   const workspace = useInstrumentWorkspace();
+  const ahora = useAhora(12_000);
   const { docente, tutorados, sesiones } = portal;
   const [parametros] = useSearchParams();
 
@@ -53,22 +59,72 @@ export function TutorSessions() {
       tutorados[0]?.estudianteId ??
       '',
   );
-  const [nuevoGrupo, setNuevoGrupo] = useState(tutorados[0]?.grupo ?? '');
+  const grupos = [...new Set(tutorados.flatMap((a) => (a.grupo ? [a.grupo] : [])))];
+  const [nuevoGrupo, setNuevoGrupo] = useState(grupos[0] ?? '');
   const [modalidad, setModalidad] = useState<Sesion['modalidad']>('presencial');
   const [lugar, setLugar] = useState('Cubículo de tutoría · Pabellón B');
-  const [tema, setTema] = useState('Seguimiento del avance académico del semestre');
-  const [objetivo, setObjetivo] = useState(
-    'Acompañar al tutorado en la organización de su tiempo y en la preparación de las evaluaciones.',
-  );
+  const [enlace, setEnlace] = useState('');
+  const [tema, setTema] = useState('');
+  const [objetivo, setObjetivo] = useState('');
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const lugarSesion = modalidad === 'virtual' ? enlace : lugar;
+  const urlSesion = enlaceVirtualSesion({ modalidad, lugar: lugarSesion });
+  const grupoActivo = grupos.includes(nuevoGrupo) ? nuevoGrupo : (grupos[0] ?? '');
   const convocados =
     nuevoTipo === 'individual'
       ? [nuevoEstudiante].filter(Boolean)
-      : tutorados.filter((a) => a.grupo === nuevoGrupo).map((a) => a.estudianteId);
+      : tutorados
+          .filter((a) => grupoActivo && a.grupo === grupoActivo)
+          .map((a) => a.estudianteId)
+          .sort();
+  const lunes = lunesDeSemana(nuevaFecha);
+  const participantesValidos =
+    convocados.length <= 100 && convocados.length >= (nuevoTipo === 'grupal' ? 2 : 1);
+  const consultar =
+    ventana?.tipo === 'programar' && Boolean(lunes) && participantesValidos && Boolean(docente);
+  const disponibilidadApi = useQuery({
+    queryKey: ['disponibilidad-tutoria', docente?.id, semestreActual, lunes, convocados],
+    queryFn: ({ signal }) => consultarDisponibilidad(lunes, convocados, signal),
+    enabled: API_MODE && consultar,
+    refetchInterval: 12_000,
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
+  const disponibilidad = !consultar
+    ? undefined
+    : API_MODE
+      ? disponibilidadApi.isError
+        ? undefined
+        : disponibilidadApi.data
+      : disponibilidadDemo(docente!.id, convocados, lunes, consultarSesiones(workspace.registros));
+  const horasValidas = Boolean(nuevaInicio && nuevaFin && nuevaInicio < nuevaFin);
+  const fechaFutura = horasValidas && Date.parse(`${nuevaFecha}T${nuevaInicio}:00-05:00`) > ahora;
+  const hayCruces = Boolean(
+    disponibilidad &&
+    horasValidas &&
+    crucesDeBloque(disponibilidad, nuevaFecha, nuevaInicio, nuevaFin).length,
+  );
+  const puedeProgramar = !guardando && fechaFutura && Boolean(disponibilidad) && !hayCruces;
+  const problemaHorario = hayCruces
+    ? 'Horario ocupado. Elige otro día u hora.'
+    : consultar && !fechaFutura
+      ? horasValidas
+        ? 'Elige un horario futuro.'
+        : 'El fin debe ser posterior al inicio.'
+      : '';
   async function programar() {
-    if (!user || guardando) return;
+    if (!user || !puedeProgramar) return;
+    if (!lugarSesion.trim() || !tema.trim() || !objetivo.trim()) {
+      setError('Completa el lugar o enlace, el tema y el objetivo.');
+      return;
+    }
+    if (modalidad === 'virtual' && !urlSesion) {
+      setError('Ingresa un enlace que empiece con https:// o http://.');
+      return;
+    }
+    setError('');
     setGuardando(true);
     try {
       const sesion = await persistirProgramacion(
@@ -79,7 +135,7 @@ export function TutorSessions() {
           horaInicio: nuevaInicio,
           horaFin: nuevaFin,
           modalidad,
-          lugar,
+          lugar: lugarSesion,
           tema,
           objetivo,
           estudiantes: convocados,
@@ -87,12 +143,13 @@ export function TutorSessions() {
         workspace.registros,
       );
       setError('');
-      setAviso(
-        'Sesión programada. Ya está disponible en el calendario de los estudiantes convocados.',
-      );
+      setTema('');
+      setObjetivo('');
+      setAviso('Sesión programada.');
       setVentana({ tipo: 'detalle', sesionId: sesion.id });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo programar la sesión.');
+      if (API_MODE) void disponibilidadApi.refetch();
     } finally {
       setGuardando(false);
     }
@@ -107,14 +164,6 @@ export function TutorSessions() {
     ventana && ventana.tipo !== 'programar'
       ? sesiones.find((sesion) => sesion.id === ventana.sesionId)
       : undefined;
-
-  const cruceProgramacion =
-    nuevoTipo === 'individual' &&
-    nuevoEstudiante !== '' &&
-    nuevaInicio < nuevaFin &&
-    nuevaFecha !== ''
-      ? hayCruce(nuevoEstudiante, diaDeFecha(nuevaFecha), nuevaInicio, nuevaFin)
-      : null;
 
   if (!docente) {
     return (
@@ -145,7 +194,6 @@ export function TutorSessions() {
             </button>
           </>
         }
-        description="Programa sesiones y consulta sus acuerdos."
       />
       {aviso && <SuccessNotice>{aviso}</SuccessNotice>}
       <SessionCalendar
@@ -164,7 +212,7 @@ export function TutorSessions() {
           wide
           footer={
             <>
-              {!['cancelada', 'reprogramada'].includes(sesionDetalle.estado) && (
+              {admiteRegistroAsistencia(sesionDetalle) && (
                 <Link
                   className="btn btn-primary"
                   to={`/tutor/asistencias?sesion=${encodeURIComponent(sesionDetalle.id)}`}
@@ -189,212 +237,232 @@ export function TutorSessions() {
 
       {ventana?.tipo === 'programar' && (
         <Sheet
-          title="Programar sesión de tutoría"
-          description="Elige el horario y los participantes."
-          className="coord-form-sheet"
-          onClose={() => setVentana(null)}
-          wide
+          title="Programar sesión"
+          className="programacion-tutoria"
+          onClose={() => {
+            if (!guardando) setVentana(null);
+          }}
           footer={
             <>
-              <button
-                type="button"
-                className="btn btn-falcon-default"
-                onClick={() => setVentana(null)}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={programar}
-                disabled={guardando || (nuevoTipo === 'individual' && !nuevoEstudiante)}
-              >
-                Guardar programación
-              </button>
+              {(error || problemaHorario) && (
+                <p className="programacion-tutoria__estado" role={error ? 'alert' : 'status'}>
+                  <TriangleAlert aria-hidden="true" />
+                  <span>{error || problemaHorario}</span>
+                </p>
+              )}
+              <div className="programacion-tutoria__acciones">
+                <button
+                  type="button"
+                  className="btn btn-falcon-default"
+                  onClick={() => setVentana(null)}
+                  disabled={guardando}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={programar}
+                  disabled={!puedeProgramar}
+                >
+                  {guardando ? 'Programando…' : 'Programar'}
+                </button>
+              </div>
             </>
           }
         >
-          <div className="stack">
-            {error && (
-              <Alert tone="riesgo" title="Revisa la programación">
-                {error}
-              </Alert>
-            )}
-            <div className="field-grid">
-              <div className="field">
-                <label htmlFor="programar-fecha">Fecha</label>
-                <input
-                  id="programar-fecha"
-                  className="input"
-                  type="date"
-                  value={nuevaFecha}
-                  onChange={(evento) => setNuevaFecha(evento.target.value)}
+          <div className="programacion-tutoria__contenido">
+            <div className="programacion-tutoria__datos">
+              <div className="programacion-tutoria__tipo">
+                <div className="field">
+                  <label htmlFor="programar-tipo">Tipo de tutoría</label>
+                  <select
+                    id="programar-tipo"
+                    className="select"
+                    value={nuevoTipo}
+                    onChange={(evento) =>
+                      setNuevoTipo(evento.target.value === 'grupal' ? 'grupal' : 'individual')
+                    }
+                  >
+                    <option value="individual">Individual</option>
+                    <option value="grupal">Grupal</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="programar-modalidad">Modalidad</label>
+                  <select
+                    id="programar-modalidad"
+                    className="select"
+                    value={modalidad}
+                    onChange={(e) => setModalidad(e.target.value as Sesion['modalidad'])}
+                  >
+                    <option value="presencial">Presencial</option>
+                    <option value="virtual">Virtual</option>
+                    <option value="mixta">Mixta</option>
+                  </select>
+                </div>
+              </div>
+
+              {nuevoTipo === 'individual' && (
+                <SearchableSelect
+                  label="Estudiante"
+                  placeholder="Buscar por nombre o código"
+                  options={tutoradosResueltos.map(({ estudiante }) => ({
+                    value: estudiante.id,
+                    label: nombreCompleto(estudiante),
+                    description: estudiante.codigo,
+                  }))}
+                  value={nuevoEstudiante}
+                  onChange={setNuevoEstudiante}
+                  autoFocus={false}
+                  required
                 />
+              )}
+              {nuevoTipo === 'grupal' && (
+                <div className="field">
+                  <label htmlFor="programar-grupo">Grupo</label>
+                  <select
+                    id="programar-grupo"
+                    className="select"
+                    value={grupoActivo}
+                    onChange={(e) => setNuevoGrupo(e.target.value)}
+                  >
+                    {grupos.map((grupo) => (
+                      <option key={grupo} value={grupo}>
+                        {grupo}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="field__hint">
+                    {convocados.length} {convocados.length === 1 ? 'participante' : 'participantes'}
+                  </span>
+                </div>
+              )}
+
+              <div className="programacion-tutoria__horas">
+                <div className="field programacion-tutoria__fecha">
+                  <label htmlFor="programar-fecha">Fecha</label>
+                  <input
+                    id="programar-fecha"
+                    className="input"
+                    type="date"
+                    value={nuevaFecha}
+                    onChange={(evento) => setNuevaFecha(evento.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="programar-inicio">Inicio</label>
+                  <input
+                    id="programar-inicio"
+                    className="input"
+                    type="time"
+                    value={nuevaInicio}
+                    onChange={(evento) => setNuevaInicio(evento.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="programar-fin">Fin</label>
+                  <input
+                    id="programar-fin"
+                    className="input"
+                    type="time"
+                    value={nuevaFin}
+                    onChange={(evento) => setNuevaFin(evento.target.value)}
+                  />
+                </div>
               </div>
               <div className="field">
-                <label htmlFor="programar-tipo">Tipo de tutoría</label>
-                <select
-                  id="programar-tipo"
-                  className="select"
-                  value={nuevoTipo}
-                  onChange={(evento) =>
-                    setNuevoTipo(evento.target.value === 'grupal' ? 'grupal' : 'individual')
-                  }
-                >
-                  <option value="individual">Individual</option>
-                  <option value="grupal">Grupal</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="programar-inicio">Hora de inicio</label>
-                <input
-                  id="programar-inicio"
-                  className="input"
-                  type="time"
-                  value={nuevaInicio}
-                  onChange={(evento) => setNuevaInicio(evento.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="programar-fin">Hora de fin</label>
-                <input
-                  id="programar-fin"
-                  className="input"
-                  type="time"
-                  value={nuevaFin}
-                  onChange={(evento) => setNuevaFin(evento.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="programar-modalidad">Modalidad</label>
-                <select
-                  id="programar-modalidad"
-                  className="select"
-                  value={modalidad}
-                  onChange={(e) => setModalidad(e.target.value as Sesion['modalidad'])}
-                >
-                  <option value="presencial">Presencial</option>
-                  <option value="virtual">Virtual</option>
-                  <option value="mixta">Mixta</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="programar-lugar">Lugar o enlace institucional</label>
+                <label htmlFor="programar-lugar">
+                  {modalidad === 'presencial'
+                    ? 'Lugar'
+                    : modalidad === 'virtual'
+                      ? 'Enlace'
+                      : 'Lugar o enlace'}
+                </label>
                 <input
                   id="programar-lugar"
                   className="input"
-                  type="text"
-                  value={lugar}
-                  onChange={(e) => setLugar(e.target.value)}
+                  type={modalidad === 'virtual' ? 'url' : 'text'}
+                  placeholder={modalidad === 'virtual' ? 'https://…' : undefined}
+                  value={lugarSesion}
+                  onChange={(e) => (modalidad === 'virtual' ? setEnlace : setLugar)(e.target.value)}
                   maxLength={300}
+                  required
+                />
+                {urlSesion && (
+                  <a className="small" href={urlSesion} target="_blank" rel="noopener noreferrer">
+                    Abrir enlace virtual
+                  </a>
+                )}
+              </div>
+            </div>
+            <aside className="programacion-tutoria__agenda" aria-label="Horario para programar">
+              {disponibilidad ? (
+                <DisponibilidadSemanal
+                  datos={disponibilidad}
+                  fecha={nuevaFecha}
+                  inicio={nuevaInicio}
+                  fin={nuevaFin}
+                  ahora={ahora}
+                  seleccionar={setNuevaFecha}
+                  seleccionarTramo={(fecha, inicio, fin) => {
+                    setNuevaFecha(fecha);
+                    setNuevaInicio(inicio);
+                    setNuevaFin(fin);
+                    setError('');
+                  }}
+                />
+              ) : API_MODE && consultar && disponibilidadApi.isError ? (
+                <div className="stack">
+                  <Alert tone="riesgo" title="No se pudo consultar el horario">
+                    {disponibilidadApi.error.message}
+                  </Alert>
+                  <button
+                    type="button"
+                    className="btn btn-falcon-default btn-sm"
+                    onClick={() => void disponibilidadApi.refetch()}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              ) : (
+                <p className="disponibilidad__espera small muted" role="status">
+                  {consultar
+                    ? 'Consultando disponibilidad…'
+                    : !lunes
+                      ? 'Elige una fecha.'
+                      : nuevoTipo === 'grupal'
+                        ? 'Elige un grupo de 2 a 100 estudiantes.'
+                        : 'Elige un estudiante.'}
+                </p>
+              )}
+            </aside>
+            <div className="programacion-tutoria__detalle">
+              <div className="field">
+                <label htmlFor="programar-tema">Tema</label>
+                <input
+                  id="programar-tema"
+                  className="input"
+                  type="text"
+                  value={tema}
+                  onChange={(e) => setTema(e.target.value)}
+                  maxLength={200}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="programar-objetivo">Objetivo</label>
+                <textarea
+                  id="programar-objetivo"
+                  className="textarea"
+                  rows={2}
+                  value={objetivo}
+                  onChange={(e) => setObjetivo(e.target.value)}
+                  maxLength={2000}
+                  required
                 />
               </div>
             </div>
-
-            {nuevoTipo === 'individual' && (
-              <SearchableSelect
-                label="Estudiante convocado"
-                placeholder="Buscar por nombre o código"
-                options={tutoradosResueltos.map(({ estudiante }) => ({
-                  value: estudiante.id,
-                  label: nombreCompleto(estudiante),
-                  description: estudiante.codigo,
-                }))}
-                value={nuevoEstudiante}
-                onChange={setNuevoEstudiante}
-                autoFocus={false}
-                required
-              />
-            )}
-            {nuevoTipo === 'grupal' && (
-              <label className="field" htmlFor="programar-grupo">
-                <span>Grupo convocado</span>
-                <select
-                  id="programar-grupo"
-                  className="select"
-                  value={nuevoGrupo}
-                  onChange={(e) => setNuevoGrupo(e.target.value)}
-                >
-                  {[
-                    ...new Set(
-                      tutorados
-                        .map((a) => a.grupo)
-                        .filter((grupo): grupo is string => Boolean(grupo)),
-                    ),
-                  ].map((grupo) => (
-                    <option key={grupo} value={grupo}>
-                      {grupo}
-                    </option>
-                  ))}
-                </select>
-                <span className="field__hint">
-                  {convocados.length} estudiantes de tus asignaciones activas recibirán la sesión en
-                  su calendario.
-                </span>
-              </label>
-            )}
-
-            {cruceProgramacion ? (
-              <Alert tone="alerta" title="Posible cruce con el horario académico">
-                El bloque coincide con <strong>{cruceProgramacion.titulo}</strong> (
-                {cruceProgramacion.horaInicio}–{cruceProgramacion.horaFin}). Elige otro horario para
-                asegurar la asistencia del estudiante.
-              </Alert>
-            ) : nuevoTipo === 'individual' && nuevoEstudiante !== '' && nuevaInicio < nuevaFin ? (
-              <Alert tone="ok" title="Horario sin cruces">
-                Se revisará la disponibilidad al guardar.
-              </Alert>
-            ) : null}
-
-            <div className="field">
-              <label htmlFor="programar-tema">Tema o título de la sesión</label>
-              <input
-                id="programar-tema"
-                className="input"
-                type="text"
-                value={tema}
-                onChange={(e) => setTema(e.target.value)}
-                maxLength={200}
-                aria-describedby={nuevoTipo === 'grupal' ? 'programar-tema-ayuda' : undefined}
-              />
-              {nuevoTipo === 'grupal' && (
-                <span className="field__hint" id="programar-tema-ayuda">
-                  Obligatorio para sesiones grupales.
-                </span>
-              )}
-            </div>
-            <div className="field">
-              <label htmlFor="programar-objetivo">Objetivo de la sesión</label>
-              <textarea
-                id="programar-objetivo"
-                className="textarea"
-                value={objetivo}
-                onChange={(e) => setObjetivo(e.target.value)}
-                maxLength={2000}
-              />
-            </div>
-            <dl className="meta-list">
-              <div>
-                <dt>Docente tutor</dt>
-                <dd>{nombreCompleto(docente)}</dd>
-              </div>
-              <div>
-                <dt>Semestre</dt>
-                <dd>{semestreActual}</dd>
-              </div>
-              <div>
-                <dt>Día de la semana</dt>
-                <dd>
-                  {['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'][
-                    diaDeFecha(nuevaFecha) - 1
-                  ] ?? '—'}
-                </dd>
-              </div>
-              <div>
-                <dt>Vigencia del horario</dt>
-                <dd>Semestre {semestreActual}</dd>
-              </div>
-            </dl>
           </div>
         </Sheet>
       )}

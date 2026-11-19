@@ -1,11 +1,11 @@
-import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeading } from '../../components/ui/PageHeading';
 import { FormsFilters } from '../../components/ui/FormsPanel';
 import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CircleCheck } from '../../components/ui/icons';
 import { StudentFormsPanel } from '../../components/panels/StudentFormsPanel';
-import type { FiltroFormularios } from '../../components/panels/StudentFormsPanel';
+import { filtroFormulario, filtrosFormularios } from '../../utils/filtrosFormularios';
 import { usePortal } from '../../hooks/usePortal';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
 import { semestreActual } from '../../data/catalogos';
@@ -17,16 +17,6 @@ import {
 } from '../../utils/formulariosEstudiante';
 import '../../styles/student-forms.css';
 
-const FILTROS: { id: FiltroFormularios; nombre: string }[] = [
-  { id: '', nombre: 'Todos' },
-  { id: 'pendiente', nombre: 'Pendientes' },
-  { id: 'observado', nombre: 'Por corregir' },
-  { id: 'entregado', nombre: 'Enviados' },
-];
-
-const esFiltro = (valor: string | null): valor is FiltroFormularios =>
-  FILTROS.some((f) => f.id === valor);
-
 /** Mis formularios: lo que el tutorado debe responder ahora, sin ruido. */
 export function StudentInstruments() {
   const portal = usePortal();
@@ -34,8 +24,7 @@ export function StudentInstruments() {
   const [parametros, setParametros] = useSearchParams();
   const location = useLocation();
   const navegar = useNavigate();
-  const estado = parametros.get('estado');
-  const filtro: FiltroFormularios = esFiltro(estado) ? estado : '';
+  const filtro = filtroFormulario(parametros.get('estado'));
   const aviso = (location.state as { aviso?: string } | null)?.aviso;
 
   // Enlaces anteriores («Evaluar» desde Sesiones) abren directamente la página del formulario.
@@ -63,11 +52,11 @@ export function StudentInstruments() {
     workspace.momento,
   );
   const pendientes = formularios.filter(porResponder).length;
-  const cantidad: Record<FiltroFormularios, number> = {
+  const enviados = formularios.filter((f) => f.disponibilidad === 'enviado').length;
+  const cantidad = {
     '': formularios.length,
-    pendiente: pendientes,
-    observado: formularios.filter((f) => f.disponibilidad === 'corregir').length,
-    entregado: formularios.filter((f) => f.disponibilidad === 'enviado').length,
+    pendiente: formularios.length - enviados,
+    enviado: enviados,
   };
 
   function filtrar(id: string) {
@@ -83,11 +72,9 @@ export function StudentInstruments() {
       <PageHeading
         eyebrow="Mi tutoría"
         title="Mis formularios"
-        description={`${
-          pendientes
-            ? `Tienes ${pendientes} ${pendientes === 1 ? 'formulario' : 'formularios'} por responder.`
-            : 'Estás al día con tus formularios.'
-        } Ciclo ${estudiante.ciclo ?? 'sin informar'} · ${semestreActual}.`}
+        description={
+          estudiante.ciclo ? `Ciclo ${estudiante.ciclo} · ${semestreActual}` : semestreActual
+        }
         actions={
           <span className={`sf-pill${pendientes ? '' : ' sf-pill--ok'}`}>
             {pendientes ? `${pendientes} por responder` : 'Al día'}
@@ -123,7 +110,7 @@ export function StudentInstruments() {
 
       <FormsFilters
         label="Filtrar mis formularios"
-        options={FILTROS.map((f) => ({ ...f, cantidad: cantidad[f.id] }))}
+        options={filtrosFormularios.map((f) => ({ ...f, cantidad: cantidad[f.id] }))}
         value={filtro}
         onChange={filtrar}
       />
@@ -135,6 +122,7 @@ export function StudentInstruments() {
         ciclo={estudiante.ciclo}
         filtro={filtro}
       />
+      <Outlet />
     </div>
   );
 }

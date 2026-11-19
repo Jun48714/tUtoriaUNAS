@@ -1,20 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormatoEditor } from './FormatoEditor';
 import { ApiError } from '../../../services/apiClient';
-import {
-  cargarEditorFormato,
-  guardarDefinicion,
-  publicarDefinicion,
-} from '../../../services/editorFormatos';
+import { cargarEditorFormato, publicarDefinicion } from '../../../services/editorFormatos';
 import { definicionPorCodigo } from '../../../data/formatos';
 import type { EstadoEditorFormato } from '../../../types/editorFormatos';
 import { etiquetaBreve } from '../../../data/presentacionFormatos';
 
 vi.mock('../../../services/editorFormatos', () => ({
   cargarEditorFormato: vi.fn(),
-  guardarDefinicion: vi.fn(),
   publicarDefinicion: vi.fn(),
   cargarVersionFormato: vi.fn(),
 }));
@@ -87,40 +82,34 @@ describe('editor de coordinación', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pregunta anterior' }));
     expect(document.querySelector('.fe-question-label')).toHaveTextContent('Colegio actualizado');
   });
-  it('separa guardar de publicar y conserva la edición ante un conflicto', async () => {
+  it('publica directamente y conserva la edición ante un conflicto', async () => {
     montar();
     await screen.findByLabelText('Ir a pregunta');
     fireEvent.click(screen.getByRole('tab', { name: /^Formulario$/ }));
     const titulo = await screen.findByLabelText('Título del formulario');
     fireEvent.change(titulo, { target: { value: 'Entrevista editada' } });
-    expect(screen.getByRole('button', { name: 'Publicar cambios' })).toBeDisabled();
-    vi.mocked(guardarDefinicion).mockRejectedValueOnce(
+    expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
+    vi.mocked(publicarDefinicion).mockRejectedValueOnce(
       new ApiError('El registro cambió en otro cliente.', 409),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-    await screen.findByText(/El registro cambió/);
-    expect(titulo).toHaveValue('Entrevista editada');
-    const guardado = {
-      ...inicial(),
-      version: 1,
-      borrador: { ...inicial().publicada, nombre: 'Entrevista editada' },
-    };
-    vi.mocked(guardarDefinicion).mockResolvedValueOnce(guardado);
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Publicar cambios' })).toBeEnabled(),
-    );
-    expect(publicarDefinicion).not.toHaveBeenCalled();
-    vi.mocked(publicarDefinicion).mockResolvedValueOnce({
-      ...guardado,
-      version: 2,
-      versionPublicada: 2,
-    });
     fireEvent.click(screen.getByRole('button', { name: 'Publicar cambios' }));
     expect(publicarDefinicion).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Sí, publicar' }));
+    await screen.findByText(/El registro cambió/);
+    expect(titulo).toHaveValue('Entrevista editada');
+    vi.mocked(publicarDefinicion).mockResolvedValueOnce({
+      ...inicial(),
+      publicada: { ...inicial().publicada, nombre: 'Entrevista editada' },
+      versionPublicada: 2,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publicar cambios' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, publicar' }));
     await screen.findByText('Versión 2 publicada para todos los portales.');
-    expect(publicarDefinicion).toHaveBeenCalledOnce();
+    expect(publicarDefinicion).toHaveBeenCalledTimes(2);
+    expect(publicarDefinicion).toHaveBeenLastCalledWith(
+      inicial(),
+      expect.objectContaining({ nombre: 'Entrevista editada' }),
+    );
   });
   it('protege cambios sin guardar al cerrar y permite editar nuevas preguntas', async () => {
     const cerrar = montar();

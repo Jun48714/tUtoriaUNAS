@@ -61,9 +61,6 @@ function DemoRecoveryPage() {
       {sentTo === null && (
         <div id="recovery-intro">
           <h2 className="d01__title">¿Olvidaste tu contraseña?</h2>
-          <p className="d01__sub">
-            Ingresa tu correo institucional para recibir tu enlace de acceso.
-          </p>
         </div>
       )}
 
@@ -109,7 +106,7 @@ function DemoRecoveryPage() {
           </div>
           <h3 className="recovery-success__title">¡Enlace enviado!</h3>
           <p className="recovery-success__desc">
-            Enviamos el enlace a: <strong id="sent-email-display">{sentTo}</strong>
+            Correo: <strong id="sent-email-display">{sentTo}</strong>
           </p>
           <p className="recovery-success__note">
             Válido por 15 minutos. Revisa también tu carpeta de spam.

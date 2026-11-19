@@ -31,10 +31,9 @@ export function RedactorAviso({
   const [destinatarios, setDestinatarios] = useState<string[]>(aviso?.destinatarioIds ?? []);
   const [buscarDestinatario, setBuscarDestinatario] = useState('');
   const [busquedaAbierta, setBusquedaAbierta] = useState(false);
-  const [estado, setEstado] = useState<'borrador' | 'enviado' | 'programado'>(
-    aviso?.estado === 'programado' && !copiar ? 'programado' : 'borrador',
+  const [estado, setEstado] = useState<'enviado' | 'programado'>(
+    aviso?.estado === 'programado' && !copiar ? 'programado' : 'enviado',
   );
-  const [canal, setCanal] = useState(aviso?.canal ?? 'sistema');
   const [programado, setProgramado] = useState(() =>
     aviso?.programadoPara && !copiar
       ? new Intl.DateTimeFormat('sv-SE', {
@@ -80,7 +79,7 @@ export function RedactorAviso({
               cuerpo,
               destinatarios,
               estado,
-              canal,
+              canal: 'sistema',
               plantilla: aviso?.plantilla ?? 'redaccion-libre',
               programadoPara:
                 estado === 'programado' && programado
@@ -90,13 +89,7 @@ export function RedactorAviso({
           )
         }
         alGuardar={onCerrar}
-        etiqueta={
-          estado === 'borrador'
-            ? 'Guardar borrador'
-            : estado === 'programado'
-              ? 'Programar aviso'
-              : 'Publicar aviso'
-        }
+        etiqueta={estado === 'programado' ? 'Programar aviso' : 'Publicar aviso'}
       >
         {escuelasGestion.length > 0 && !editando && (
           <EscuelaGestion
@@ -232,17 +225,8 @@ export function RedactorAviso({
         <div className="field-grid">
           <div className="field">
             <label htmlFor={`${id}-canal`}>Canal</label>
-            <select
-              id={`${id}-canal`}
-              className="select"
-              value={canal}
-              onChange={(e) => {
-                setCanal(e.target.value as typeof canal);
-                if (e.target.value === 'correo') setEstado('borrador');
-              }}
-            >
+            <select id={`${id}-canal`} className="select" value="sistema" disabled>
               <option value="sistema">Dentro del sistema</option>
-              <option value="correo">Borrador de correo</option>
             </select>
           </div>
           <div className="field">
@@ -253,13 +237,8 @@ export function RedactorAviso({
               value={estado}
               onChange={(e) => setEstado(e.target.value as typeof estado)}
             >
-              <option value="borrador">Guardar borrador</option>
-              <option value="enviado" disabled={canal !== 'sistema'}>
-                Publicar ahora
-              </option>
-              <option value="programado" disabled={canal !== 'sistema'}>
-                Programar publicación
-              </option>
+              <option value="enviado">Publicar ahora</option>
+              <option value="programado">Programar publicación</option>
             </select>
           </div>
         </div>
@@ -275,12 +254,6 @@ export function RedactorAviso({
               onChange={(e) => setProgramado(e.target.value)}
             />
           </div>
-        )}
-        {canal === 'correo' && (
-          <p className="small muted">
-            El correo institucional requiere su proveedor. Puedes conservar el borrador o publicar
-            dentro del sistema.
-          </p>
         )}
       </FormularioPersistente>
       {editando && puedeEliminar && (

@@ -67,6 +67,18 @@ const CAMPOS_ASISTENCIA = new Set([
   'grupo',
   'asistentes',
 ]);
+const CAMPOS_CONTEXTO = new Set([
+  'nombreEstudiante',
+  'codigo',
+  'ciclo',
+  'escuela',
+  'nombreTutor',
+  'telefonoTutor',
+  'semestre',
+  'grupo',
+  'fecha',
+  'turno',
+]);
 
 /** Pasos breves y revisión explícita antes de compartir respuestas. */
 export function GuidedInstrumentForm({
@@ -90,14 +102,26 @@ export function GuidedInstrumentForm({
   );
   const esEvaluacion = ['F10', 'F11'].includes(instrumento.formato);
   const entrevista = esEntrevista(instrumento.formato);
+  const [entrega, setEntrega] = useState<{ respuestas: Record<string, string> } | null>(null);
+  const asistenciaIntegrada =
+    API_MODE && instrumento.sesionId && ['F06', 'F07'].includes(instrumento.formato);
+  const seccionesVisibles =
+    !editable || entrega
+      ? contexto.secciones
+      : contexto.secciones
+          .map((seccion) => ({
+            ...seccion,
+            campos: seccion.campos.filter(
+              (campo) =>
+                !(
+                  (CAMPOS_CONTEXTO.has(campo.codigo) ||
+                    (asistenciaIntegrada && CAMPOS_ASISTENCIA.has(campo.codigo))) &&
+                  valoresIniciales[campo.codigo]?.trim()
+                ),
+            ),
+          }))
+          .filter((seccion) => seccion.campos.length > 0);
   const deReferencia = new Set([
-    'nombreEstudiante',
-    'codigo',
-    'ciclo',
-    'escuela',
-    'nombreTutor',
-    'telefonoTutor',
-    'semestre',
     'correo',
     'telefono',
     'apoderado',
@@ -111,7 +135,6 @@ export function GuidedInstrumentForm({
     'ciclosGrupal',
     'individuales',
     'grupales',
-    ...(esEvaluacion ? ['fecha', 'grupo', 'turno'] : []),
     ...(instrumento.formato === 'F12' ? ['area', 'motivo', 'detalle'] : []),
   ]);
   // La lista se fija al abrir. Un guardado no puede retirar preguntas bajo el cursor.
@@ -124,30 +147,29 @@ export function GuidedInstrumentForm({
       ),
   );
   const [mostrarRegistrados, setMostrarRegistrados] = useState(false);
-  const secciones = bloquesPresentacion(contexto);
+  const secciones = bloquesPresentacion({ ...contexto, secciones: seccionesVisibles });
   const lecturaActual = Math.min(seccionLectura, secciones.length - 1);
   const erroresActuales = erroresInstrumento(contexto, valores);
-  const [entrega, setEntrega] = useState<{ respuestas: Record<string, string> } | null>(null);
   const [consultarEntrega, setConsultarEntrega] = useState(false);
   const pasos = secciones.flatMap((s, i) =>
-    registrados.size === 0 ||
-    mostrarRegistrados ||
-    s.campos.some((c) => campoVisible(c, valores) && !registrados.has(c.codigo))
+    s.campos.some(
+      (c) => campoVisible(c, valores) && (mostrarRegistrados || !registrados.has(c.codigo)),
+    )
       ? [i]
       : [],
   );
   const [pasoElegido, setPaso] = useState(() => pasos[0] ?? secciones.length);
-  const paso = pasos.includes(pasoElegido)
-    ? pasoElegido
-    : (pasos.find((i) => i >= pasoElegido) ?? secciones.length);
+  const paso =
+    pasoElegido === -1
+      ? secciones.length
+      : pasos.includes(pasoElegido)
+        ? pasoElegido
+        : (pasos.find((i) => i >= pasoElegido) ?? secciones.length);
   const indicePaso = pasos.indexOf(paso);
-  const [mensaje, setMensaje] = useState('');
   const [fallo, setFallo] = useState('');
   const [guardando, setGuardando] = useState(false);
   const guardadoEnCurso = useRef(false);
   const versionVista = useRef(instrumento.version);
-  const [confirmacion, setConfirmacion] = useState<string | null>(null);
-  const confirmado = confirmacion === JSON.stringify(valores);
   const cabecera = useRef<HTMLHeadingElement>(null);
   const resumenError = useRef<HTMLDivElement>(null);
   const resumen = paso === secciones.length;
@@ -174,16 +196,14 @@ export function GuidedInstrumentForm({
         limpiar.push(`respuestas.${campo.codigo}__otro`);
     }
     formulario.clearErrors(limpiar);
-    setMensaje('');
     setFallo('');
-    setConfirmacion(null);
   }
   function actualizar(codigo: string, valor: string) {
     formulario.setValue(`respuestas.${codigo}`, valor, { shouldDirty: true, shouldTouch: true });
     alEditar(codigo);
   }
   function ir(destino: number) {
-    setPaso(destino);
+    setPaso(destino === secciones.length ? -1 : destino);
     requestAnimationFrame(() => {
       cabecera.current?.focus({ preventScroll: true });
       cabecera.current
@@ -191,26 +211,16 @@ export function GuidedInstrumentForm({
         ?.scrollIntoView({ block: 'start', behavior: 'instant' });
     });
   }
-  async function guardar(enviar: boolean) {
-    if (guardadoEnCurso.current) return false;
+  async function guardar() {
+    if (!onGuardar || guardadoEnCurso.current) return;
     guardadoEnCurso.current = true;
     setGuardando(true);
     setFallo('');
     try {
-      const resultado = await onGuardar?.(
-        respuestasVisibles(contexto, serializarFormulario(formulario.getValues())),
-        enviar,
-        versionVista.current,
-      );
+      const respuestas = respuestasVisibles(contexto, serializarFormulario(formulario.getValues()));
+      const resultado = await onGuardar(respuestas, true, versionVista.current);
       if (resultado) versionVista.current = resultado.version;
-      if (enviar && onGuardar)
-        setEntrega({
-          respuestas:
-            resultado?.respuestas ??
-            respuestasVisibles(contexto, serializarFormulario(formulario.getValues())),
-        });
-      setMensaje(enviar ? 'Formulario enviado.' : 'Borrador guardado');
-      return true;
+      setEntrega({ respuestas: resultado?.respuestas ?? respuestas });
     } catch (error) {
       if (error instanceof ApiError) {
         for (const [codigo, mensajes] of Object.entries(error.errors))
@@ -224,7 +234,6 @@ export function GuidedInstrumentForm({
           );
       }
       setFallo(error instanceof Error ? error.message : 'No pudimos guardar. Intenta nuevamente.');
-      return false;
     } finally {
       guardadoEnCurso.current = false;
       setGuardando(false);
@@ -245,7 +254,7 @@ export function GuidedInstrumentForm({
       requestAnimationFrame(() => resumenError.current?.focus());
       return;
     }
-    if (!onGuardar || (await guardar(false))) ir(pasos[indicePaso + 1] ?? secciones.length);
+    ir(pasos[indicePaso + 1] ?? secciones.length);
   }
   async function enviar() {
     if (!(await formulario.trigger())) {
@@ -253,11 +262,7 @@ export function GuidedInstrumentForm({
       requestAnimationFrame(() => resumenError.current?.focus());
       return;
     }
-    if (!confirmado) {
-      setFallo('Confirma que revisaste tus respuestas.');
-      return;
-    }
-    await guardar(true);
+    await guardar();
   }
   function bloque(
     seccionActual: (typeof secciones)[number],
@@ -286,22 +291,7 @@ export function GuidedInstrumentForm({
                 mostrarAyuda={!lectura || !compacto}
                 editable={
                   !lectura &&
-                  !(
-                    API_MODE &&
-                    instrumento.sesionId &&
-                    ['F06', 'F07'].includes(instrumento.formato) &&
-                    CAMPOS_ASISTENCIA.has(campo.codigo)
-                  ) &&
-                  !(
-                    [
-                      'nombreEstudiante',
-                      'codigo',
-                      'ciclo',
-                      'escuela',
-                      'nombreTutor',
-                      'semestre',
-                    ].includes(campo.codigo) && Boolean(valoresIniciales[campo.codigo])
-                  ) &&
+                  !(asistenciaIntegrada && CAMPOS_ASISTENCIA.has(campo.codigo)) &&
                   !(
                     esEvaluacion &&
                     ['grupo', 'fecha', 'turno', 'nombreTutor'].includes(campo.codigo)
@@ -313,7 +303,10 @@ export function GuidedInstrumentForm({
                 onTablaEditada={() => alEditar(campo.codigo, true)}
               />
             );
-            return !lectura && campo.tipo === 'texto-largo' && !campo.obligatorio ? (
+            return !lectura &&
+              campo.tipo === 'texto-largo' &&
+              !campo.obligatorio &&
+              !(definicion.codigo === 'F08' && campo.codigo === 'detalleMotivo') ? (
               <details
                 className="form-optional"
                 key={campo.codigo}
@@ -473,63 +466,57 @@ export function GuidedInstrumentForm({
         {resumen ? (
           <>
             <div className="form-review-list">
-              {contexto.secciones.map((s) => (
-                <details className="tutoring-review-section" key={s.titulo}>
-                  <summary>
-                    <span>{seccionBreve(s.titulo)}</span>
-                    <span
-                      className="form-review-state"
-                      aria-label={
-                        s.campos.some(
+              {seccionesVisibles
+                .filter((s) => s.campos.some((c) => campoVisible(c, valores)))
+                .map((s) => (
+                  <details className="tutoring-review-section" key={s.titulo}>
+                    <summary>
+                      <span>{seccionBreve(s.titulo)}</span>
+                      <span
+                        className="form-review-state"
+                        aria-label={
+                          s.campos.some(
+                            (c) =>
+                              erroresActuales[c.codigo] || erroresActuales[`${c.codigo}__otro`],
+                          )
+                            ? 'Por completar'
+                            : 'Completo'
+                        }
+                      >
+                        {s.campos.some(
                           (c) => erroresActuales[c.codigo] || erroresActuales[`${c.codigo}__otro`],
-                        )
-                          ? 'Por completar'
-                          : 'Completo'
-                      }
-                    >
-                      {s.campos.some(
-                        (c) => erroresActuales[c.codigo] || erroresActuales[`${c.codigo}__otro`],
-                      ) ? (
-                        <span className="form-review-pending">Pendiente</span>
-                      ) : (
-                        <Check aria-hidden="true" />
-                      )}
-                    </span>
-                    <ChevronRight className="form-review-chevron" aria-hidden="true" />
-                  </summary>
-                  {bloque(s, true)}
-                  <button
-                    type="button"
-                    className="btn btn-link"
-                    aria-label="Editar esta sección"
-                    onClick={() => {
-                      setMostrarRegistrados(true);
-                      ir(
-                        Math.max(
-                          0,
-                          secciones.findIndex((b) =>
-                            b.campos.some((c) => c.codigo === s.campos[0]?.codigo),
+                        ) ? (
+                          <span className="form-review-pending">Pendiente</span>
+                        ) : (
+                          <Check aria-hidden="true" />
+                        )}
+                      </span>
+                      <ChevronRight className="form-review-chevron" aria-hidden="true" />
+                    </summary>
+                    {bloque(s, true)}
+                    <button
+                      type="button"
+                      className="btn btn-link"
+                      aria-label="Editar esta sección"
+                      onClick={() => {
+                        setMostrarRegistrados(true);
+                        ir(
+                          Math.max(
+                            0,
+                            secciones.findIndex((b) =>
+                              b.campos.some(
+                                (c) => s.campos.includes(c) && campoVisible(c, valores),
+                              ),
+                            ),
                           ),
-                        ),
-                      );
-                    }}
-                  >
-                    Editar
-                  </button>
-                </details>
-              ))}
+                        );
+                      }}
+                    >
+                      Editar
+                    </button>
+                  </details>
+                ))}
             </div>
-            <label className="tutoring-confirm">
-              <input
-                type="checkbox"
-                aria-label="He revisado mis respuestas y deseo enviarlas."
-                checked={confirmado}
-                onChange={(event) =>
-                  setConfirmacion(event.target.checked ? JSON.stringify(valores) : null)
-                }
-              />
-              <span>Respuestas revisadas</span>
-            </label>
             {!puedeEnviar && (
               <Alert
                 tone="info"
@@ -540,8 +527,8 @@ export function GuidedInstrumentForm({
                 }
               >
                 {etapaDeFormato(definicion.codigo) === 'inicio'
-                  ? 'La entrevista inicial se completa al inicio del semestre. Puedes guardar el borrador.'
-                  : 'Puedes preparar y guardar el borrador. El envío se habilita al finalizar el semestre.'}
+                  ? 'La entrevista inicial se completa al inicio del semestre.'
+                  : 'El envío se habilita al finalizar el semestre.'}
               </Alert>
             )}
           </>
@@ -549,29 +536,14 @@ export function GuidedInstrumentForm({
           seccion && bloque(seccion, false, !mostrarRegistrados ? 'pendientes' : undefined)
         )}
         <div className="tutoring-form__actions">
-          <div className="tutoring-save-status">
-            {mensaje && <SuccessNotice>{mensaje}</SuccessNotice>}
-          </div>
           {(resumen ? pasos.length > 0 : indicePaso > 0) && (
             <button
               type="button"
               className="btn btn-falcon-default"
+              disabled={guardando}
               onClick={() => ir(resumen ? pasos.at(-1)! : pasos[indicePaso - 1]!)}
             >
               <ArrowLeft aria-hidden="true" /> Atrás
-            </button>
-          )}
-          {onGuardar && (
-            <button
-              type="button"
-              className="btn btn-falcon-default"
-              disabled={guardando}
-              aria-label="Guardar borrador"
-              onClick={() => {
-                void guardar(false);
-              }}
-            >
-              {resumen ? 'Guardar' : 'Guardar borrador'}
             </button>
           )}
           {resumen ? (
@@ -591,8 +563,7 @@ export function GuidedInstrumentForm({
               disabled={guardando}
               onClick={continuar}
             >
-              {indicePaso === pasos.length - 1 ? 'Revisar respuestas' : 'Continuar'}{' '}
-              <ArrowRight aria-hidden="true" />
+              Siguiente <ArrowRight aria-hidden="true" />
             </button>
           )}
         </div>

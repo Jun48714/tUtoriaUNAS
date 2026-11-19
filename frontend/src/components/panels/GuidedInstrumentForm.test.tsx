@@ -9,12 +9,15 @@ import { GuidedInstrumentForm } from './GuidedInstrumentForm';
 import { bloquesPresentacion } from '../../data/presentacionFormatos';
 
 function irPregunta(formato: Instrumento['formato'], codigo: string) {
-  const indice = bloquesPresentacion(definicionPorCodigo(formato)!).findIndex((s) =>
+  const bloque = bloquesPresentacion(definicionPorCodigo(formato)!).find((s) =>
     s.campos.some((c) => c.codigo === codigo),
+  )!;
+  const selector = screen.getByLabelText<HTMLSelectElement>('Sección del formulario');
+  const opcion = Array.from(selector.options).find((o) =>
+    bloque.campos.some((campo) => campo.codigo === o.dataset.questionCode),
   );
-  fireEvent.change(screen.getByLabelText('Sección del formulario'), {
-    target: { value: String(indice) },
-  });
+  expect(opcion).toBeDefined();
+  fireEvent.change(selector, { target: { value: opcion!.value } });
 }
 
 vi.mock('../../hooks/usePortal', () => ({ usePortal: () => ({ sesiones: [], instrumentos: [] }) }));
@@ -91,7 +94,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
       within(titulo.closest('details')!).getByRole('button', { name: 'Editar esta sección' }),
     );
   }
-  it('conserva la precarga sin mostrar el bloque de datos disponibles y permite editar desde la revisión', async () => {
+  it('conserva la precarga sin mostrar el bloque de datos disponibles y permite editar desde la revisión', () => {
     const guardar = vi.fn();
     const instrumento = {
       ...registro('F04'),
@@ -111,12 +114,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
     expect(screen.queryByText(/Datos ya disponibles/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Colegio de procedencia/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Nombre del estudiante/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-    await waitFor(() => expect(guardar).toHaveBeenCalled());
-    expect(guardar.mock.lastCall![0]).toMatchObject({
-      colegio: 'I.E. ficticia',
-      apoderado: 'Contacto ficticio',
-    });
+    expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
     editarSeccion(1);
     expect(screen.getByLabelText(/Colegio de procedencia/)).toHaveValue('I.E. ficticia');
   });
@@ -143,15 +141,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
       fireEvent.click(screen.getByRole('button', { name: /Quitar registro 2/ }));
       expect(container.querySelectorAll('.tutoring-edit-row')).toHaveLength(2);
       expect(container.querySelectorAll('.tutoring-edit-row')[1]).toBe(ultima);
-      fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-      const respuestas = guardar.mock.lastCall![0] as Record<string, string>;
-      const guardadas = JSON.parse(respuestas.asistentes!) as Record<string, string>[];
-      expect(guardadas.map((f) => f.estudianteId)).toEqual([
-        participantes[0]!.estudianteId,
-        participantes[2]!.estudianteId,
-      ]);
-      expect(guardadas[1]![formato === 'F07' ? 'ciclo' : 'grupo']).toBe('7');
-      expect(guardadas.every((f) => !('id' in f))).toBe(true);
+      expect(campo).toHaveValue(campo.type === 'number' ? 7 : '7');
       rerender(
         <GuidedInstrumentForm
           definicion={definicionPorCodigo(formato)!}
@@ -177,7 +167,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
     },
   );
 
-  it('el borrador acepta incompletos; avanzar exige los campos del paso y muestra mensajes accesibles', async () => {
+  it('valida y avanza sin esperar una escritura en el servidor', async () => {
     const guardar = vi.fn();
     render(
       <GuidedInstrumentForm
@@ -189,27 +179,72 @@ describe('formulario guiado con RHF y resolver Zod', () => {
       />,
     );
     irPregunta('F07', 'horaInicio');
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-    expect(guardar).toHaveBeenCalledWith(expect.any(Object), false, registro().version);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
-    guardar.mockClear();
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Revisa las respuestas señaladas'),
     );
     expect(guardar).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/^Hora de inicio/)).toHaveAttribute('aria-invalid', 'true');
     fireEvent.change(screen.getByLabelText(/^Hora de inicio/), { target: { value: '10:00' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     await screen.findByLabelText(/^Hora de fin/);
-    expect(guardar).toHaveBeenCalledWith(
-      expect.objectContaining({ horaInicio: '10:00' }),
-      false,
-      registro().version,
+    expect(guardar).not.toHaveBeenCalled();
+  });
+
+  it('muestra el detalle de F08 junto a la categoría, sin abrir un desplegable', () => {
+    render(
+      <GuidedInstrumentForm
+        definicion={definicionPorCodigo('F08')!}
+        instrumento={{ ...registro('F08'), estudianteId: 'EST-2023010456', respuestas: {} }}
+        editable
+      />,
+    );
+    irPregunta('F08', 'detalleMotivo');
+    expect(screen.getByRole('radio', { name: 'Estudiantes becados' })).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Detalle de la atención' })).toBeVisible();
+  });
+
+  it('omite identidad, grupo y fecha del recorrido y la revisión, pero los envía', async () => {
+    const guardar = vi.fn();
+    render(
+      <GuidedInstrumentForm
+        definicion={definicionPorCodigo('F08')!}
+        instrumento={{
+          ...registro('F08'),
+          estudianteId: 'EST-2023010456',
+          respuestas: { fecha: '2026-10-10', grupo: 'Grupo ficticio de prueba' },
+        }}
+        editable
+        onGuardar={guardar}
+      />,
+    );
+    const selector = screen.getByLabelText<HTMLSelectElement>('Sección del formulario');
+    const codigos = Array.from(selector.options).map((opcion) => opcion.dataset.questionCode);
+    for (const codigo of ['nombreEstudiante', 'grupo', 'fecha'])
+      expect(codigos).not.toContain(codigo);
+    fireEvent.click(screen.getByRole('radio', { name: 'Estudiantes becados' }));
+    irPregunta('F08', 'resultado');
+    fireEvent.click(screen.getByRole('radio', { name: 'Resuelto' }));
+    fireEvent.change(selector, {
+      target: { value: selector.options[selector.options.length - 1]!.value },
+    });
+    expect(screen.queryByText('Grupo ficticio de prueba')).not.toBeInTheDocument();
+    expect(screen.queryByText('Estudiante atendido')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar formulario' }));
+    await waitFor(() =>
+      expect(guardar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fecha: '2026-10-10',
+          grupo: 'Grupo ficticio de prueba',
+          nombreEstudiante: expect.any(String),
+        }),
+        true,
+        1,
+      ),
     );
   });
 
-  it('al cambiar a una respuesta que oculta el seguimiento no guarda el texto oculto', async () => {
+  it('al cambiar la respuesta oculta el seguimiento sin guardar', () => {
     const guardar = vi.fn();
     const instrumento = {
       ...registro('F04'),
@@ -229,8 +264,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
     expect(screen.getByLabelText('¿Qué te faltó recibir? *')).toHaveValue('Texto anterior');
     fireEvent.click(screen.getByRole('radio', { name: 'Sí' }));
     expect(screen.queryByLabelText('¿Qué te faltó recibir? *')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-    expect(guardar.mock.lastCall![0]).not.toHaveProperty('motivoExpectativas');
+    expect(guardar).not.toHaveBeenCalled();
   });
 
   it('retira del resumen el error de una pregunta que deja de corresponder', async () => {
@@ -249,7 +283,7 @@ describe('formulario guiado con RHF y resolver Zod', () => {
       />,
     );
     editarSeccion(2);
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /Qué te faltó recibir/ })).toBeVisible(),
     );
@@ -278,7 +312,7 @@ describe('confirmación de entrega y feedback de respuesta', () => {
     fireEvent.change(selector, {
       target: { value: selector.options[selector.options.length - 1]!.value },
     });
-    fireEvent.click(screen.getByRole('checkbox', { name: /He revisado/ }));
+    expect(screen.queryByRole('checkbox', { name: /He revisado/ })).not.toBeInTheDocument();
   }
   it('espera el servidor, impide doble envío y mantiene el cierre aunque el padre actualice a enviado', async () => {
     let resolver!: (value: Instrumento) => void;
@@ -339,7 +373,6 @@ describe('confirmación de entrega y feedback de respuesta', () => {
         expect(screen.getByRole('alert')).toHaveTextContent('No se pudo confirmar.'),
       );
       expect(container.querySelector('.form-completion')).not.toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: /He revisado/ })).toBeChecked();
       expect(screen.getByRole('button', { name: 'Enviar formulario' })).toBeEnabled();
     },
   );
@@ -398,7 +431,7 @@ it('espera el detalle de Otro y el blur de los textos antes de confirmar la resp
   expect(within(expectativas).getByText('Respondida')).toBeVisible();
 });
 
-it('las caritas guardan el valor oficial negativo A–D y no una puntuación nueva', async () => {
+it('las caritas conservan el valor oficial negativo A–D durante la navegación', () => {
   const guardar = vi.fn();
   const { container } = render(
     <GuidedInstrumentForm
@@ -413,7 +446,8 @@ it('las caritas guardan el valor oficial negativo A–D y no una puntuación nue
   expect(pregunta.querySelectorAll('.form-choice-face')).toHaveLength(4);
   fireEvent.click(within(pregunta).getByRole('radio', { name: 'Totalmente en desacuerdo' }));
   expect(within(pregunta).getByText('Respondida')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
-  await waitFor(() => expect(guardar).toHaveBeenCalled());
-  expect(guardar.mock.lastCall![0].p01).toBe('D · Totalmente en desacuerdo');
+  irPregunta('F10', 'p02');
+  irPregunta('F10', 'p01');
+  expect(screen.getByRole('radio', { name: 'Totalmente en desacuerdo' })).toBeChecked();
+  expect(guardar).not.toHaveBeenCalled();
 });

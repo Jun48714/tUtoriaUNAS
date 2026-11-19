@@ -483,7 +483,6 @@ export function CoordAssignments() {
       <PageHeading
         eyebrow={`Coordinación de tutoría · ${portal.institucional ? 'Todas las escuelas' : escuelaDe(portal.escuelaId)}`}
         title="Asignar tutores"
-        description="Organiza las asignaciones y la cobertura del semestre."
         actions={
           <>
             <button type="button" className="btn btn-falcon-default" onClick={exportarAsignaciones}>
@@ -704,10 +703,7 @@ export function CoordAssignments() {
 
       {cambios.length > 0 && (
         <Card>
-          <CardHead
-            title="Cambios de tutor realizados"
-            description="Cada cambio conserva el tutor anterior, el nuevo, el motivo y el responsable."
-          />
+          <CardHead title="Cambios de tutor realizados" />
           <CardBody flush>
             <ul className="list">
               {cambios.map((cambio) => {

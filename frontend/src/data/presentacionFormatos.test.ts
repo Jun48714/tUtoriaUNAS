@@ -16,7 +16,10 @@ describe('presentación separada de los anexos', () => {
       const bloques = bloquesPresentacion(d);
       expect(bloques.flatMap((b) => b.campos)).toEqual(d.secciones.flatMap((s) => s.campos));
       for (const b of bloques) {
-        expect(b.campos.filter((c) => !c.visibleSi).length).toBeLessThanOrEqual(1);
+        const principales = b.campos.filter((c) => !c.visibleSi).map((c) => c.codigo);
+        if (d.codigo === 'F08' && principales.includes('detalleMotivo'))
+          expect(principales).toEqual(['motivo', 'detalleMotivo']);
+        else expect(principales.length).toBeLessThanOrEqual(1);
         for (const c of b.campos) {
           etiquetaBreve(d.codigo, c);
           for (const o of c.opciones ?? []) opcionBreve(d.codigo, c.codigo, o);

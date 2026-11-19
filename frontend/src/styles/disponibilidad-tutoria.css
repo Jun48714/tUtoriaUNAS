@@ -1,0 +1,270 @@
+dialog.sheet.programacion-tutoria {
+  --programacion-margen: clamp(12px, 2.4vw, 24px);
+  width: min(1000px, calc(100vw - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+}
+
+.programacion-tutoria .sheet__head,
+.programacion-tutoria .sheet__foot {
+  align-items: center;
+  padding: 12px var(--programacion-margen);
+}
+.programacion-tutoria .sheet__head h2 {
+  font-size: 1.2rem;
+}
+.programacion-tutoria .sheet__body {
+  padding: 16px var(--programacion-margen);
+}
+.programacion-tutoria__contenido,
+.programacion-tutoria__datos,
+.programacion-tutoria__detalle {
+  display: grid;
+  gap: 12px;
+}
+.programacion-tutoria__contenido > *,
+.programacion-tutoria .input,
+.programacion-tutoria .select,
+.programacion-tutoria .textarea {
+  min-width: 0;
+}
+.programacion-tutoria__tipo,
+.programacion-tutoria__horas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.programacion-tutoria__fecha {
+  grid-column: 1 / -1;
+}
+.programacion-tutoria__datos {
+  align-content: start;
+}
+.programacion-tutoria__detalle {
+  border-top: 1px solid var(--ink-200);
+  padding-top: 12px;
+}
+.programacion-tutoria__detalle .textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.programacion-tutoria :is(.field, .searchable-select) {
+  gap: 6px;
+}
+.programacion-tutoria :is(.field > label, .searchable-select > label, .field__label) {
+  margin: 0;
+  color: var(--ink-800);
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.programacion-tutoria__horas .input {
+  padding-inline: 8px;
+  font-size: 0.875rem;
+}
+.programacion-tutoria__estado {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1 1 240px;
+  margin: 0;
+  color: var(--warn);
+  font-size: var(--text-ui-small);
+  overflow-wrap: anywhere;
+}
+.programacion-tutoria__estado[role='alert'] {
+  color: var(--danger);
+}
+.programacion-tutoria__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 390px) {
+  .programacion-tutoria__horas {
+    grid-template-columns: minmax(0, 1.45fr) repeat(2, minmax(0, 1fr));
+  }
+  .programacion-tutoria__fecha {
+    grid-column: auto;
+  }
+}
+@media (min-width: 500px) {
+  .programacion-tutoria__detalle {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+@media (min-width: 810px) {
+  .programacion-tutoria__contenido {
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+    gap: 16px 20px;
+    align-items: start;
+  }
+  .programacion-tutoria__detalle {
+    grid-column: 1 / -1;
+  }
+}
+
+.disponibilidad {
+  --agenda-alto: 174px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.disponibilidad__espera {
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.disponibilidad__cabecera,
+.disponibilidad__leyenda {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 4px;
+}
+.disponibilidad__cabecera {
+  justify-content: space-between;
+}
+.disponibilidad__cabecera h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.disponibilidad__leyenda .badge {
+  padding: 2px 7px;
+  font-size: var(--text-ui-small);
+}
+.disponibilidad__indicacion {
+  margin-inline-start: auto;
+}
+.disponibilidad__grilla {
+  display: grid;
+  grid-template-columns: max-content repeat(var(--dias), minmax(0, 1fr));
+  gap: 4px;
+  padding-block-end: 5px;
+}
+.disponibilidad__dia {
+  display: grid;
+  grid-template-rows: 36px var(--agenda-alto);
+  gap: 3px;
+  min-width: 0;
+}
+.disponibilidad__fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-800);
+  font-size: 0.7rem;
+  line-height: 1.15;
+  cursor: pointer;
+}
+.disponibilidad__fecha[aria-pressed='true'] {
+  border-color: var(--green-300);
+  background: var(--green-50);
+}
+.disponibilidad__fecha small {
+  color: var(--ink-600);
+}
+.disponibilidad__fecha small[data-estado='Cruce'] {
+  color: var(--danger);
+}
+.disponibilidad__fecha small[data-estado='Libre'] {
+  color: var(--green-800);
+}
+.disponibilidad__horas {
+  position: relative;
+  align-self: end;
+  height: var(--agenda-alto);
+  min-width: 2.3rem;
+  font: 0.65rem var(--font-mono, monospace);
+  color: var(--ink-600);
+}
+.disponibilidad__horas span {
+  position: absolute;
+  transform: translateY(-50%);
+}
+.disponibilidad__pista {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ok-bg);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.disponibilidad__pista:disabled,
+.disponibilidad__pista[data-bloqueado='true'] {
+  cursor: not-allowed;
+}
+.disponibilidad__pista:focus-visible {
+  outline: 2px solid var(--green-700);
+  outline-offset: 1px;
+}
+.disponibilidad__pista[data-parcial='true'] {
+  background: var(--surface);
+}
+.disponibilidad__linea,
+.disponibilidad__bloque,
+.disponibilidad__seleccion,
+.disponibilidad__preseleccion {
+  position: absolute;
+  inset-inline: 0;
+}
+.disponibilidad__linea {
+  border-top: 1px solid color-mix(in srgb, var(--line) 24%, transparent);
+}
+.disponibilidad__linea[data-marca='true'] {
+  border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+}
+.disponibilidad__bloque {
+  background: color-mix(in srgb, var(--danger) 68%, var(--danger-line));
+}
+.disponibilidad__seleccion {
+  border: 2px solid var(--green-900);
+  pointer-events: none;
+}
+.disponibilidad__seleccion[data-cruce='true'] {
+  border-color: var(--ink-900);
+}
+.disponibilidad__preseleccion {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--green-700);
+  background: color-mix(in srgb, var(--green-300) 70%, transparent);
+  color: var(--green-900);
+  font: 600 0.64rem / 1 var(--font-mono, monospace);
+  pointer-events: none;
+}
+.disponibilidad__cruces {
+  margin: 0;
+  padding-inline-start: 1.2rem;
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+.disponibilidad p {
+  margin: 0;
+}
+@media (max-width: 420px) {
+  .disponibilidad {
+    --agenda-alto: 148px;
+    padding-inline: 8px;
+  }
+  .disponibilidad__fecha {
+    font-size: 0.65rem;
+  }
+}

@@ -58,7 +58,6 @@ export function SessionOverview() {
       <PageHeading
         eyebrow={coordinacion ? 'Coordinación' : 'Estudiante · Mi tutoría'}
         title={coordinacion ? 'Sesiones de tutoría' : 'Mis sesiones de tutoría'}
-        description="Selecciona una sesión para consultar su detalle."
         actions={
           coordinacion ? (
             <CalendarFilters

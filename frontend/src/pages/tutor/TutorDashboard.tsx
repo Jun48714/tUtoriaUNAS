@@ -38,7 +38,6 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
       <PageHeading
         eyebrow="Tutoría"
         title={`Hola, ${docente.nombres.split(' ')[0]}`}
-        description="Revisa tus sesiones, tus estudiantes y las tareas pendientes."
         actions={
           <>
             {scope.filtros}
@@ -57,7 +56,6 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
         <Stat
           label="Estudiantes"
           value={new Set(tutorados.map((a) => a.estudianteId)).size}
-          note="Estudiantes a tu cargo"
           icon={<Users />}
         />
         <Stat
@@ -77,7 +75,6 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
         <Stat
           label="Solicitudes de apoyo abiertas"
           value={abiertas.length}
-          note="Requieren seguimiento"
           tone="violeta"
           icon={<Send />}
         />
@@ -99,12 +96,11 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
               label: 'Observaciones por corregir',
               description: 'Revisa y vuelve a enviar los formularios.',
               count: observados,
-              href: '/tutor/instrumentos?estado=observado',
+              href: '/tutor/instrumentos?estado=pendiente',
               urgent: true,
             },
             {
               label: 'Estudiantes con alertas',
-              description: 'Consulta su situación y próximos pasos.',
               count: alertas,
               href: '/tutor/tutorados',
               urgent: true,

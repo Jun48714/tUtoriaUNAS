@@ -39,10 +39,10 @@ public static class JsonDatos
         d.Estado, d.Avance, d.Version, Fecha(d.Creado), Fecha(d.Actualizado), d.Enviado is { } fecha ? Fecha(fecha) : null,
         d.RevisadoPor, Elemento(d.ObservacionesJson), false, Leer<Dictionary<string, string>>(d.RespuestasJson), d.EscuelaId,
         d.DefinicionJson is null ? null : Elemento(d.DefinicionJson));
-    public static SesionDto Dto(SesionEntity s, string? soloEstudiante = null) => new(s.Id, "TUT-" + s.Id, s.Tipo, s.TutorId, s.SemestreId,
+    public static SesionDto Dto(SesionEntity s, string? soloEstudiante = null, bool incluirEvidencia = false) => new(s.Id, "TUT-" + s.Id, s.Tipo, s.TutorId, s.SemestreId,
         s.Fecha, s.HoraInicio, s.HoraFin, s.Modalidad, s.Lugar, s.Tema, s.Objetivo, s.Estado,
         s.Asistentes.Where(a => soloEstudiante is null || a.EstudianteId == soloEstudiante).Select(a => new AsistenteDto(a.EstudianteId, a.Estado, a.HoraRegistro, a.Observacion)).ToArray(),
-        Elemento(s.AcuerdosJson), s.InstrumentoId, null, s.AsistenciaConfirmada, s.Version, s.Asistentes.Count, s.Asistentes.Count(a => a.Estado is "asistio" or "tarde"), s.EscuelaId);
+        Elemento(s.AcuerdosJson), s.InstrumentoId, null, s.AsistenciaConfirmada, s.Version, s.Asistentes.Count, s.Asistentes.Count(a => a.Estado is "asistio" or "tarde"), s.EscuelaId, incluirEvidencia ? s.EvidenciaNombre : null);
 }
 public sealed class TutoriaContext(TutoriaDbContext db, IHttpContextAccessor accessor, TimeProvider clock)
 {

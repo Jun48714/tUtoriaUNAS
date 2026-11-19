@@ -11,6 +11,21 @@ export function sesionFinalizo(sesion: Sesion, ahora = Date.now()): boolean {
   return Date.parse(`${sesion.fecha}T${sesion.horaFin}:00-05:00`) <= ahora;
 }
 
+export const admiteRegistroAsistencia = (sesion: Sesion) =>
+  ['programada', 'realizada'].includes(sesion.estado) && sesionFinalizo(sesion);
+
+export function enlaceVirtualSesion(sesion: Pick<Sesion, 'lugar' | 'modalidad'>) {
+  if (sesion.modalidad === 'presencial') return null;
+  try {
+    const enlace = new URL(sesion.lugar.trim());
+    return ['http:', 'https:'].includes(enlace.protocol) && !enlace.username && !enlace.password
+      ? enlace.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function bloqueoEvaluacion(
   sesion: Sesion | undefined,
   estudianteId: string,

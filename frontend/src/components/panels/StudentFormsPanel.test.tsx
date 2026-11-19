@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { StudentFormsPanel } from './StudentFormsPanel';
-import type { FiltroFormularios } from './StudentFormsPanel';
+import type { FiltroFormularios } from '../../utils/filtrosFormularios';
 import type { Instrumento, Sesion } from '../../types/domain';
 import type { FormularioEstudiante } from '../../utils/formulariosEstudiante';
 
@@ -130,27 +130,23 @@ describe('Mis formularios del tutorado', () => {
     );
   });
 
-  it('«Pendientes» muestra solo lo que se puede responder ahora', () => {
+  it('«Pendientes» agrupa formularios por responder y por habilitar', () => {
     panel('pendiente');
     expect(screen.getByRole('link', { name: /Entrevista inicial/ })).toBeInTheDocument();
-    expect(screen.queryByText('Se habilitan más adelante')).not.toBeInTheDocument();
+    expect(screen.getByText('Se habilitan más adelante')).toBeInTheDocument();
     expect(screen.queryByText('Enviados')).not.toBeInTheDocument();
   });
 
-  it('«Por corregir» y «Enviados» tienen su propio estado vacío', () => {
-    panel('observado');
-    expect(screen.getByText('Nada por corregir')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Entrevista inicial/ })).not.toBeInTheDocument();
-
+  it('«Enviados» tiene su propio estado vacío', () => {
     panel(
-      'entregado',
+      'enviado',
       formularios.filter((f) => f.disponibilidad !== 'enviado'),
     );
     expect(screen.getByText('Aún no envías formularios')).toBeInTheDocument();
   });
 
   it('una entrevista observada se presenta para corregir con el pedido del tutor', () => {
-    panel('observado', [
+    panel('pendiente', [
       {
         registro: instrumento({
           id: 'ENT',

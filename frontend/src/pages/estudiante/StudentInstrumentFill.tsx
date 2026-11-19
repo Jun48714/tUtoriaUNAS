@@ -4,7 +4,7 @@ import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageLoading } from '../../components/ui/PageLoading';
 import { StatusBadge } from '../../components/ui/StatusBadge';
-import { ArrowLeft } from '../../components/ui/icons';
+import { Sheet } from '../../components/ui/Sheet';
 import { useAuth } from '../../hooks/useAuth';
 import { usePortal } from '../../hooks/usePortal';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
@@ -12,26 +12,18 @@ import { API_MODE } from '../../services/apiConfig';
 import { snapshotApi } from '../../services/apiTutoria';
 import { persistirFormulario } from '../../services/mutacionesTutoria';
 import { definicionPorCodigo } from '../../data/formatos';
-import { formatFecha } from '../../utils/fechas';
 import { bloqueoEvaluacion, esEvaluacionSesion } from '../../utils/evaluacionesSesion';
 import { clasificarFormulario } from '../../utils/formulariosEstudiante';
 import '../../styles/student-forms.css';
 
-function Volver() {
-  return (
-    <Link className="sf-volver" to="/estudiante/instrumentos">
-      <ArrowLeft aria-hidden="true" /> Mis formularios
-    </Link>
-  );
-}
-
-/** Responder (o consultar) un formulario en su propia página, sin ventanas superpuestas. */
+/** El enlace directo abre el formulario sobre la bandeja del estudiante. */
 export function StudentInstrumentFill() {
   const { instrumentoId = '' } = useParams();
   const { user } = useAuth();
   const portal = usePortal();
   const workspace = useInstrumentWorkspace();
   const navegar = useNavigate();
+  const cerrar = () => navegar('/estudiante/instrumentos', { replace: true });
   const registro = portal.instrumentos.find((r) => r.id === instrumentoId);
   const definicion = registro
     ? (registro.definicion ?? definicionPorCodigo(registro.formato))
@@ -41,8 +33,7 @@ export function StudentInstrumentFill() {
     // En modo API los formularios llegan después del primer pintado.
     if (API_MODE && !snapshotApi().datos && !workspace.aviso) return <PageLoading />;
     return (
-      <div className="sf-pagina sf-llenado">
-        <Volver />
+      <Sheet title="Formulario no disponible" className="sheet--instrumento" onClose={cerrar}>
         <EmptyState
           title="No encontramos este formulario"
           description="Puede que ya no esté disponible para tu cuenta. Revisa tus formularios vigentes."
@@ -52,7 +43,7 @@ export function StudentInstrumentFill() {
             </Link>
           }
         />
-      </div>
+      </Sheet>
     );
   }
 
@@ -78,9 +69,7 @@ export function StudentInstrumentFill() {
         ? 'Entrevista de cierre'
         : 'Entrevista de ingreso';
   const contexto = evaluacion
-    ? sesion
-      ? `${sesion.tema} · ${formatFecha(sesion.fecha)} · ${sesion.horaInicio}–${sesion.horaFin}`
-      : 'Sesión no disponible'
+    ? (sesion?.tema ?? 'Sesión no disponible')
     : `Formato ${definicion.numero} · ${registro.semestreId}`;
 
   const guardar = async (respuestas: Record<string, string>, enviar: boolean, version?: number) => {
@@ -89,15 +78,15 @@ export function StudentInstrumentFill() {
   };
 
   return (
-    <div className="sf-pagina sf-llenado">
-      <Volver />
-      <header className="sf-cabecera">
-        <div className="sf-cabecera__texto">
-          <h1>{(definicion.revision ?? 1) > 1 ? definicion.nombre : titulo}</h1>
-          <p className="sf-cabecera__contexto">{contexto}</p>
-        </div>
+    <Sheet
+      title={(definicion.revision ?? 1) > 1 ? definicion.nombre : titulo}
+      description={contexto}
+      className="sheet--instrumento sf-llenado"
+      onClose={cerrar}
+    >
+      <div className="ui-row">
         <StatusBadge estado={registro.estado} contexto="formulario" />
-      </header>
+      </div>
 
       {observaciones.length > 0 && (
         <Alert tone="alerta" title="Tu tutor pidió estos cambios">
@@ -114,18 +103,16 @@ export function StudentInstrumentFill() {
         </Alert>
       )}
 
-      <div className="sf-hoja">
-        <GuidedInstrumentForm
-          key={registro.id}
-          definicion={definicion}
-          instrumento={registro}
-          editable={editable}
-          puedeEnviar={editable}
-          mostrarFormato={false}
-          onFinalizar={() => navegar('/estudiante/instrumentos', { replace: true })}
-          onGuardar={editable ? guardar : undefined}
-        />
-      </div>
-    </div>
+      <GuidedInstrumentForm
+        key={registro.id}
+        definicion={definicion}
+        instrumento={registro}
+        editable={editable}
+        puedeEnviar={editable}
+        mostrarFormato={false}
+        onFinalizar={cerrar}
+        onGuardar={editable ? guardar : undefined}
+      />
+    </Sheet>
   );
 }

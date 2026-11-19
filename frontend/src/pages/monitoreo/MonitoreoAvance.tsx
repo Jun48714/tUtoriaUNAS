@@ -387,10 +387,7 @@ export function MonitoreoAvance() {
               />
             </MetricGroup>
             <Card>
-              <CardHead
-                title="Avance de la tutoría"
-                description="Estado de cada estudiante y de cada docente en el semestre. Solo lectura."
-              />
+              <CardHead title="Avance de la tutoría" />
               <CardBody>
                 <div className="stack">
                   <DirectoryViews

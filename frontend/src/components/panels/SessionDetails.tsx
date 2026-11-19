@@ -3,9 +3,11 @@ import { nombreTutor } from '../../data/tutoria';
 import { cantidadAsistentes } from '../../services/sessionAttendance';
 import { formatFecha } from '../../utils/fechas';
 import type { Sesion } from '../../types/domain';
+import { enlaceVirtualSesion } from '../../utils/evaluacionesSesion';
 
 /** Detalle común del calendario, sin registros individuales de asistencia. */
 export function SessionDetails({ sesion }: { sesion: Sesion }) {
+  const enlace = enlaceVirtualSesion(sesion);
   return (
     <div className="stack">
       <div className="ui-row ui-row--wrap ui-row--tight">
@@ -25,8 +27,16 @@ export function SessionDetails({ sesion }: { sesion: Sesion }) {
           <dd>{nombreTutor(sesion.tutorId)}</dd>
         </div>
         <div>
-          <dt>Lugar</dt>
-          <dd>{sesion.lugar}</dd>
+          <dt>{enlace ? 'Enlace virtual' : 'Lugar'}</dt>
+          <dd>
+            {enlace ? (
+              <a href={enlace} target="_blank" rel="noopener noreferrer">
+                Unirse a la sesión
+              </a>
+            ) : (
+              sesion.lugar
+            )}
+          </dd>
         </div>
         <div>
           <dt>{sesion.estado === 'realizada' ? 'Asistentes' : 'Convocados'}</dt>

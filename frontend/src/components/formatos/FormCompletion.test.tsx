@@ -54,7 +54,7 @@ describe('cierres editoriales de los doce formatos', () => {
   it.each([
     ['Se resuelve con la asesoría', 'resuelto', 'Se registró que la atención se resolvió'],
     ['Se programa nueva cita para seguimiento', 'seguimiento', 'La nueva cita de seguimiento'],
-    ['Se deriva a:', 'derivar', 'Se preparó el borrador del formato 12'],
+    ['Se deriva a:', 'derivar', 'Se preparó el formato 12'],
   ])('F08 refleja %s sin afirmar otro resultado', (resultado, ruta, texto) => {
     const { container } = render(
       <FormCompletion formato="F08" respuestas={{ resultado: String(resultado) }} />,

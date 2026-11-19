@@ -474,7 +474,6 @@
   outline-offset: 3px;
 }
 .tutoring-option input,
-.tutoring-confirm input,
 .tutoring-roster input {
   width: 18px;
   height: 18px;
@@ -608,14 +607,6 @@
     grid-template-columns: 1fr;
     gap: 3px;
   }
-}
-.tutoring-confirm {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: var(--text-ui-body);
-  min-height: 44px;
-  cursor: pointer;
 }
 .tutoring-errors {
   border: 1px solid #b42318;

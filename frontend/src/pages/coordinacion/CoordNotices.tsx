@@ -178,7 +178,7 @@ export function CoordNotices() {
                     .split(',')
                     .map((s) => s.trim()),
                   canal: 'sistema',
-                  estado: 'borrador',
+                  estado: 'enviado',
                   enviado: new Date().toISOString(),
                   plantilla: 'redaccion-libre',
                   relacionadoCon: null,
@@ -188,7 +188,7 @@ export function CoordNotices() {
               setRedactar(false);
             }}
           >
-            <p className="compact-note">Borrador de demostración en esta vista.</p>
+            <p className="compact-note">Aviso de demostración en esta vista.</p>
             <label className="field">
               Destinatarios
               <input className="input" name="destinatarios" required />
@@ -202,7 +202,7 @@ export function CoordNotices() {
               <textarea className="textarea" name="cuerpo" required />
             </label>
             <button className="btn btn-primary" type="submit">
-              Guardar borrador
+              Publicar aviso
             </button>
           </form>
         </Sheet>

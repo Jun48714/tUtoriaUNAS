@@ -5,6 +5,20 @@
   scroll-margin-top: 90px;
   overflow-anchor: none;
 }
+.sheet--instrumento .sheet__body:has(> .tutoring-form) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sheet--instrumento .sheet__body > .tutoring-form:not(.tutoring-form--read) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  scroll-margin-top: 0;
+}
+.sheet--instrumento .sheet__body > .tutoring-form > .tutoring-form__actions {
+  margin-top: auto;
+}
 .tutoring-form__toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 130px;
@@ -206,11 +220,6 @@
   margin: 0;
   font-size: 0.72rem;
 }
-.tutoring-form--review .tutoring-confirm {
-  min-height: 44px;
-  font-size: 0.75rem;
-  margin: 0;
-}
 .tutoring-form--review .tutoring-form__actions {
   margin-top: 0;
   gap: 8px;
@@ -240,15 +249,6 @@
   min-width: 44px;
   min-height: 44px;
   padding: 8px;
-}
-.tutoring-save-status {
-  position: absolute;
-  bottom: -22px;
-  left: 0;
-  line-height: 18px;
-}
-.tutoring-save-status .success-notice {
-  font-size: 0.68rem;
 }
 .tutoring-field[data-reduced-motion='true'] .tutoring-option {
   transition: none;

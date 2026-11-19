@@ -14,11 +14,15 @@ public sealed record InstrumentoDto(string Id, string Formato, string SemestreId
 public sealed record SesionDto(string Id, string Codigo, string Tipo, string TutorId, string SemestreId,
     string Fecha, string HoraInicio, string HoraFin, string Modalidad, string Lugar, string Tema, string Objetivo,
     string Estado, AsistenteDto[] Asistentes, JsonElement Acuerdos, string? InstrumentoId, string? Observacion,
-    bool AsistenciaConfirmada, int Version, int TotalConvocados, int TotalAsistentes, string? EscuelaId = null);
+    bool AsistenciaConfirmada, int Version, int TotalConvocados, int TotalAsistentes, string? EscuelaId = null, string? EvidenciaNombre = null);
 public sealed record AsistenteDto(string EstudianteId, string Estado, string? HoraRegistro, string? Observacion);
 public sealed record ProgramarSesionDto(string Tipo, string Fecha, string HoraInicio, string HoraFin, string Modalidad,
     string Lugar, string Tema, string Objetivo, string[] Estudiantes);
-public sealed record RegistrarAsistenciaDto(int Version, AsistenteDto[] Asistentes, string Mensaje = "", string TipoTutoria = "Académica");
+public sealed record ConsultarDisponibilidadDto(string Fecha, string[] Estudiantes);
+public sealed record BloqueOcupadoDto(string Fecha, string HoraInicio, string HoraFin, string Origen);
+public sealed record DisponibilidadTutoriaDto(string Lunes, int SinHorario, BloqueOcupadoDto[] Bloques);
+public sealed record EvidenciaAsistenciaDto(string Nombre, string Tipo, byte[] Contenido);
+public sealed record RegistrarAsistenciaDto(int Version, AsistenteDto[] Asistentes, string Mensaje = "", string TipoTutoria = "Académica", EvidenciaAsistenciaDto? Evidencia = null);
 public sealed record CrearInstrumentoDto(string Formato, string? EstudianteId, string[]? Participantes = null);
 public sealed record GuardarInstrumentoDto(int Version, Dictionary<string, string> Respuestas, bool Enviar, int? VersionFormato = null);
 public sealed record RevisarInstrumentoDto(int Version, string Decision, string Comentario);

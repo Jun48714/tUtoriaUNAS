@@ -5,9 +5,15 @@ import type { Instrumento, Sesion } from '../types/domain';
 import type { DemoUser } from '../types/auth';
 import { asignaciones, sesiones } from '../data/tutoria';
 import { semestreActual } from '../data/catalogos';
-import { hayCruce } from '../data/academico';
+import {
+  crucesDeBloque,
+  disponibilidadDemo,
+  lunesDeSemana,
+  origenOcupacion,
+} from './disponibilidadTutoria';
 import { sesionesDesdeInstrumentos } from '../utils/seguimientoInstrumentos';
 import { aplicarRegistro, ATTENDANCE_KEY, leerRegistros } from './sessionAttendance';
+import { enlaceVirtualSesion } from '../utils/evaluacionesSesion';
 
 export const SESSIONS_KEY = 'unas:scheduled-sessions:v1';
 export const SESSIONS_EVENT = 'unas:scheduled-sessions-updated';
@@ -96,6 +102,8 @@ export function programarSesion(
       'Completa la fecha, las horas, el lugar, el tema, el objetivo y los estudiantes.',
     );
   const dato = resultado.data;
+  if (dato.modalidad === 'virtual' && !enlaceVirtualSesion(dato))
+    throw new Error('Escribe el enlace completo de la sesión virtual (https://…).');
   if (dato.horaFin <= dato.horaInicio)
     throw new Error('La hora de fin debe ser posterior al inicio.');
   const inicio = Date.parse(`${dato.fecha}T${dato.horaInicio}:00-05:00`);
@@ -127,23 +135,15 @@ export function programarSesion(
     )
   )
     throw new Error('Solo puedes convocar a estudiantes de tus asignaciones activas.');
-  const dia = new Date(`${dato.fecha}T12:00:00-05:00`).getUTCDay() || 7;
-  if (dato.estudiantes.some((id) => hayCruce(id, dia, dato.horaInicio, dato.horaFin)))
-    throw new Error(
-      'El horario coincide con una clase de los estudiantes convocados. Elige otro horario.',
-    );
-  if (
-    consultarSesiones(registros).some(
-      (s) =>
-        !['cancelada', 'reprogramada'].includes(s.estado) &&
-        s.fecha === dato.fecha &&
-        s.horaInicio < dato.horaFin &&
-        dato.horaInicio < s.horaFin &&
-        (s.tutorId === actor.id ||
-          s.asistentes.some((a) => dato.estudiantes.includes(a.estudianteId))),
-    )
-  )
-    throw new Error('El tutor o un estudiante ya tiene otra sesión en ese horario.');
+  const ocupacion = disponibilidadDemo(
+    actor.id,
+    dato.estudiantes,
+    lunesDeSemana(dato.fecha),
+    consultarSesiones(registros),
+  );
+  const [cruce] = crucesDeBloque(ocupacion, dato.fecha, dato.horaInicio, dato.horaFin);
+  if (cruce)
+    throw new Error(`El horario coincide con ${origenOcupacion[cruce.origen].toLowerCase()}.`);
   const raw = localStorage.getItem(SESSIONS_KEY);
   const anteriores = z.array(programadaSchema).safeParse(JSON.parse(raw ?? '[]'));
   if (!anteriores.success)

@@ -1,0 +1,67 @@
+PROBLEMA ACTUAL: NADIE PUEDE INICIAR SESION EN https://192.168.10.122:8443/login
+(Para la IA que trabaja en la VM. Leer tambien deploy/CONTEXTO_VM.txt. No escribas contrasenas en archivos ni en el repo.)
+
+1. SINTOMA
+- La pagina carga bien (HTTPS, proxy, frontend OK). Al iniciar sesion: POST /api/auth/login -> 401 "Datos de acceso incorrectos."
+- El usuario probo con DOC-0421 / tutoria2026 (usuario de prueba de la base local) y tambien dice que "nada reconoce".
+
+2. LO QUE YA ESTA COMPROBADO
+- Contenedores sanos (db, api, web, proxy, backup). Migraciones aplicadas.
+- Se restauro la base local en la VM: select count(*) from "Personas" = 4066 (4065 del padron + 1 persona del administrador creado por bootstrap).
+  La base local tenia: 3717 estudiantes, 348 tutores, 39 usuarios issuer "local-development", 4 cuentas issuer "portal-account" (estudiantes).
+- Se ejecuto "docker compose run --rm bootstrap" DESPUES de restaurar (si no, no hay admin). Verificar abajo.
+
+3. CAUSAS CONOCIDAS (por diseno, no son errores)
+a) Los 39 usuarios "local-development" (DOC-0421, codigos de estudiante, coordinacion.tutoria; clave tutoria2026) NO pueden entrar en produccion:
+   LocalAuthController solo los acepta si ASPNETCORE_ENVIRONMENT=Development y LocalDevelopment:Enabled=true; Program.cs ademas lanza
+   excepcion si LocalDevelopment esta activo fuera de Development. NO activarlo: expondria el sistema (con padron real) a una clave conocida.
+b) En produccion el acceso es SOLO por cuentas del portal (tabla "CredencialesCuenta" + "Usuarios" con Issuer='portal-account'),
+   con CORREO (columna CorreoNormalizado) y contrasena de 15-128 caracteres. El identificador es el correo, no el codigo.
+c) Bloqueo: 5 contrasenas erroneas bloquean la credencial 15 min (BloqueadaHasta) y devuelven el mismo 401 generico.
+   Limite por IP en /api/auth/login: 30/minuto.
+d) Cuentas con CambioObligatorio=true o Verificada=false NO entran directo: piden codigo por correo (SMTP no configurado) -> no podran activarse.
+
+4. HIPOTESIS A DESCARTAR (en este orden)
+H1. El administrador de bootstrap no existe o se borro (por ejemplo restauracion posterior).
+H2. La contrasena de TUTORIA_ADMIN_PASSWORD en ~/tutoria/.env quedo alterada por docker compose: en .env un "$" se interpola y " #" inicia comentario;
+    por eso la clave guardada en la base no es la que el usuario escribe. Solucion: poner el valor entre comillas simples, ej. TUTORIA_ADMIN_PASSWORD='mi-frase-larga' y recrear la cuenta (ver 6).
+H3. La credencial esta bloqueada por intentos fallidos.
+H4. El usuario esta usando el codigo / DOC-0421 en vez del correo, o el correo no es @unas.edu.pe.
+H5. Los cambios nuevos (comandos "cuenta" y "cuentas-prueba") no se subieron / no se reconstruyo la API (docker compose up -d --build), asi que las cuentas de prueba aun no existen.
+
+5. DIAGNOSTICO (en ~/tutoria)
+-- Estado de cuentas del portal:
+docker compose exec -T db psql -U tutoria_app -d tutoria_unas -c 'select u."Id",u."Rol",u."EscuelaId",u."Activo",u."AdminInstitucional",c."CorreoNormalizado",c."Verificada",c."CambioObligatorio",c."IntentosFallidos",c."BloqueadaHasta" from "Usuarios" u join "CredencialesCuenta" c on c."UsuarioId"=u."Id" order by u."Rol";'
+   -> Debe haber una fila rol=coordinacion, AdminInstitucional=t, Verificada=t, CambioObligatorio=f, Activo=t, correo del admin.
+-- Prueba directa de la API (sin navegador), sustituye correo y clave:
+curl -sk -X POST https://localhost:8443/api/auth/login -H 'Content-Type: application/json' -d '{"identifier":"CORREO@unas.edu.pe","password":"CLAVE"}' -w '\nHTTP %{http_code}\n'
+   200 = bien (el problema esta en como se teclea/entra en el navegador); 401 = credencial/clave; 409/403 = mensaje explicativo.
+-- Logs de la API:
+docker compose logs --tail 100 api
+-- Que la cuenta de prueba exista (tras ejecutar cuentas-prueba):
+docker compose exec -T db psql -U tutoria_app -d tutoria_unas -c 'select "Rol",count(*) from "CredencialesCuenta" group by "Rol";'
+
+6. SOLUCIONES
+S1 (bloqueo H3):
+docker compose exec -T db psql -U tutoria_app -d tutoria_unas -c 'update "CredencialesCuenta" set "IntentosFallidos"=0,"BloqueadaHasta"=null;'
+
+S2 (admin con clave mal guardada, H1/H2): borrar y recrear el admin con la clave entre comillas simples en .env.
+  docker compose exec -T db psql -U tutoria_app -d tutoria_unas -c "delete from \"CredencialesCuenta\" where \"CorreoNormalizado\"='CORREO_ADMIN'; delete from \"Usuarios\" where \"Identificador\"='CORREO_ADMIN';"
+  nano .env   # TUTORIA_ADMIN_PASSWORD='frase-de-15-o-mas-caracteres'
+  docker compose run --rm bootstrap
+  (despues quitar TUTORIA_ADMIN_PASSWORD de .env)
+
+S3 (cuentas para probar todos los roles, sin correo): comandos ya implementados en el backend (hay que subir los archivos y reconstruir):
+  Archivos: backend/TutoriaUNAS.Api/Program.cs, backend/TutoriaUNAS.Api/Data/BootstrapProduccion.cs, docker-compose.yml
+  docker compose up -d --build
+  docker compose run --rm -e CUENTA_PASSWORD='frase-de-15-o-mas' cuentas-prueba
+     -> crea cuentas verificadas (login por correo) para los 39 usuarios de prueba: estudiantes (2023010456@unas.edu.pe ...),
+        tutores (lvela@unas.edu.pe ...) y coordinacion (mparedes@unas.edu.pe). Ninguna es administrador institucional.
+  docker compose run --rm -e CUENTA_ROL=tutor -e CUENTA_CORREO=x@unas.edu.pe -e CUENTA_PASSWORD='...' cuenta
+     -> cuenta individual verificada para una persona del padron (busca la ficha por correo; si hay varias pide CUENTA_PERSONA_ID;
+        si la ficha no tiene escuela pide CUENTA_ESCUELA, ej. E-IIS).
+
+7. NOTAS
+- El login se hace con CORREO + contrasena. Despues del 200, el frontend guarda el token; si /api devuelve 401 tras entrar, revisar la hora de la VM (timedatectl) y que el volumen "keys" no se haya recreado.
+- Si se pierde/recrea el volumen "keys", las sesiones abiertas se invalidan (volver a iniciar sesion), las cuentas no.
+- SMTP sigue sin configurar: es normal que "Olvidaste tu clave" y la activacion por codigo no envien correo.

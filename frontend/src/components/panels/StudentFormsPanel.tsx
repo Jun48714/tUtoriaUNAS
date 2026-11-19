@@ -11,12 +11,11 @@ import {
 import { esEvaluacionSesion } from '../../utils/evaluacionesSesion';
 import { porResponder, rutaFormulario } from '../../utils/formulariosEstudiante';
 import type { FormularioEstudiante } from '../../utils/formulariosEstudiante';
+import type { FiltroFormularios } from '../../utils/filtrosFormularios';
 import { Badge, StatusBadge } from '../ui/StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { ArrowRight, ChevronRight, CircleCheck, Clock } from '../ui/icons';
 import '../../styles/student-forms.css';
-
-export type FiltroFormularios = '' | 'pendiente' | 'observado' | 'entregado';
 
 interface Props {
   formularios: FormularioEstudiante[];
@@ -179,12 +178,10 @@ function Grupo({
   titulo,
   formularios,
   plegado = false,
-  nota,
 }: {
   titulo: string;
   formularios: FormularioEstudiante[];
   plegado?: boolean;
-  nota?: string;
 }) {
   if (!formularios.length) return null;
   const lista = (
@@ -202,7 +199,6 @@ function Grupo({
           <span className="sf-grupo__cantidad">{formularios.length}</span>
           <ChevronRight className="sf-grupo__chevron" aria-hidden="true" />
         </summary>
-        {nota && <p className="sf-grupo__nota">{nota}</p>}
         {lista}
       </details>
     );
@@ -235,72 +231,43 @@ export function StudentFormsPanel({ formularios, registros, sesiones, ciclo, fil
         )
     : 0;
 
-  const visibleEntrevista =
-    entrevista &&
-    (filtro === ''
-      ? entrevista.disponibilidad !== 'enviado'
-      : filtro === 'pendiente'
-        ? porResponder(entrevista)
-        : filtro === 'observado'
-          ? entrevista.disponibilidad === 'corregir'
-          : false);
-  const porEvaluar = evaluaciones.filter((f) =>
-    filtro === 'observado' ? f.disponibilidad === 'corregir' : porResponder(f),
-  );
+  const visibleEntrevista = entrevista && entrevista.disponibilidad !== 'enviado';
+  const porEvaluar = evaluaciones.filter(porResponder);
   const esperando = evaluaciones.filter((f) => f.disponibilidad === 'esperando');
   const enviados = formularios.filter((f) => f.disponibilidad === 'enviado');
 
-  if (filtro === 'entregado')
+  if (filtro === 'enviado')
     return enviados.length ? (
       <div className="sf-panel">
         <Grupo titulo="Enviados" formularios={enviados} />
       </div>
     ) : (
-      <EmptyState
-        title="Aún no envías formularios"
-        description="Cuando envíes tu entrevista o una evaluación, la verás aquí."
-      />
+      <EmptyState title="Aún no envías formularios" />
     );
 
   const nada = !visibleEntrevista && !porEvaluar.length;
   return (
     <div className="sf-panel">
-      {ciclo === null && filtro !== 'observado' && (
+      {ciclo === null && (
         <p className="sf-aviso-ciclo">
           Tu entrevista inicial aparecerá cuando coordinación confirme tu ciclo.
         </p>
       )}
       {visibleEntrevista && <Entrevista f={entrevista} ciclo={ciclo} avance={avance} />}
       {porEvaluar.length > 0 && (
-        <Grupo
-          titulo={filtro === 'observado' ? 'Por corregir' : 'Evaluaciones por responder'}
-          formularios={porEvaluar}
-        />
+        <Grupo titulo="Evaluaciones por responder" formularios={porEvaluar} />
       )}
       {nada && (
         <div className="sf-al-dia">
           <EmptyState
             icon={<CircleCheck aria-hidden="true" />}
-            title={filtro === 'observado' ? 'Nada por corregir' : 'Estás al día'}
-            description={
-              filtro === 'observado'
-                ? 'Tu tutor no pidió cambios en tus formularios.'
-                : 'Cuando tu tutor confirme la asistencia de una sesión, su evaluación aparecerá aquí.'
-            }
+            title="Estás al día"
+            description="Las evaluaciones se habilitan cuando tu tutor confirma la asistencia."
           />
         </div>
       )}
-      {filtro === '' && (
-        <>
-          <Grupo
-            titulo="Se habilitan más adelante"
-            formularios={esperando}
-            plegado
-            nota="Cada evaluación se activa cuando termina la sesión y tu tutor confirma tu asistencia."
-          />
-          <Grupo titulo="Enviados" formularios={enviados} plegado />
-        </>
-      )}
+      <Grupo titulo="Se habilitan más adelante" formularios={esperando} plegado />
+      {filtro === '' && <Grupo titulo="Enviados" formularios={enviados} plegado />}
     </div>
   );
 }

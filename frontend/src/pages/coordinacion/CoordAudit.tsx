@@ -356,7 +356,6 @@ function AuditoriaDemostracion() {
       <PageHeading
         eyebrow={`Gestión institucional · Auditoría y historial de cambios · Semestre ${semestreActual}`}
         title="Historial de cambios"
-        description="Revisa quién consultó, cambió o descargó información y cuándo lo hizo."
         actions={
           <>
             <Badge tone="info">{eventos.length} eventos registrados</Badge>
@@ -409,7 +408,6 @@ function AuditoriaDemostracion() {
       <Card>
         <CardHead
           title="Acciones registradas"
-          description="Busca por perfil, acción o descarga."
           actions={
             <button
               type="button"
@@ -458,10 +456,7 @@ function AuditoriaDemostracion() {
       <DirectoryDisclosure title="Detalle de auditoría">
         <div className="grid grid--2">
           <Card>
-            <CardHead
-              title="Actividad por perfil"
-              description="Acciones y descargas realizadas por cada perfil."
-            />
+            <CardHead title="Actividad por perfil" />
             <CardBody flush>
               <ul className="list">
                 {porRol.map((fila) => (
@@ -485,10 +480,7 @@ function AuditoriaDemostracion() {
           </Card>
 
           <Card accent>
-            <CardHead
-              title="Qué se guarda en el historial"
-              description="Acciones que quedan registradas."
-            />
+            <CardHead title="Qué se guarda en el historial" />
             <CardBody>
               <dl className="def-list">
                 <div>

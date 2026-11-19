@@ -1,17 +1,14 @@
 import { useId, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSistema } from '../../hooks/useSistema';
-import { usePermiso } from '../../hooks/usePermiso';
 import { useAccionPersistente } from '../../hooks/useAccionPersistente';
 import { API_MODE } from '../../services/apiConfig';
-import { apiJson } from '../../services/apiClient';
-import { refrescarApi } from '../../services/apiTutoria';
 import { mutarSistema, marcarAvisosApi } from '../../services/apiSistema';
-import type { CampanaSalud, Instrumento, Sesion } from '../../types/domain';
+import type { CampanaSalud, Sesion } from '../../types/domain';
 import { fechaActualLima } from '../../utils/fechas';
 import { Alert } from '../ui/Alert';
 import { Card, CardBody, CardHead } from '../ui/Card';
-import { FormularioPersistente, EliminarPersistente } from './OperacionPersistente';
+import { FormularioPersistente } from './OperacionPersistente';
 import { RedactorAviso } from './RedactorAviso';
 
 export function InscripcionCampana({ campana }: { campana: CampanaSalud }) {
@@ -141,40 +138,6 @@ function EditorEstadoSesion({ sesion }: { sesion: Sesion }) {
         )}
       </FormularioPersistente>
     </details>
-  );
-}
-
-export function DescartarFormulario({
-  instrumento,
-  onCerrar,
-}: {
-  instrumento: Instrumento;
-  onCerrar(): void;
-}) {
-  const { user } = useAuth();
-  const puedeEliminar = usePermiso('formularios', 'eliminar');
-  if (
-    !API_MODE ||
-    !puedeEliminar ||
-    user?.role !== 'tutor' ||
-    instrumento.tutorId !== user.id ||
-    !['F08', 'F12'].includes(instrumento.formato) ||
-    !['no-iniciado', 'borrador'].includes(instrumento.estado) ||
-    instrumento.enviado
-  )
-    return null;
-  return (
-    <EliminarPersistente
-      etiqueta="Descartar este borrador"
-      eliminar={async () => {
-        await apiJson(
-          `/api/formularios/${encodeURIComponent(instrumento.id)}?version=${instrumento.version}`,
-          'DELETE',
-        );
-        await refrescarApi();
-      }}
-      alEliminar={onCerrar}
-    />
   );
 }
 

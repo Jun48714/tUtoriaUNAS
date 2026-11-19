@@ -76,18 +76,26 @@ describe('estado remoto del expediente', () => {
     ).rejects.toThrow('El registro cambió');
     expect(snapshotApi().workspace.registros[0]).toEqual(document);
   });
-  it('distingue un guardado confirmado de una recarga posterior que falla', async () => {
+  it('confirma la escritura aunque la recarga siga pendiente e informa si falla', async () => {
     vi.mocked(apiJson).mockResolvedValueOnce(state());
     await refrescarApi();
     const saved = { ...document, version: 3, respuestas: { apoderado: 'Dato confirmado' } };
+    let fallarRecarga!: (error: Error) => void;
     vi.mocked(apiJson)
       .mockResolvedValueOnce(saved)
-      .mockRejectedValueOnce(new Error('No se pudo actualizar la bandeja'));
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            fallarRecarga = reject;
+          }),
+      );
     await expect(guardarFormularioApi(document, saved.respuestas, false, 2)).resolves.toEqual(
       saved,
     );
     expect(snapshotApi().workspace.registros[0]).toEqual(saved);
-    expect(snapshotApi().error).toContain('No se pudo actualizar');
+    expect(snapshotApi().error).toBeNull();
+    fallarRecarga(new Error('No se pudo actualizar la bandeja'));
+    await vi.waitFor(() => expect(snapshotApi().error).toContain('No se pudo actualizar'));
     const session: Sesion = {
       id: 'SES-FICTICIA',
       codigo: 'TUT-FICTICIA',

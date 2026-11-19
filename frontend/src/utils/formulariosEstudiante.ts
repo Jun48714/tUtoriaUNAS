@@ -2,6 +2,7 @@ import type { Instrumento, Sesion } from '../types/domain';
 import { semestreActual } from '../data/catalogos';
 import { formulariosVigentes } from './entrevistas';
 import { esEvaluacionSesion, sesionFinalizo } from './evaluacionesSesion';
+import { formularioEnviado } from './filtrosFormularios';
 import { formatoInicial, puedeEnviarFormato } from './instrumentos';
 import type { MomentoTutoria } from './instrumentos';
 
@@ -24,7 +25,6 @@ export interface FormularioEstudiante {
   motivo?: string;
 }
 
-const ENTREGADOS: Instrumento['estado'][] = ['enviado', 'aprobado'];
 const PRESENTE = ['asistio', 'tarde'];
 
 export function clasificarFormulario(
@@ -34,7 +34,7 @@ export function clasificarFormulario(
   ahora = Date.now(),
 ): Omit<FormularioEstudiante, 'registro'> {
   const sesion = registro.sesionId ? sesiones.find((s) => s.id === registro.sesionId) : undefined;
-  if (ENTREGADOS.includes(registro.estado)) return { sesion, disponibilidad: 'enviado' };
+  if (formularioEnviado(registro.estado)) return { sesion, disponibilidad: 'enviado' };
 
   if (esEvaluacionSesion(registro.formato)) {
     const asistencia = sesion?.asistentes.find((a) => a.estudianteId === registro.estudianteId);

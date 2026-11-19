@@ -95,7 +95,7 @@ export function CoordFormats() {
         <Sheet
           title={`Formato ${detalle.numero} · ${detalle.nombre}`}
           onClose={() => setDetalle(null)}
-          wide
+          className="sheet--instrumento"
           footer={
             puedeEditar && (
               <button

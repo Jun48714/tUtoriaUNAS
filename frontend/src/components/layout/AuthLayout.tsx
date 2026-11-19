@@ -29,20 +29,8 @@ export function AuthLayout() {
           </Link>
 
           <div className="d01__pitch">
-            <p className="d01__tag">Sistema de Tutoría Universitaria</p>
-            <h1 className="d01__headline">
-              {variant === 'recovery'
-                ? 'Vuelve a conectar con tu acompañamiento.'
-                : 'Acompañamiento que germina desde el primer ciclo.'}
-            </h1>
-            {variant === 'recovery' && (
-              <p className="d01__brand-description">
-                Recupera tu acceso y continúa tu camino universitario.
-              </p>
-            )}
+            <h1 className="d01__headline">Sistema de Tutoría Universitaria</h1>
           </div>
-
-          <p className="d01__motto">Tierra que sustenta, tutoría que orienta.</p>
         </section>
 
         <section className="d01__panel">

@@ -362,7 +362,7 @@ export const muestrasFormatos: DocumentoFormato[] = [
       nombreEstudiante: INTERMEDIO.nombreEstudiante,
       ciclo: '5',
       grupo: 'G-02',
-      motivo: 'Organización del tiempo',
+      motivo: 'Estudiantes académicos',
       detalleMotivo:
         'El estudiante trabaja por las tardes en el negocio familiar y no logra cumplir con las prácticas de Estadística. Desaprobó la primera evaluación parcial.',
       resultado: 'Se programa nueva cita para seguimiento',

@@ -1,8 +1,3 @@
-dialog.sheet.fe-sheet {
-  width: min(900px, calc(100vw - 32px));
-  height: min(560px, calc(100dvh - 32px));
-  max-height: calc(100dvh - 32px);
-}
 .fe-sheet .sheet__body {
   display: flex;
   flex-direction: column;
@@ -536,11 +531,6 @@ dialog.sheet.fe-sheet {
   outline-offset: 3px;
 }
 @media (max-width: 600px) {
-  dialog.sheet.fe-sheet {
-    width: calc(100vw - 12px);
-    height: min(560px, calc(100dvh - 16px));
-    max-height: calc(100dvh - 16px);
-  }
   .fe-sheet .sheet__body {
     padding: 12px 10px;
   }

@@ -66,7 +66,6 @@ export function StudentReferrals() {
       <PageHeading
         eyebrow="Estudiante · Mi información"
         title={enSeguimiento ? 'Solicitudes de apoyo en seguimiento' : 'Mis solicitudes de apoyo'}
-        description="Consulta las solicitudes de apoyo que registró tu tutor y el estado de cada atención."
         actions={<Badge tone={abiertas.length ? 'info' : 'ok'}>{abiertas.length} en proceso</Badge>}
       />
 
@@ -79,18 +78,15 @@ export function StudentReferrals() {
         </Link>
       </div>
 
-      <Alert tone="info" title="Qué información puedes ver aquí">
-        El sistema conserva el área de destino, el estado de la atención y las recomendaciones
-        funcionales para tus estudios. <strong>No</strong> almacena diagnósticos, historias
-        clínicas, recetas ni análisis. No tener una atención registrada no significa que no recibas
-        atención fuera de la UNAS.
+      <Alert tone="info" title="Privacidad">
+        Aquí solo figuran el área, el estado y las pautas académicas autorizadas.
       </Alert>
 
       <div className="grid grid--4">
         <Stat
           label="Solicitudes de apoyo registradas"
           value={derivaciones.length}
-          note="Fichas del formato 12 registradas por tu tutor"
+          note="Formato 12"
           icon={<Send aria-hidden="true" />}
         />
         <Stat
@@ -103,7 +99,6 @@ export function StudentReferrals() {
         <Stat
           label="Atendidas"
           value={atendidas.length}
-          note="Con atención registrada por el área"
           icon={<CircleCheck aria-hidden="true" />}
           tone="info"
         />
@@ -128,7 +123,7 @@ export function StudentReferrals() {
           <CardBody>
             <EmptyState
               title="Sin solicitudes de apoyo registradas"
-              description="No tienes solicitudes de apoyo a servicios de apoyo. Si lo necesitas, coméntalo con tu docente tutor."
+              description="Si necesitas apoyo, contacta a tu tutor."
               icon={<Send />}
             />
           </CardBody>
@@ -138,7 +133,6 @@ export function StudentReferrals() {
           <Card>
             <CardHead
               title="Historial de solicitudes de apoyo"
-              description="Área, motivo, estado y última actualización"
               actions={<Badge tone="neutro">{derivaciones.length} fichas</Badge>}
             />
             <CardBody flush>

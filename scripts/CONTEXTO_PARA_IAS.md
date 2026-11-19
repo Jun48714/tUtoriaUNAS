@@ -473,3 +473,53 @@ la mezcla estaba en los procesos que servían la aplicación y se corrigió en e
   los tres roles, sin caídas detectadas ni escrituras distintas de login. El resumen
   `scripts/asignaciones-verificacion.json` corresponde ahora a esta comprobación original,
   no a la copia de auditoría de la sección anterior.
+
+## 17. Observaciones de la reunión del 19 de noviembre de 2026
+
+- Sesiones virtuales validan y abren enlaces HTTP(S). Asistencias muestra solo convocatorias
+  que ya pasaron su hora de fin y sesiones realizadas. El registro admite una evidencia
+  opcional en PDF (individual) o foto/PDF (grupal), con cámara en dispositivos táctiles.
+  `015-evidencia-asistencia.sql` guarda el archivo separado de las listas, en la misma
+  transacción que la asistencia. Solo el tutor responsable puede consultarlo.
+- `016-motivos-atencion.sql` actualiza las opciones estándar de F08 y conserva las definiciones
+  de envíos históricos. Motivo y detalle se muestran juntos. F12 confirma el registro con
+  animación y deja explícita la transmisión pendiente a DIBU, según el alcance confirmado.
+- Las pantallas de formatos ya no escriben al navegar entre pasos. La confirmación se muestra
+  tras la escritura, mientras la bandeja se actualiza en segundo plano. El backend agrupa
+  lecturas de participantes y del expediente. El editor institucional publica en una sola
+  operación y `Mis registros → Ver` usa la vista imprimible de informes con la ficha llena.
+
+## 18. Tamaño del modal y bandejas de formularios
+
+- Tutor, estudiante y coordinación comparten el modal de 760 × 460 px como máximo, con
+  espaciado lateral adaptable y desplazamiento interno. Los enlaces directos a entrevistas
+  lo abren sobre Mis formularios.
+- Identidad, grupo y fecha disponibles se ocultan al llenar y revisar, pero siguen en los
+  valores validados, el envío y la consulta final. Los datos que faltan se pueden completar.
+- Las bandejas y los accesos de formularios muestran Enviados, Pendientes y Todos. Aprobados
+  se incluyen en Enviados. Observados se incluyen en Pendientes con su opción de corregir.
+
+## 19. Disponibilidad semanal y agenda del coordinador de escuela
+
+- `POST /api/sesiones/disponibilidad` devuelve solo intervalos ocupados por clase o sesión y la
+  cantidad de convocados sin horario cargado. Verifica que los convocados estén asignados al
+  tutor en el semestre activo. La fuente de ocupación se comparte con `ProgramarInterno`, que
+  vuelve a comprobar el bloque al guardar o reprogramar, dentro de la transacción existente.
+- La vista del tutor cruza el horario de todos los convocados elegidos con el propio. Actualiza
+  el intervalo en pantalla al cambiar las horas y consulta el servidor cada 12 s mientras se
+  muestra. Marca disponibilidad parcial cuando falta el horario de algún convocado.
+- El coordinador de escuela conserva el rol tutor para sus propias sesiones y formatos. La nueva
+  pestaña Sesiones de Monitoreo consulta el calendario de su escuela en modo lectura, por docente.
+
+## 20. Textos de programación y portales
+
+- «Programar sesión» muestra los campos, el calendario semanal y avisos breves para los
+  cruces o intervalos inválidos. Tema y objetivo empiezan en blanco y se limpian al confirmar.
+- Se eliminaron explicaciones que repetían encabezados, filtros o indicadores en los portales
+  de estudiante, tutor, coordinación institucional y monitoreo de escuela. El acceso conserva
+  el nombre institucional, las instrucciones necesarias y los estados de verificación.
+- El modal agrupa los convocados y el horario junto al calendario en escritorio. Los avisos
+  quedan en el pie con las acciones. En móvil se desplaza el contenido y el pie sigue visible.
+- Al pulsar un tramo disponible del calendario se rellenan fecha, inicio y fin. La hora se
+  elige en pasos de 30 minutos, conserva la duración actual y verifica todo el intervalo.
+  También se puede elegir con Intro y mover el tramo con las flechas.

@@ -83,7 +83,7 @@ describe('cierre de los registros derivados de asistencia', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Guardar registro' }));
       await waitFor(() => expect(fixtures.guardar).toHaveBeenCalledOnce());
       expect(container.querySelector('.form-completion')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Guardar registro' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Guardando…' })).toBeDisabled();
       await act(async () => confirmar());
       const scene = document.querySelector('.form-completion');
       expect(scene).toHaveAttribute('data-format', tipo === 'individual' ? 'F06' : 'F07');

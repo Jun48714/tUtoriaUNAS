@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -47,7 +48,7 @@ public sealed class SeguridadAuditoriaTests(PostgresFixture fixture) : IClassFix
     {
         using var coord = await fixture.Login("coordinacion.tutoria", "coordinacion"); using var tutor = await fixture.Login("DOC-0421", "tutor");
         var borrador = await Ok<InstrumentoDto>(await tutor.PostAsJsonAsync("/api/formularios", new { formato = "F08", estudianteId = "EST-2023010456" }));
-        var respuestas = new Dictionary<string, string> { ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Organización del tiempo", ["resultado"] = "Se resuelve con la asesoría" };
+        var respuestas = new Dictionary<string, string> { ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Estudiantes académicos", ["resultado"] = "Se resuelve con la asesoría" };
         var enviado = await Ok<InstrumentoDto>(await tutor.PutAsJsonAsync("/api/formularios/" + borrador.Id, new { version = borrador.Version, respuestas, enviar = true }));
         var cfg = (await Estado(coord)).Sistema!.ConfiguracionPeriodo!.Value.Deserialize<ConfiguracionPeriodoEntity>(JsonDatos.Options)!;
         var periodo = new PeriodoInput(cfg.Version, cfg.Inicio, cfg.Fin, cfg.EntrevistasHasta, cfg.InformesHasta, true);
@@ -73,7 +74,7 @@ public sealed class SeguridadAuditoriaTests(PostgresFixture fixture) : IClassFix
     }
     private static Dictionary<string, string> Derivacion(string detalle) => new()
     {
-        ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Situación personal", ["detalleMotivo"] = detalle,
+        ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Estudiantes becados", ["detalleMotivo"] = detalle,
         ["resultado"] = "Se deriva a:", ["areaDerivacion"] = "Psicología"
     };
 
@@ -85,13 +86,13 @@ public sealed class SeguridadAuditoriaTests(PostgresFixture fixture) : IClassFix
         var ficha = "/api/formularios/INST-F12-desde-" + enviado.Id;
         var inicial = await Ok<InstrumentoDto>(await tutor.GetAsync(ficha));
         Assert.Equal("Detalle original ficticio", inicial.Respuestas["detalle"]);
-        var corregido = await ObservarYReenviar(coord, tutor, enviado, new() { ["detalleMotivo"] = "Detalle corregido ficticio", ["motivo"] = "Riesgo académico", ["areaDerivacion"] = "Psicopedagogía" });
+        var corregido = await ObservarYReenviar(coord, tutor, enviado, new() { ["detalleMotivo"] = "Detalle corregido ficticio", ["motivo"] = "Estudiantes sobresalientes", ["areaDerivacion"] = "Psicopedagogía" });
         var sincronizada = await Ok<InstrumentoDto>(await tutor.GetAsync(ficha));
         Assert.Equal("no-iniciado", sincronizada.Estado);
         Assert.True(sincronizada.Version > inicial.Version);
         Assert.Equal("Detalle corregido ficticio", sincronizada.Respuestas["detalle"]);
         Assert.Equal("Psicopedagogía", sincronizada.Respuestas["area"]);
-        Assert.Equal("Dificultades de aprendizaje", sincronizada.Respuestas["motivo"]);
+        Assert.Equal("Estudiantes sobresalientes", sincronizada.Respuestas["motivo__otro"]);
         var aprobado = await Ok<InstrumentoDto>(await coord.PostAsJsonAsync($"/api/formularios/{enviado.Id}/revision", new { version = corregido.Version, decision = "aprobado", comentario = "Conforme" }));
         Assert.Equal(aprobado.Respuestas["detalleMotivo"], (await Ok<InstrumentoDto>(await tutor.GetAsync(ficha))).Respuestas["detalle"]);
 
@@ -128,7 +129,7 @@ public sealed class SeguridadAuditoriaTests(PostgresFixture fixture) : IClassFix
         var cita = JsonDatos.Fecha(DateTimeOffset.UtcNow.AddDays(6));
         var enviado = await EnviarAtencion(tutor, new()
         {
-            ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Organización del tiempo", ["resultado"] = "Se programa nueva cita para seguimiento",
+            ["fecha"] = JsonDatos.Fecha(DateTimeOffset.UtcNow), ["motivo"] = "Estudiantes académicos", ["resultado"] = "Se programa nueva cita para seguimiento",
             ["proximaCita"] = cita, ["horaCita"] = "02:00", ["horaFinCita"] = "02:30"
         });
         bool Seguimiento(SesionDto s) => s.Fecha == cita && s.HoraInicio == "02:00" && s.Estado == "programada";
@@ -144,7 +145,8 @@ public sealed class SeguridadAuditoriaTests(PostgresFixture fixture) : IClassFix
         await using (var scope = fixture.App.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
-            db.Sesiones.Add(new SesionEntity { Id = sesionId, TutorId = "DOC-0421", EscuelaId = "E-IIS", SemestreId = "2026-I", Tipo = "individual", Fecha = JsonDatos.Fecha(DateTimeOffset.UtcNow.AddDays(-200)), HoraInicio = "09:00", HoraFin = "10:00", FinUtc = DateTimeOffset.UtcNow.AddDays(-200), Tema = "Sesión ficticia de un semestre anterior", Asistentes = [new() { EstudianteId = "EST-2023010456" }] });
+            var fecha = JsonDatos.Fecha(DateTimeOffset.UtcNow.AddDays(-200));
+            db.Sesiones.Add(new SesionEntity { Id = sesionId, TutorId = "DOC-0421", EscuelaId = "E-IIS", SemestreId = "2026-I", Tipo = "individual", Fecha = fecha, HoraInicio = "09:00", HoraFin = "10:00", FinUtc = DateTimeOffset.Parse($"{fecha}T10:00:00-05:00", CultureInfo.InvariantCulture).ToUniversalTime(), Tema = "Sesión ficticia de un semestre anterior", Asistentes = [new() { EstudianteId = "EST-2023010456" }] });
             await db.SaveChangesAsync();
         }
         using var tutor = await fixture.Login("DOC-0421", "tutor");

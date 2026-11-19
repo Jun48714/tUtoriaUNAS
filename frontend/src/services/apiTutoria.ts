@@ -16,6 +16,7 @@ import { establecerSemestreActual } from '../data/catalogos';
 import { apiJson, apiJsonSiCambio, getApiSession } from './apiClient';
 import type { MomentoTutoria } from '../utils/instrumentos';
 import type { ProgramacionSesion } from './sessionWorkspace';
+import type { EvidenciaAsistencia } from './evidenciaAsistencia';
 import type { SistemaApi } from '../types/sistema';
 import { aplicarDatosSistema, vaciarDatosSistema } from './datosSistema';
 import { API_MODE } from './apiConfig';
@@ -199,7 +200,7 @@ export async function crearFormularioApi(formato: CodigoFormato, estudianteId?: 
     estudianteId: estudianteId ?? null,
   });
   documentoAceptado(result);
-  await actualizarTrasEscritura();
+  void actualizarTrasEscritura();
   return result;
 }
 export async function guardarFormularioApi(
@@ -219,7 +220,7 @@ export async function guardarFormularioApi(
     },
   );
   documentoAceptado(result);
-  await actualizarTrasEscritura();
+  void actualizarTrasEscritura();
   return result;
 }
 export async function revisarFormularioApi(
@@ -233,12 +234,12 @@ export async function revisarFormularioApi(
     { version: registro.version, decision, comentario },
   );
   documentoAceptado(result);
-  await actualizarTrasEscritura();
+  void actualizarTrasEscritura();
 }
 export async function programarSesionApi(input: ProgramacionSesion) {
   const result = await apiJson<Sesion>('/api/sesiones', 'POST', input);
   sesionAceptada(result);
-  await actualizarTrasEscritura();
+  void actualizarTrasEscritura();
   return result;
 }
 export async function guardarAsistenciaApi(
@@ -246,14 +247,15 @@ export async function guardarAsistenciaApi(
   asistentes: Sesion['asistentes'],
   mensaje: string,
   tipoTutoria = 'Académica',
+  evidencia?: EvidenciaAsistencia,
 ) {
   const result = await apiJson<Sesion>(
     `/api/sesiones/${encodeURIComponent(sesion.id)}/asistencia`,
     'PUT',
-    { version: sesion.version, asistentes, mensaje, tipoTutoria },
+    { version: sesion.version, asistentes, mensaje, tipoTutoria, evidencia },
   );
   sesionAceptada(result);
-  await actualizarTrasEscritura();
+  void actualizarTrasEscritura();
   return result;
 }
 export async function cambiarMomentoApi(momento: MomentoTutoria) {

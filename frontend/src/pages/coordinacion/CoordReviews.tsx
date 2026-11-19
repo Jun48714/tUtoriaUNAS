@@ -30,6 +30,8 @@ import { definicionPorCodigo } from '../../data/formatos';
 import { HOY_ISO, formatFecha } from '../../utils/fechas';
 import { estadoRevisionInforme } from '../../utils/estadoInforme';
 import type { EstadoRevisionInforme } from '../../utils/estadoInforme';
+import { filtrosFormularios, filtroFormulario } from '../../utils/filtrosFormularios';
+import type { FiltroFormularios } from '../../utils/filtrosFormularios';
 import '../../styles/informes-revision.css';
 
 const FORMATOS_INFORME: CodigoFormato[] = ['F01', 'F02'];
@@ -84,7 +86,7 @@ export function CoordReviews() {
 
   const [decisiones, setDecisiones] = useState<Record<string, DecisionRevision>>({});
   const [seleccionado, setSeleccionado] = useState<Instrumento | null>(null);
-  const [pestana, setPestana] = useState<EstadoRevision | 'todos'>('todos');
+  const [pestana, setPestana] = useState<FiltroFormularios>('');
   const [detallePestana, setDetallePestana] = useState('informe-respuestas');
   const [comentario, setComentario] = useState('');
   const [avisoInterno, setAvisoInterno] = useState<{ error: boolean; texto: string } | null>(null);
@@ -159,30 +161,15 @@ export function CoordReviews() {
         opciones: escuelas.map((escuela) => ({ valor: escuela.id, etiqueta: escuela.nombre })),
         valorDe: (fila) => fila.escuelaId,
       },
-      {
-        id: 'enviado',
-        etiqueta: 'Situación del envío',
-        opciones: [
-          { valor: 'enviado', etiqueta: 'Enviado por el responsable' },
-          { valor: 'borrador', etiqueta: 'En borrador' },
-          { valor: 'no-iniciado', etiqueta: 'No iniciado' },
-          { valor: 'aprobado', etiqueta: 'Aprobado en el registro' },
-        ],
-        valorDe: (fila) => fila.instrumento.estado,
-      },
     ],
     [filas],
   );
 
   const filtro = useFiltro(filas, buscarEn, selects);
 
-  const porTab: Record<EstadoRevision | 'todos', FilaRevision[]> = {
-    todos: filtro.filtrados,
-    preparacion: filtro.filtrados.filter((fila) => fila.estado === 'preparacion'),
-    pendiente: filtro.filtrados.filter((fila) => fila.estado === 'pendiente'),
-    observado: filtro.filtrados.filter((fila) => fila.estado === 'observado'),
-    aprobado: filtro.filtrados.filter((fila) => fila.estado === 'aprobado'),
-  };
+  const corresponde = (fila: FilaRevision, id: FiltroFormularios) =>
+    !id || (fila.estado === 'pendiente' || fila.estado === 'aprobado') === (id === 'enviado');
+  const filasVisibles = filtro.filtrados.filter((fila) => corresponde(fila, pestana));
   const detalleFila = seleccionado
     ? (filas.find((fila) => fila.instrumento.id === seleccionado.id) ?? null)
     : null;
@@ -250,7 +237,7 @@ export function CoordReviews() {
           : 'Observación registrada. El responsable la verá en su bandeja de instrumentos.',
     });
     setComentario('');
-    setPestana(estado);
+    setPestana(estado === 'aprobado' ? 'enviado' : 'pendiente');
   }
 
   const columnas: Column<FilaRevision>[] = [
@@ -333,7 +320,7 @@ export function CoordReviews() {
       <PageHeading
         eyebrow="Coordinación de tutoría · Revisión de informes"
         title="Revisar informes"
-        description="Revisa los informes 01 y 02. Puedes aprobarlos o pedir correcciones."
+        description="Formatos 01 y 02"
         actions={
           <Link className="btn btn-falcon-default" to="/coordinacion/plan">
             Preparar informe de escuela
@@ -351,52 +338,40 @@ export function CoordReviews() {
               selects={selects}
               valores={filtro.valores}
               onValores={filtro.setValores}
-              mostrados={porTab[pestana].length}
-              total={
-                pestana === 'todos'
-                  ? filas.length
-                  : filas.filter((fila) => fila.estado === pestana).length
-              }
+              mostrados={filasVisibles.length}
+              total={filas.filter((fila) => corresponde(fila, pestana)).length}
               onLimpiar={filtro.limpiar}
               etiqueta="Filtros de la bandeja de informes"
               placeholder="Buscar informe"
               views={
                 <Tabs
                   etiqueta="Estado de revisión de los informes"
-                  activo={pestana}
-                  onChange={(id) => setPestana(id as EstadoRevision | 'todos')}
-                  items={[
-                    { id: 'pendiente', label: 'Pendiente', count: porTab.pendiente.length },
-                    {
-                      id: 'preparacion',
-                      label: 'En preparación',
-                      count: porTab.preparacion.length,
-                    },
-                    { id: 'observado', label: 'Por corregir', count: porTab.observado.length },
-                    { id: 'aprobado', label: 'Aprobado', count: porTab.aprobado.length },
-                    { id: 'todos', label: 'Todos', count: filtro.filtrados.length },
-                  ]}
+                  activo={pestana || 'todos'}
+                  onChange={(id) => setPestana(filtroFormulario(id))}
+                  items={filtrosFormularios.map(({ id, nombre }) => ({
+                    id: id || 'todos',
+                    label: nombre,
+                    count: filtro.filtrados.filter((fila) => corresponde(fila, id)).length,
+                  }))}
                 />
               }
             />
 
-            {(['pendiente', 'preparacion', 'observado', 'aprobado', 'todos'] as const).map((id) => (
-              <TabPanel key={id} id={id} activo={pestana}>
-                <DataTable<FilaRevision>
-                  rows={porTab[id]}
-                  columns={columnas}
-                  caption={`Informes 01 y 02 en estado ${id}`}
-                  rowKey={(fila) => fila.instrumento.id}
-                  pageSize={8}
-                  pagination="auto"
-                  paginationPosition="bottom"
-                  inlineActions
-                  initialSort={{ key: 'revision', direction: 'asc' }}
-                  emptyTitle="Sin informes en esta pestaña"
-                  emptyDescription="Cambia de pestaña o ajusta los filtros."
-                />
-              </TabPanel>
-            ))}
+            <TabPanel id={pestana || 'todos'} activo={pestana || 'todos'}>
+              <DataTable<FilaRevision>
+                rows={filasVisibles}
+                columns={columnas}
+                caption="Informes 01 y 02"
+                rowKey={(fila) => fila.instrumento.id}
+                pageSize={8}
+                pagination="auto"
+                paginationPosition="bottom"
+                inlineActions
+                initialSort={{ key: 'revision', direction: 'asc' }}
+                emptyTitle="Sin informes en esta pestaña"
+                emptyDescription="Cambia de pestaña o ajusta los filtros."
+              />
+            </TabPanel>
           </div>
         </CardBody>
       </Card>
@@ -409,9 +384,8 @@ export function CoordReviews() {
       </DirectoryDisclosure>
       {informeActual && detalleFila && (
         <Sheet
-          wide
           title={`Formato ${detalleFormato?.numero ?? '—'} · ${detalleFormato?.nombre ?? informeActual.formato}`}
-          className="sheet--form sheet--informe-revision"
+          className="sheet--instrumento sheet--informe-revision"
           description={`${informeActual.id} · ${escuelaDe(detalleFila.escuelaId)} · semestre ${informeActual.semestreId}`}
           onClose={() => {
             setSeleccionado(null);

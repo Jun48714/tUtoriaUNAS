@@ -1,5 +1,32 @@
 # Sistema de Tutoría Universitaria · UNAS
 
+## Disponibilidad al programar una sesión
+
+En **Sesiones → Programar sesión**, la cuadrícula semanal cruza las clases del estudiante o de
+todos los convocados del grupo, las clases cargadas del tutor y las sesiones activas que ocupan a
+alguno de ellos. Cambiar las horas actualiza la vista al instante. Mientras el modal está visible,
+se consulta la agenda cada 12 segundos. En móvil, **Ver disponibilidad semanal** baja a la cuadrícula.
+
+Al guardar, la API vuelve a comprobar el cruce dentro de la transacción. Se permite empezar a la
+misma hora en que termina otro bloque. Si falta el horario académico de un convocado, la vista
+marca la disponibilidad como parcial y la validación utiliza los datos cargados.
+
+El docente coordinador consulta los horarios de otros tutores de su escuela en
+**Monitoreo de escuela → Sesiones**. Programa y gestiona sus sesiones desde el portal de tutor.
+
+## Ajustes de la reunión del 19 de noviembre de 2026
+
+En **Sesiones**, la modalidad virtual requiere un enlace y permite abrirlo en la programación
+y en el detalle de la sesión. **Asistencias** lista las sesiones que terminaron y admite un PDF
+en tutoría individual, o una foto o PDF en grupal. Las fotos se reducen antes de enviarse.
+La API comprime las evidencias al guardarlas si reduce su tamaño y conserva el PDF original
+al descargarlo. La evidencia es opcional y su descarga corresponde al tutor responsable.
+
+Los formatos se envían al final. Administración publica sus cambios directamente y los avisos
+se publican o programan. Los registros enviados del tutor se abren con sus respuestas en una
+pestaña imprimible que permite guardar PDF. La confirmación del F12 corresponde al registro
+en Tutoría UNAS. La transmisión a DIBU queda pendiente de su API.
+
 ## Informes de tutoría · 12 de noviembre de 2026
 
 En **Coordinación → Informes** se consultan los informes F01 y F02 por periodo y estado.
@@ -23,10 +50,9 @@ lugar. Se pueden añadir, duplicar, mover o retirar preguntas, cambiar sus texto
 tipos, obligatoriedad, ayuda y condiciones; las tablas permiten editar columnas. Los ajustes
 del formulario quedan plegados y la vista previa utiliza el formulario del portal.
 
-**Guardar borrador** conserva la edición en PostgreSQL sin cambiar los portales.
-**Publicar cambios** crea una revisión y actualiza los tres roles al recargar, recuperar el
-foco o en la actualización periódica de diez segundos. El historial permite recuperar una
-publicación como borrador. El servidor rechaza cambios concurrentes y cuentas sin autorización.
+**Publicar cambios** guarda la edición y crea una revisión en la misma operación. Los tres roles
+la reciben al recargar o en la actualización periódica. El historial permite recuperar una
+publicación para editarla. El servidor rechaza cambios concurrentes y cuentas sin autorización.
 Los envíos anteriores conservan sus preguntas, opciones y respuestas, también en la exportación.
 
 Los códigos F01–F12 y los responsables normativos se conservan. Los datos automáticos de
@@ -586,6 +612,11 @@ La API usa controladores, servicios por inyección de dependencias, DTOs, Proble
 CORS con orígenes explícitos, OpenAPI y EF Core PostgreSQL. `SchemaRunner` aplica scripts
 versionados mediante la opción local de Development o `--migrate`. `/health` comprueba el
 proceso; `/health/ready` consulta las tablas de PostgreSQL.
+
+La migración `017-integridad-agenda.sql` verifica las fechas y horas, los estados de
+asistencia y la designación del coordinador de escuela. PostgreSQL también rechaza sesiones
+superpuestas para el mismo tutor o estudiante al confirmar la transacción. La API consulta
+además los horarios académicos antes de programar o reprogramar.
 
 | Variable                     | Uso                                                                          |
 | ---------------------------- | ---------------------------------------------------------------------------- |

@@ -136,6 +136,7 @@ export function seccionBreve(titulo: string) {
   );
 }
 export function opcionBreve(formato: CodigoFormato, codigo: string, opcion: string) {
+  if (formato === 'F08' && codigo === 'motivo' && opcion === 'Otro') return 'Otros';
   if (formato === 'F10' && /^p\d{2}$/.test(codigo)) return opcion.replace(/^[A-D] · /, '');
   if (formato === 'F08' && codigo === 'resultado')
     return (
@@ -169,8 +170,10 @@ export function bloquesPresentacion(definicion: DefinicionFormato): SeccionForma
   return definicion.secciones.flatMap((seccion) => {
     const unidades: CampoFormato[][] = [];
     for (const campo of seccion.campos) {
-      const padre =
-        campo.visibleSi && unidades.find((u) => u.some((c) => c.codigo === campo.visibleSi!.campo));
+      const vinculada =
+        campo.visibleSi?.campo ??
+        (definicion.codigo === 'F08' && campo.codigo === 'detalleMotivo' ? 'motivo' : undefined);
+      const padre = vinculada && unidades.find((u) => u.some((c) => c.codigo === vinculada));
       if (padre) padre.push(campo);
       else unidades.push([campo]);
     }

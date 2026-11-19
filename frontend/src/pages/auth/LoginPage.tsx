@@ -64,7 +64,6 @@ export function LoginPage() {
         <h2 className="d01__title" id="login-title">
           Inicia sesión
         </h2>
-        <p className="d01__sub">Accede a tu acompañamiento universitario.</p>
       </div>
 
       <form

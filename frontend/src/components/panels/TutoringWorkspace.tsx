@@ -1,8 +1,6 @@
-import { DescartarFormulario } from './AccionesTutoria';
 import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { bloqueoEvaluacion } from '../../utils/evaluacionesSesion';
-import { formatFecha } from '../../utils/fechas';
 import { useAuth } from '../../hooks/useAuth';
 import { usePortal } from '../../hooks/usePortal';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
@@ -20,6 +18,7 @@ import { Alert } from '../ui/Alert';
 import { Sheet } from '../ui/Sheet';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { ArrowRight, Check, CircleCheck } from '../ui/icons';
+import { abrirVistaInforme } from '../formatos/vistaInforme';
 import { GuidedInstrumentForm } from './GuidedInstrumentForm';
 import { TeacherFormsPanel } from './TeacherFormsPanel';
 import { tituloFormulario } from './teacherFormTasks';
@@ -107,12 +106,11 @@ export function TutoringWorkspace() {
     );
   function abrir(registro: Instrumento) {
     if (
-      API_MODE &&
-      ['F06', 'F07'].includes(registro.formato) &&
-      registro.sesionId &&
-      !['borrador', 'observado'].includes(registro.estado)
+      ['enviado', 'aprobado'].includes(registro.estado) &&
+      definicionPorCodigo(registro.formato)?.actor === 'tutor'
     ) {
-      navegar(`/tutor/asistencias?sesion=${encodeURIComponent(registro.sesionId)}`);
+      if (!abrirVistaInforme(registro, definicionPorCodigo(registro.formato), undefined, 'Formato'))
+        setAviso('Permite las ventanas emergentes para abrir el formato.');
       return;
     }
     setAbierto(registro);
@@ -264,12 +262,7 @@ export function TutoringWorkspace() {
       {nuevo && (
         <Sheet
           title={`Formato ${nuevo.slice(1)} · ${tituloFormulario(nuevo)}`}
-          className={['F06', 'F08', 'F12'].includes(nuevo) ? 'tutoring-search-sheet' : undefined}
-          description={
-            nuevo === 'F07'
-              ? 'Marca a los estudiantes que participaron.'
-              : 'Selecciona al estudiante al que atendiste.'
-          }
+          className="sheet--instrumento"
           onClose={() => {
             setNuevo(null);
             const nuevos = new URLSearchParams(parametros);
@@ -359,8 +352,7 @@ export function TutoringWorkspace() {
       {actual && definicion && (
         <Sheet
           title={`Formato ${definicion.numero} · ${actual.definicion?.nombre ?? tituloFormulario(actual.formato)}`}
-          className={`sheet--form${!editar ? ' tutoring-preview-sheet' : ''}`}
-          wide
+          className="sheet--instrumento"
           onClose={cerrarFormulario}
         >
           <div className="tutoring-dialog-meta">
@@ -369,13 +361,6 @@ export function TutoringWorkspace() {
               {definicion.actorEtiqueta} · {actual.semestreId}
             </span>
           </div>
-          {esEvaluacion && sesionActual && (
-            <p className="forms-panel__context">
-              {sesionActual.tema} · {formatFecha(sesionActual.fecha)} · {sesionActual.horaInicio}–
-              {sesionActual.horaFin} · {sesionActual.codigo}. Los datos de la sesión ya están
-              completados.
-            </p>
-          )}
           {actual.observaciones.some((o) => o.estado === 'abierta') && (
             <Alert tone="alerta" title="Correcciones solicitadas">
               {actual.observaciones
@@ -402,7 +387,6 @@ export function TutoringWorkspace() {
             onGuardar={editar ? guardar : undefined}
             onFinalizar={cerrarFormulario}
           />
-          <DescartarFormulario instrumento={actual} onCerrar={cerrarFormulario} />
           {puedeRevisar && (
             <div className="tutoring-review-actions">
               <h3>Revisión de la entrevista</h3>

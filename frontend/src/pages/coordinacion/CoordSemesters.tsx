@@ -66,7 +66,6 @@ export function CoordSemesters() {
       <PageHeading
         eyebrow="Coordinación de tutoría"
         title="Semestres y fechas"
-        description="Calendario académico y plazos de tutoría."
         actions={
           API_MODE &&
           config && (

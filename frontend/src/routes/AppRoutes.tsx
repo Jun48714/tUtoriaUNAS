@@ -70,6 +70,9 @@ const MonitoreoAvance = lazy(() =>
 const MonitoreoFormatos = lazy(() =>
   import('../pages/monitoreo/MonitoreoFormatos').then((m) => ({ default: m.MonitoreoFormatos })),
 );
+const MonitoreoSesiones = lazy(() =>
+  import('../pages/monitoreo/MonitoreoSesiones').then((m) => ({ default: m.MonitoreoSesiones })),
+);
 const MonitoreoDerivaciones = lazy(() =>
   import('../pages/monitoreo/MonitoreoDerivaciones').then((m) => ({
     default: m.MonitoreoDerivaciones,
@@ -107,11 +110,9 @@ export function AppRoutes() {
             />
             <Route path="/estudiante/sesiones" element={<StudentSessions />} />
             <Route path="/estudiante/tutor" element={<StudentTutor />} />
-            <Route path="/estudiante/instrumentos" element={<StudentInstruments />} />
-            <Route
-              path="/estudiante/instrumentos/:instrumentoId"
-              element={<StudentInstrumentFill />}
-            />
+            <Route path="/estudiante/instrumentos" element={<StudentInstruments />}>
+              <Route path=":instrumentoId" element={<StudentInstrumentFill />} />
+            </Route>
             <Route path="/estudiante/expediente" element={<StudentRecord />} />
             <Route path="/estudiante/derivaciones" element={<StudentReferrals />} />
             <Route path="/estudiante/salud" element={<StudentHealth />} />
@@ -141,6 +142,14 @@ export function AppRoutes() {
               element={
                 <SoloCoordinadorEscuela>
                   <MonitoreoAvance />
+                </SoloCoordinadorEscuela>
+              }
+            />
+            <Route
+              path="/tutor/monitoreo/sesiones"
+              element={
+                <SoloCoordinadorEscuela>
+                  <MonitoreoSesiones />
                 </SoloCoordinadorEscuela>
               }
             />

@@ -323,7 +323,6 @@ export function CoordReports() {
       <PageHeading
         eyebrow={`Coordinación de tutoría · Reportes e indicadores · ${semestreId}`}
         title="Reportes de tutoría"
-        description="Cobertura, atenciones y sesiones por escuela."
         actions={
           <>
             <button type="button" className="btn btn-falcon-default" onClick={exportar}>
@@ -537,10 +536,7 @@ export function CoordReports() {
       <DirectoryDisclosure title="Áreas y motivos">
         <div className="grid grid--2">
           <Card>
-            <CardHead
-              title="Solicitudes de apoyo por área"
-              description="Área receptora, casos totales y seguimiento"
-            />
+            <CardHead title="Solicitudes de apoyo por área" />
             <CardBody flush>
               <ul className="list">
                 {porArea.map((fila) => (

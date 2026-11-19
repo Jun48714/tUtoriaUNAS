@@ -232,7 +232,6 @@ export function CoordIntegrations() {
       <PageHeading
         eyebrow={`Gestión institucional · Integraciones de datos · ${portal.institucional ? 'Todas las escuelas' : escuelaDe(portal.escuelaId)}`}
         title="Datos de otras áreas"
-        description="Revisa qué datos se solicitaron a cada área y cuáles están pendientes de entrega."
         actions={
           <>
             <Badge tone="info">{insumosInstitucionales.length} solicitudes</Badge>
@@ -246,7 +245,6 @@ export function CoordIntegrations() {
       <Card>
         <CardHead
           title="Seguimiento de solicitudes"
-          description="Filtra por estado o por existencia de respuesta del área."
           actions={
             <Badge tone="dorado">
               {conRespuesta} de {insumosInstitucionales.length} respondidas
@@ -350,10 +348,7 @@ export function CoordIntegrations() {
         <SecondaryPanel title="Historial y requisitos">
           <div className="grid grid--sidebar">
             <Card>
-              <CardHead
-                title="Historial de solicitudes"
-                description="Envío de solicitudes y respuestas de las áreas, en orden cronológico."
-              />
+              <CardHead title="Historial de solicitudes" />
               <CardBody>
                 <Timeline
                   etiqueta="Línea de tiempo de las solicitudes de datos"
