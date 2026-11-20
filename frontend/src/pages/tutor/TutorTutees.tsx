@@ -392,18 +392,21 @@ export function TutorTutees() {
           value={conAlertas}
           note="Requieren acompañamiento"
           icon={<CircleAlert />}
+          tone="alerta"
         />
         <Stat
           label="Promedio del grupo"
           value={promedioGrupo?.toFixed(1) ?? '—'}
           note="Escala 0–20 · mínimo aprobatorio: 11"
           icon={<GraduationCap />}
+          tone="info"
         />
         <Stat
           label="Formularios pendientes"
           value={pendientesTotales}
           note="Formatos 03, 04, 05, 10 y 11"
           icon={<ClipboardList />}
+          tone="dorado"
         />
       </MetricGroup>
 

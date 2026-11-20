@@ -556,7 +556,7 @@ Toda optimización debe conservar la apariencia al píxel.
 - El LCP del login se trabajó el 20 de noviembre (sección 22). Sigue sin medirse la API con datos
   reales (requiere la sesión del usuario).
 
-## 22. LCP del login: arranque liviano (20 de noviembre de 2026, sin commit)
+## 22. LCP del login: arranque liviano (20 de noviembre de 2026, commit `50e625f`)
 
 Informe completo y evidencias en `artifacts/lcp-login-2026-11-20/INFORME.md` (carpeta ignorada por
 git; incluye los scripts de medición). Resumen:
@@ -584,3 +584,38 @@ git; incluye los scripts de medición). Resumen:
 - Fallos E2E anteriores (no se tocaron): p. ej. `application.spec.ts` espera relleno izquierdo de
   42 px en los campos del acceso y hay 40 px; también fallan `theme-consistency`,
   `tutoring-workflow` y otros.
+
+## 23. Paleta: verde normal y acentos de Word (20 de noviembre de 2026, sin commit)
+
+Pedido del usuario: un sistema más colorido **solo con color**, sin agregar rayas, bordes ni
+elementos y sin rediseñar el login; reemplazar el verde oscuro por un «verde normal» y combinar
+los colores de la paleta de Word en todo el sistema y todos los roles. Rechazó paletas neutras,
+barra lateral verde sólida y tarjetas rellenas.
+
+- Verde institucional `#176036` → `#2b7d3c` (tokens `--green*` y `--falcon-primary*` en
+  `styles/global.css`). Es el más claro que mantiene AA: texto blanco en botones 5,2:1 y texto
+  verde sobre `--green-soft` 4,6:1. No usar verdes más claros para texto ni botones.
+- Acentos Word en `global.css`: `--acento-azul #4472c4`, `--acento-naranja #ed7d31`,
+  `--acento-dorado #e9a400`, `--acento-morado #8064a2`, `--acento-rojo #c0504d`,
+  `--acento-gris #a5a5a5`. Los estados (`--info`, `--warn`, `--danger`, `--violet`, `--gold`)
+  pasan a tonos de esa paleta.
+- Dónde se aplican: iconos de `Stat` según `tone` (`portal-surfaces.css`; antes todos salían
+  azul marino), iconos y contadores del menú por posición del grupo (`falcon-layout.css`: 2 azul,
+  3 verde, 4 naranja, 5 dorado, último = Cuenta en morado), contadores de «Tareas pendientes» y
+  mes de la próxima sesión (`dashboard.css`), punto de avisos y paleta de gráficos
+  (`utils/chartStyles.ts`). Se asignaron tonos a las `Stat` que no tenían en el panel y ficha del
+  estudiante, estudiantes y reportes del tutor, monitoreo y `DirectoryPage`.
+- Los verdes escritos a mano en `directory.css`, `charts.css`, `editor-formatos.css`,
+  `vista-informe.css`, `form-completion.css`, `auth.css`, `PortalCharts.tsx` y `TutorReports.tsx`
+  usan ahora los tokens.
+- Verificado: tsc, ESLint, Prettier, 309 pruebas unitarias; capturas de 49 pantallas de los tres
+  roles y el login a 1600×950 sin errores de consola; E2E con los mismos 56 fallos previos.
+- Ajustes posteriores el mismo día:
+  - `DisponibilidadSemanal`: el horario elegido se dibuja en el día seleccionado como bloque verde
+    oscuro (`--green-900`) con «inicio–fin»; rojo oscuro si hay cruce. Leyenda «Tu sesión».
+  - Registro de asistencia (`TutorAttendance.tsx`): sin «Marcar todos como presentes», sin el
+    selector de tipo (se envía siempre «Académica», constante `TIPO_TUTORIA`), sin el código en
+    el encabezado ni párrafos de ayuda; tabla en un marco con «Asistencia · N de M · Formato».
+    Las E2E `api-persistencia` y `session-evaluations` marcan ahora el radio «Asistió».
+  - Panel del estudiante: la tarjeta «Próxima sesión» (repetía el bloque) pasa a «Sesiones
+    programadas».

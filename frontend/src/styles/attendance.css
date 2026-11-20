@@ -38,6 +38,63 @@
 .attendance-register .data-table th[data-key='sesion'] {
   min-width: 260px;
 }
+.attendance-editor {
+  display: grid;
+  gap: 20px;
+}
+.attendance-editor__marco {
+  padding: 4px 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.attendance-editor__marco .attendance-students tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+.attendance-editor__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-block: 12px 4px;
+}
+.attendance-editor__cabecera h3 {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.attendance-editor__cabecera span {
+  color: var(--ink-600);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+.attendance-editor__ayuda {
+  margin-left: 6px;
+  color: var(--ink-600);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+.attendance-editor input[type='file'] {
+  padding: 6px;
+  color: var(--ink-600);
+  font-size: 0.85rem;
+}
+.attendance-editor input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-800);
+  font: 600 0.85rem var(--font-body);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.attendance-editor input[type='file']::file-selector-button:hover {
+  background: var(--green-50);
+}
 .attendance-students {
   width: 100%;
   table-layout: fixed;

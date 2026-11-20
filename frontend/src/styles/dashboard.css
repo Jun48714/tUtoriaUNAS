@@ -129,10 +129,25 @@
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
-.dashboard-task--urgent .dashboard-task__count {
-  border-color: #d7b19e;
-  background: #fcf3ee;
-  color: #873a25;
+.dashboard-tasks li:nth-child(odd) .dashboard-task__count {
+  border-color: var(--info-line);
+  background: var(--info-bg);
+  color: var(--info);
+}
+.dashboard-tasks li:nth-child(even) .dashboard-task__count {
+  border-color: var(--violet-line);
+  background: var(--violet-bg);
+  color: var(--violet);
+}
+.dashboard-tasks li:nth-child(odd) .dashboard-task--urgent .dashboard-task__count {
+  border-color: var(--danger-line);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.dashboard-tasks li:nth-child(even) .dashboard-task--urgent .dashboard-task__count {
+  border-color: #f2b48a;
+  background: var(--acento-naranja-bg);
+  color: var(--acento-naranja-ink);
 }
 .dashboard-task__text {
   display: grid;
@@ -182,13 +197,14 @@
   color: var(--green-800);
 }
 .dashboard-next__date > span {
+  color: var(--acento-rojo);
   font-size: 14px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 .dashboard-next__date strong {
-  color: #22442f;
+  color: var(--green-900);
   font-size: 39px;
   font-weight: 750;
   line-height: 1.25;
@@ -303,7 +319,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #5baa8a, #0d674f);
+  background: linear-gradient(90deg, var(--green-500), var(--green));
 }
 @container dashboard (min-width: 880px) {
   .dashboard-metrics {

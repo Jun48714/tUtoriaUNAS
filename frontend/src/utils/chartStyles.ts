@@ -1,11 +1,11 @@
 /** Estilo compartido para los gráficos locales de ECharts, sin añadir librerías. */
 export const CHART_COLORS = {
-  green: '#176036',
-  blue: '#3676b3',
-  violet: '#7963b5',
-  amber: '#b38931',
-  slate: '#84998c',
-  rose: '#b34856',
+  green: '#2b7d3c',
+  blue: '#4472c4',
+  violet: '#8064a2',
+  amber: '#e9a400',
+  slate: '#a5a5a5',
+  rose: '#c0504d',
   line: '#e2eae5',
   text: '#405548',
 };

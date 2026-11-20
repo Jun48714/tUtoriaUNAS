@@ -196,7 +196,7 @@
 }
 .sidebar.navbar-vertical .sidebar__link.nav-link:hover {
   color: var(--green);
-  background: rgba(23, 96, 54, 0.06);
+  background: rgba(43, 125, 60, 0.06);
 }
 .sidebar.navbar-vertical .sidebar__link.nav-link.active {
   background: var(--green-soft);
@@ -238,6 +238,39 @@
   border-radius: 10px;
   color: var(--green);
   font: 600 0.78rem var(--font-body);
+}
+/* Cada grupo del menú toma un acento de Office por su posición; Cuenta, siempre al final, va en morado. */
+.sidebar__group {
+  --grupo: var(--green);
+  --grupo-bg: var(--green-soft);
+  --grupo-ink: var(--green-800);
+}
+.sidebar__group:nth-child(2) {
+  --grupo: var(--acento-azul);
+  --grupo-bg: var(--info-bg);
+  --grupo-ink: var(--info);
+}
+.sidebar__group:nth-child(4) {
+  --grupo: var(--acento-naranja);
+  --grupo-bg: var(--acento-naranja-bg);
+  --grupo-ink: var(--acento-naranja-ink);
+}
+.sidebar__group:nth-child(5) {
+  --grupo: var(--acento-dorado);
+  --grupo-bg: var(--warn-bg);
+  --grupo-ink: var(--warn);
+}
+.sidebar__group:last-child:not(:first-child) {
+  --grupo: var(--acento-morado);
+  --grupo-bg: var(--violet-bg);
+  --grupo-ink: var(--violet);
+}
+.sidebar__group .sidebar__link:not(.active) > .portal-icon {
+  color: var(--grupo);
+}
+.sidebar__group .sidebar__link:not(.active) .sidebar__link-count {
+  background: var(--grupo-bg);
+  color: var(--grupo-ink);
 }
 .sidebar .sidebar__submenu {
   display: block;
@@ -443,7 +476,7 @@
   right: 4px;
   width: 7px;
   height: 7px;
-  background: var(--green);
+  background: var(--acento-naranja);
   border: 1px solid var(--background);
   border-radius: 50%;
 }

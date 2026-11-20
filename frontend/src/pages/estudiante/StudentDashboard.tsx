@@ -6,7 +6,6 @@ import { PageHeading } from '../../components/ui/PageHeading';
 import { DashboardScope, PortalCharts } from '../../components/ui/PortalCharts';
 import type { DashboardScopeData } from '../../components/ui/PortalCharts';
 import { Stat } from '../../components/ui/Stat';
-import { formatFecha } from '../../utils/fechas';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
 import { formulariosDelEstudiante, porResponder } from '../../utils/formulariosEstudiante';
 
@@ -26,6 +25,7 @@ function StudentPanel({ scope }: { scope: DashboardScopeData }) {
       />
     );
   const realizadas = sesiones.filter((s) => s.estado === 'realizada');
+  const programadas = sesiones.filter((s) => s.estado === 'programada').length;
   const asistidas = realizadas.filter((s) =>
     s.asistentes.some(
       (a) => a.estudianteId === estudiante.id && ['asistio', 'tarde'].includes(a.estado),
@@ -60,9 +60,11 @@ function StudentPanel({ scope }: { scope: DashboardScopeData }) {
       />
       <div className="dashboard-metrics">
         <Stat
-          label="Próxima sesión"
-          value={proxima ? formatFecha(proxima.fecha) : '—'}
+          label="Sesiones programadas"
+          value={programadas}
+          note="En el periodo seleccionado"
           icon={<CalendarDays />}
+          tone="info"
         />
         <Stat
           label="Asistencia"
@@ -75,12 +77,14 @@ function StudentPanel({ scope }: { scope: DashboardScopeData }) {
           value={pendientes}
           note="Formularios por responder"
           icon={<ClipboardList />}
+          tone="dorado"
         />
         <Stat
           label="En seguimiento"
           value={abiertas.length}
           note="Solicitudes de apoyo"
           icon={<Send />}
+          tone="violeta"
         />
       </div>
       <div className="dashboard-focus-grid">

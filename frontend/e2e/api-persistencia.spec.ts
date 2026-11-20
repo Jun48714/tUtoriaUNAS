@@ -72,7 +72,8 @@ test('asistencia del tutor libera la evaluación; otro navegador recupera el bor
       await tutor.evaluate(() => document.documentElement.scrollWidth - innerWidth),
     ).toBeLessThanOrEqual(1);
   }
-  await attendance.getByRole('button', { name: 'Marcar todos como presentes' }).click();
+  for (const radio of await attendance.getByRole('radio', { name: /^Asistió:/ }).all())
+    await radio.check();
   const savedAttendance = tutor.waitForResponse(
     (r) => r.url().endsWith('/SES-PRUEBA-individual/asistencia') && r.request().method() === 'PUT',
   );

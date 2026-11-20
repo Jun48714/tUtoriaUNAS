@@ -214,6 +214,9 @@ export function TutorAttendance() {
   );
 }
 
+// La oficina registra todas las tutorías como académicas; el campo ya no se pregunta.
+const TIPO_TUTORIA = 'Académica';
+
 function AttendanceEditor({
   sesion,
   onClose,
@@ -235,7 +238,6 @@ function AttendanceEditor({
   const [guardando, setGuardando] = useState(false);
   const [evidencia, setEvidencia] = useState<File>();
   const [descargando, setDescargando] = useState(false);
-  const [tipoTutoria, setTipoTutoria] = useState('Académica');
   const [asistentes, setAsistentes] = useState<Sesion['asistentes']>(() =>
     sesion.asistentes.map((a) => ({
       ...a,
@@ -255,7 +257,7 @@ function AttendanceEditor({
     setGuardando(true);
     setError('');
     try {
-      await onSave(asistentes, mensaje, tipoTutoria, version, evidencia);
+      await onSave(asistentes, mensaje, TIPO_TUTORIA, version, evidencia);
       setCompletada(true);
     } catch (e) {
       setError(
@@ -275,7 +277,7 @@ function AttendanceEditor({
   return (
     <Sheet
       title={sesion.tema}
-      description={`${formatFechaLarga(sesion.fecha)} · ${sesion.horaInicio}–${sesion.horaFin} · ${sesion.codigo}`}
+      description={`${formatFechaLarga(sesion.fecha)} · ${sesion.horaInicio}–${sesion.horaFin}`}
       wide
       onClose={onClose}
       footer={
@@ -298,117 +300,91 @@ function AttendanceEditor({
         </>
       }
     >
-      <div className="stack">
-        <p className="small muted">Marca la asistencia de todos los convocados.</p>
+      <div className="attendance-editor">
         {error && (
           <Alert tone="riesgo" title="Revisa el registro">
             {error}
           </Alert>
         )}
-        <div className="ui-row ui-row--between ui-row--wrap">
-          <strong>
-            {total} de {asistentes.length} asistentes
-          </strong>
-          <span className="small muted">
-            Formato {sesion.tipo === 'individual' ? '06' : '07'} · {sesion.semestreId}
-          </span>
-        </div>
-        <button
-          type="button"
-          className="btn btn-falcon-default"
-          onClick={() => {
-            setAsistentes((lista) =>
-              lista.map((a) => ({
-                ...a,
-                estado: 'asistio',
-                horaRegistro: a.horaRegistro ?? sesion.horaInicio,
-              })),
-            );
-            setMarcados(new Set(asistentes.map((a) => a.estudianteId)));
-          }}
-        >
-          Marcar todos como presentes
-        </button>
-        <table className="attendance-students">
-          <caption className="sr-only">Asistencia de los estudiantes de esta sesión</caption>
-          <thead>
-            <tr>
-              <th scope="col">Estudiante</th>
-              <th scope="col">Asistió</th>
-              <th scope="col">Faltó</th>
-            </tr>
-          </thead>
-          <tbody>
-            {asistentes.map((asistente) => {
-              const estudiante = estudiantePorId(asistente.estudianteId);
-              const nombre = estudiante ? nombreCompleto(estudiante) : asistente.estudianteId;
-              return (
-                <tr className="attendance-student" key={asistente.estudianteId}>
-                  <th scope="row">
-                    <strong>{nombre}</strong>
-                    <span className="cell-note mono">
-                      {estudiante?.codigo ?? asistente.estudianteId}
-                    </span>
-                  </th>
-                  {(['asistio', 'falto'] as const).map((estado) => (
-                    <td key={estado}>
-                      <label className="attendance-choice">
-                        <input
-                          type="radio"
-                          name={`asistencia-${asistente.estudianteId}`}
-                          value={estado}
-                          disabled={guardando}
-                          checked={
-                            marcados.has(asistente.estudianteId) && asistente.estado === estado
-                          }
-                          onChange={() => {
-                            setMarcados((lista) => new Set([...lista, asistente.estudianteId]));
-                            setAsistentes((lista) =>
-                              lista.map((alumno) =>
-                                alumno.estudianteId === asistente.estudianteId
-                                  ? {
-                                      ...alumno,
-                                      estado,
-                                      horaRegistro:
-                                        estado === 'asistio'
-                                          ? (alumno.horaRegistro ?? sesion.horaInicio)
-                                          : null,
-                                    }
-                                  : alumno,
-                              ),
-                            );
-                          }}
-                        />
-                        <span className="sr-only">
-                          {estado === 'asistio' ? 'Asistió' : 'Faltó'}: {nombre}
-                        </span>
-                      </label>
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {API_MODE && sesion.tipo === 'individual' && (
-          <label className="field">
-            <span>Tipo de tutoría individual</span>
-            <select
-              className="select"
-              value={tipoTutoria}
-              disabled={guardando}
-              onChange={(e) => setTipoTutoria(e.target.value)}
-            >
-              <option>Académica</option>
-              <option>Personal</option>
-              <option>Social</option>
-            </select>
-          </label>
-        )}
+        <section className="attendance-editor__marco" aria-labelledby="asistencia-titulo">
+          <header className="attendance-editor__cabecera">
+            <h3 id="asistencia-titulo">Asistencia</h3>
+            <span>
+              {total} de {asistentes.length} asistentes · Formato{' '}
+              {sesion.tipo === 'individual' ? '06' : '07'}
+            </span>
+          </header>
+          <table className="attendance-students">
+            <caption className="sr-only">Asistencia de los estudiantes de esta sesión</caption>
+            <thead>
+              <tr>
+                <th scope="col">Estudiante</th>
+                <th scope="col">Asistió</th>
+                <th scope="col">Faltó</th>
+              </tr>
+            </thead>
+            <tbody>
+              {asistentes.map((asistente) => {
+                const estudiante = estudiantePorId(asistente.estudianteId);
+                const nombre = estudiante ? nombreCompleto(estudiante) : asistente.estudianteId;
+                return (
+                  <tr className="attendance-student" key={asistente.estudianteId}>
+                    <th scope="row">
+                      <strong>{nombre}</strong>
+                      <span className="cell-note mono">
+                        {estudiante?.codigo ?? asistente.estudianteId}
+                      </span>
+                    </th>
+                    {(['asistio', 'falto'] as const).map((estado) => (
+                      <td key={estado}>
+                        <label className="attendance-choice">
+                          <input
+                            type="radio"
+                            name={`asistencia-${asistente.estudianteId}`}
+                            value={estado}
+                            disabled={guardando}
+                            checked={
+                              marcados.has(asistente.estudianteId) && asistente.estado === estado
+                            }
+                            onChange={() => {
+                              setMarcados((lista) => new Set([...lista, asistente.estudianteId]));
+                              setAsistentes((lista) =>
+                                lista.map((alumno) =>
+                                  alumno.estudianteId === asistente.estudianteId
+                                    ? {
+                                        ...alumno,
+                                        estado,
+                                        horaRegistro:
+                                          estado === 'asistio'
+                                            ? (alumno.horaRegistro ?? sesion.horaInicio)
+                                            : null,
+                                      }
+                                    : alumno,
+                                ),
+                              );
+                            }}
+                          />
+                          <span className="sr-only">
+                            {estado === 'asistio' ? 'Asistió' : 'Faltó'}: {nombre}
+                          </span>
+                        </label>
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </section>
         {API_MODE && (
           <section className="stack stack--sm" aria-label="Evidencia de asistencia">
             <label className="field">
-              <span>Evidencia (opcional)</span>
+              <span>
+                Evidencia{' '}
+                <small className="attendance-editor__ayuda">
+                  Opcional · {sesion.tipo === 'grupal' ? 'foto o PDF' : 'PDF'} hasta 8 MB
+                </small>
+              </span>
               <input
                 className="input"
                 type="file"
@@ -438,9 +414,6 @@ function AttendanceEditor({
                 />
               </label>
             )}
-            <p className="small muted">
-              {sesion.tipo === 'grupal' ? 'Foto o PDF' : 'PDF'} · Hasta 8 MB.
-            </p>
             {evidencia && (
               <p className="small">
                 Adjunto seleccionado: {evidencia.name}{' '}
@@ -490,7 +463,12 @@ function AttendanceEditor({
             </details>
           )}
           <label className="field" htmlFor="asistencia-acuerdo">
-            <span>Nuevo acuerdo o mensaje</span>
+            <span>
+              Acuerdo{' '}
+              <small className="attendance-editor__ayuda">
+                Opcional · lo verán los estudiantes de la sesión
+              </small>
+            </span>
             <textarea
               id="asistencia-acuerdo"
               className="textarea"
@@ -498,20 +476,10 @@ function AttendanceEditor({
               value={mensaje}
               maxLength={2000}
               onChange={(e) => setMensaje(e.target.value)}
-              aria-describedby="asistencia-acuerdo-ayuda"
               placeholder="Escribe el acuerdo de esta sesión…"
             />
           </label>
-          <p id="asistencia-acuerdo-ayuda" className="small muted">
-            Se mostrará a los estudiantes de esta sesión. Solo verán el acuerdo y la cantidad de
-            asistentes.
-          </p>
         </section>
-        <p className="small muted">
-          {API_MODE
-            ? 'La asistencia y el formato de atención se guardan al confirmar el registro.'
-            : 'Demostración: registro guardado en este navegador.'}
-        </p>
       </div>
     </Sheet>
   );

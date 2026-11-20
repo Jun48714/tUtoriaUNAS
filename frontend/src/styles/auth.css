@@ -340,8 +340,8 @@
     border-color 0.15s ease;
 }
 .d01 .d01__cta:hover {
-  border-color: var(--green-hover, #256547);
-  background: var(--green-hover, #256547);
+  border-color: var(--green-hover, #22662f);
+  background: var(--green-hover, #22662f);
   color: #fff;
 }
 .d01 .d01__cta:disabled,
@@ -368,7 +368,7 @@
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--green-soft);
-  color: var(--green-hover, #256547);
+  color: var(--green-hover, #22662f);
   font-size: 0.78rem;
 }
 .d01 .d01__ok--error {

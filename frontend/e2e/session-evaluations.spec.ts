@@ -85,9 +85,7 @@ for (const caso of [
     await page.goto(enlace!);
     if (caso.tipo === 'individual' && caso.asistio)
       await revisarAnchos(page, 'confirmar-asistencia');
-    if (caso.asistio)
-      await modal.getByRole('button', { name: 'Marcar todos como presentes' }).click();
-    else await modal.getByRole('radio', { name: /^Faltó:/ }).check();
+    await modal.getByRole('radio', { name: caso.asistio ? /^Asistió:/ : /^Faltó:/ }).check();
     await modal.getByRole('button', { name: 'Finalizar sesión y guardar asistencia' }).click();
     await expect(modal).toHaveCount(0);
     await salir(page);

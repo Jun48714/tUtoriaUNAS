@@ -88,7 +88,7 @@
 .fe-section-title:focus,
 .fe-question-title:focus,
 .fe-option-text:focus {
-  border-bottom-color: #3d805b;
+  border-bottom-color: var(--green-500);
 }
 .fe-metadata {
   margin-top: 6px;
@@ -527,7 +527,7 @@
   color: #52635b;
 }
 .fe-sheet :focus-visible {
-  outline: 3px solid #3d805b;
+  outline: 3px solid var(--green-500);
   outline-offset: 3px;
 }
 @media (max-width: 600px) {

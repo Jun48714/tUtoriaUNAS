@@ -97,6 +97,7 @@ export function StudentRecord() {
           value={estudiante.promedioPonderado?.toFixed(1) ?? '—'}
           note="Escala 0–20"
           icon={<GraduationCap />}
+          tone="info"
         />
         <Stat
           label="Créditos aprobados"
@@ -114,6 +115,7 @@ export function StudentRecord() {
             value={`${Math.round(avance)}%`}
             note="Créditos aprobados del plan"
             icon={<UserCheck />}
+            tone="violeta"
           />
         )}
       </MetricGroup>

@@ -282,7 +282,7 @@ export function TutorReports() {
         name: actividad === 'asistencias' ? 'Asistencias' : 'Sesiones',
         data: serieSemanal.map((fila) => fila[actividad]),
         color: COLORES.verde,
-        fill: 'rgba(23,96,54,0.28)',
+        fill: 'rgba(43,125,60,0.28)',
         labels: true,
       }),
     ],
@@ -426,18 +426,21 @@ export function TutorReports() {
           value={atenciones.length}
           note="En sesiones realizadas"
           icon={<Users />}
+          tone="violeta"
         />
         <Stat
           label="Sesiones realizadas"
           value={realizadas.length}
           note={`${realizadas.filter((s) => s.tipo === 'individual').length} individuales · ${realizadas.filter((s) => s.tipo === 'grupal').length} grupales`}
           icon={<CalendarCheck />}
+          tone="info"
         />
         <Stat
           label="Formularios"
           value={instrumentos.length}
           note={`${instrumentos.filter((item) => item.estado === 'aprobado').length} aprobados`}
           icon={<ClipboardList />}
+          tone="dorado"
         />
       </MetricGroup>
 
@@ -687,12 +690,14 @@ export function TutorReports() {
                 value={atenciones.length}
                 note="En sesiones realizadas"
                 icon={<Users />}
+                tone="violeta"
               />
               <Stat
                 label="Sesiones"
                 value={realizadas.length}
                 note="Realizadas en el periodo"
                 icon={<CalendarCheck />}
+                tone="info"
               />
             </MetricGroup>
             <DataTable

@@ -587,7 +587,7 @@ export function PortalCharts({
           name: 'Realizadas · acumulado',
           data: periodos.map((p) => p.acumuladas),
           color: PALETTE.green,
-          fill: 'rgba(23,96,54,0.28)',
+          fill: 'rgba(43,125,60,0.28)',
         }),
         waveSeries({
           name: 'Programadas · acumulado',
@@ -702,7 +702,7 @@ export function PortalCharts({
           name: 'Realizadas',
           data: periodos.map((p) => p.realizadas),
           color: PALETTE.green,
-          fill: 'rgba(23,96,54,0.28)',
+          fill: 'rgba(43,125,60,0.28)',
           labels: true,
         }),
         waveSeries({

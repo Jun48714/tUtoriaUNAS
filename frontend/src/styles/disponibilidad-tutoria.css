@@ -164,6 +164,10 @@ ul.disponibilidad__leyenda {
   background: color-mix(in srgb, var(--danger) 30%, white);
   border-color: var(--danger);
 }
+.disponibilidad__leyenda li[data-tipo='sesion']::before {
+  background: var(--green-900);
+  border-color: var(--green-900);
+}
 .disponibilidad__grilla {
   display: grid;
   grid-template-columns: max-content repeat(var(--dias), minmax(0, 1fr));
@@ -244,6 +248,27 @@ ul.disponibilidad__leyenda {
   border-left: 3px solid var(--danger);
   border-radius: 4px;
   background: color-mix(in srgb, var(--danger) 26%, white);
+}
+.disponibilidad__seleccion {
+  position: absolute;
+  inset-inline: 2px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--green-900);
+  box-shadow: 0 2px 6px rgb(26 79 36 / 28%);
+  color: #fff;
+  font: 650 0.68rem/1 var(--font-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.disponibilidad__seleccion[data-cruce='true'] {
+  background: var(--danger);
+  box-shadow: 0 2px 6px rgb(150 59 56 / 30%);
 }
 .disponibilidad__cruces {
   margin: 0;

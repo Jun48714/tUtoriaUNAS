@@ -365,12 +365,14 @@ export function MonitoreoAvance() {
                 value={`${r.docentesConTutorados} / ${r.docentes}`}
                 note="docentes con estudiantes asignados"
                 icon={<Users aria-hidden="true" />}
+                tone="violeta"
               />
               <Stat
                 label="Sesiones"
                 value={r.sesionesRealizadas}
                 note={`${r.sesionesProgramadas} programadas`}
                 icon={<CalendarCheck aria-hidden="true" />}
+                tone="info"
               />
               <Stat
                 label="Formatos enviados"

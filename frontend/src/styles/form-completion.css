@@ -1,5 +1,5 @@
 .form-completion {
-  --fc-green: #176036;
+  --fc-green: var(--green);
   display: grid;
   justify-items: center;
   gap: 8px;

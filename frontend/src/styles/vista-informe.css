@@ -67,7 +67,7 @@ body.ri-ventana {
 }
 .ri-cabecera button:focus-visible,
 .ri-tabla-contenedor:focus-visible {
-  outline: 3px solid #3d805b;
+  outline: 3px solid var(--green-500);
   outline-offset: 3px;
 }
 body.ri-ventana .fo-impresion.ri-contenido {

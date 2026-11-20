@@ -142,6 +142,30 @@
   font-size: 48px;
 }
 
+.app-shell .workspace .stat--verde .stat__visual {
+  color: var(--green);
+}
+
+.app-shell .workspace .stat--info .stat__visual {
+  color: var(--acento-azul);
+}
+
+.app-shell .workspace .stat--dorado .stat__visual {
+  color: var(--acento-dorado);
+}
+
+.app-shell .workspace .stat--violeta .stat__visual {
+  color: var(--acento-morado);
+}
+
+.app-shell .workspace .stat--alerta .stat__visual {
+  color: var(--acento-naranja);
+}
+
+.app-shell .workspace .stat--riesgo .stat__visual {
+  color: var(--acento-rojo);
+}
+
 .app-shell .workspace .stat__note {
   margin-top: 2px;
   color: var(--ink-600);

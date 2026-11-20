@@ -14,6 +14,8 @@ export function DirectoryPage({
   return <div className={`directory-page ${className}`.trim()}>{children}</div>;
 }
 
+const TONOS_METRICA = ['info', 'dorado', 'violeta'] as const;
+
 interface DirectoryMetric {
   label: string;
   value: ReactNode;
@@ -41,13 +43,14 @@ export function DirectorySummary({
         note={parts.length === 2 ? `${parts[0]} de ${parts[1]} ${note}` : note}
         icon={icon}
       />
-      {metrics.map((metric) => (
+      {metrics.map((metric, index) => (
         <Stat
           key={metric.label}
           label={metric.label}
           value={metric.value}
           note={metric.note}
           icon={metric.icon}
+          tone={TONOS_METRICA[index % TONOS_METRICA.length]}
         />
       ))}
     </MetricGroup>

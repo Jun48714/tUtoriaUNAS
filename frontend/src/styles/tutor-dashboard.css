@@ -91,7 +91,7 @@
 
 .chart-simple-totals--waves > span:last-child i {
   background: none !important;
-  border-top: 2px dashed #3676b3;
+  border-top: 2px dashed var(--acento-azul);
 }
 
 .chart-simple-totals strong {

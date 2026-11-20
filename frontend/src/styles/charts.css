@@ -270,10 +270,10 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #176036;
+  background: var(--green);
 }
 .chart-series-legend > span + span i {
-  background: #7963b5;
+  background: var(--acento-morado);
 }
 .chart-series-legend b {
   color: var(--ink-800);
@@ -398,7 +398,7 @@
   height: 5px;
   width: 5px;
   border-radius: 50%;
-  background: #0d674f;
+  background: var(--green);
 }
 .chart-instrument-footer {
   display: grid;
@@ -412,7 +412,7 @@
   font-size: 14px;
 }
 .chart-instrument-footer strong {
-  color: #225640;
+  color: var(--green-800);
   font-size: 14px;
   font-weight: 750;
 }
@@ -430,7 +430,7 @@
 .chart-instrument-footer > div > span {
   display: block;
   height: 100%;
-  background: #0d674f;
+  background: var(--green);
   border-radius: inherit;
 }
 .chart-instrument-footer b {
