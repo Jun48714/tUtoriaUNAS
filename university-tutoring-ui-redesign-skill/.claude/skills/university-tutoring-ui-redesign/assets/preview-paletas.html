@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>SGT — Laboratorio conceptual de tipografía y diseño</title>
+<style>
+:root { color-scheme: light; --ink:#192635; --muted:#58677a; --border:#e2e7ee; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ink); background:#f3f5f8; }
+button { font:inherit; cursor:pointer; }
+*:focus-visible { outline:3px solid #2578c7; outline-offset:3px; }
+.wrap { max-width:1370px; padding:0 26px; margin:auto; }
+.intro { padding-top:48px; padding-bottom:30px; }
+.eyebrow { font-size:12px; font-weight:760; letter-spacing:.1em; color:#2b6c89; text-transform:uppercase; }
+.intro h1 { margin:9px 0 12px; font-size:clamp(32px,3.9vw,52px); line-height:1.07; letter-spacing:-.055em; max-width:850px; }
+.intro p { max-width:870px; margin:0 0 20px; color:#526174; font-size:15px; line-height:1.6; }
+.notice { display:inline-block; padding:10px 14px; border-left:3px solid #2c6e9a; background:#e6edf4; font-size:13px; line-height:1.45; }
+.tabs { display:flex; gap:8px; flex-wrap:wrap; padding:14px 0 25px; }
+.tabs button { border:1px solid #d9e0e9; color:#32445a; border-radius:10px; padding:9px 13px; background:#fff; font-size:13px; font-weight:650; }
+.tabs button[aria-pressed="true"] { background:#20394f; border-color:#20394f; color:#fff; }
+.gallery { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding-bottom:42px; }
+.concept[hidden] { display:none; }
+.concept { border:1px solid #dfe5eb; background:white; padding:20px; border-radius:19px; box-shadow:0 6px 27px #15283808; min-width:0; }
+.concept-head { display:flex; gap:15px; align-items:flex-start; justify-content:space-between; padding:2px 2px 16px; }
+.concept-label { font-size:11px; font-weight:750; color:#627286; letter-spacing:.08em; }
+.concept h2 { font-size:23px; margin:4px 0 6px; letter-spacing:-.035em; line-height:1.14; }
+.concept .desc { font-size:13px; color:#687587; margin:0; line-height:1.5; max-width:48ch; }
+.palette { display:flex; gap:4px; flex-shrink:0; border:1px solid #dde3eb; border-radius:8px; padding:5px; }
+.palette span { height:25px; width:24px; border-radius:5px; }
+.mock { --base:#f5f6fa; --brand:#243e5d; --accent:#16a89c; min-height:392px; overflow:hidden; background:var(--base); border:1px solid #e5e7ee; border-radius:11px; color:#1a2b38; }
+.mock .micro { font-size:10px; font-weight:600; line-height:1.3; }
+.mock .control { font-size:11px; font-weight:650; border:0; padding:9px 11px; border-radius:7px; color:#fff; background:var(--brand); white-space:nowrap; }
+.mock .control.accent { background:var(--accent); color:#112b29; }
+.mock .muted { color:#68798b; }
+.mock .num { font-variant-numeric:tabular-nums; }
+.mock .status { display:inline-flex; align-items:center; font-size:10px; border-radius:20px; padding:4px 8px; font-weight:650; white-space:nowrap; }
+.mock .status.good { color:#18684d; background:#e5f4ec; }
+.mock .status.warn { color:#915212; background:#fff2dc; }
+.mock .status.info { color:#285795; background:#e8eef9; }
+.mock .line { border-top:1px solid #e5e9ec; }
+.type-sample { background:#f9fafc; border:1px solid #edf0f4; border-radius:10px; padding:14px; margin-top:13px; }
+.type-sample .kicker { color:#58677a; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.075em; margin-bottom:8px; }
+.sample-grid { display:grid; grid-template-columns:1.1fr 1.1fr 1fr; gap:12px; }
+.sample { min-width:0; }
+.sample .role { display:block; font:600 11px/1.3 system-ui,sans-serif; color:#728094; margin-bottom:5px; }
+.sample .text-title { font-weight:730; font-size:24px; letter-spacing:-.035em; line-height:1.12; }
+.sample .text-subtitle { font-weight:430; font-size:14px; line-height:1.5; }
+.sample .text-label { font-weight:650; font-size:13px; line-height:1.3; }
+.type-foot { margin-top:11px; display:flex; flex-wrap:wrap; gap:8px; }
+.type-foot span { border:1px solid #e3e7ec; background:white; border-radius:6px; padding:4px 7px; font-size:11px; color:#4c5b6b; }
+/* A: precise workspace, Apple-like hierarchy but not a replica */
+.a { --base:#f6f8fb; --brand:#264461; --accent:#2caa9b; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; display:grid; grid-template-columns:88px minmax(0,1fr); }
+.a aside { border-right:1px solid #e0e7ed; background:#fff; padding:19px 9px; display:flex; flex-direction:column; align-items:stretch; gap:13px; }
+.a .brand { font-size:17px; color:var(--brand); font-weight:800; letter-spacing:-.06em; padding:2px 10px; }
+.a .sidelink { display:block; border-radius:8px; color:#66788a; font-size:9px; text-align:center; line-height:1.4; padding:9px 4px; }
+.a .sidelink.sel { background:#e8f4f3; color:#1b7268; font-weight:720; }
+.a .work { padding:25px 23px 19px; min-width:0; }
+.a h3 { font-size:27px; line-height:1.13; letter-spacing:-.046em; margin:6px 0 5px; font-weight:740; }
+.a .summarytext { font-size:12px; line-height:1.55; color:#6b7d89; margin:0 0 18px; }
+.a .numbers { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #dde5eb; border-bottom:1px solid #dde5eb; padding:14px 0; gap:14px; }
+.a .numbers .mini-label { font-size:10px; color:#708294; }
+.a .numbers strong { font-size:25px; font-weight:700; letter-spacing:-.055em; display:block; margin-top:3px; }
+.a .numbers .cell:not(:first-child) { border-left:1px solid #e1e7ed; padding-left:15px; }
+.a .rowtop { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:18px 0 9px; }
+.a .rowtop b { font-size:14px; font-weight:680; }
+.a .entry { font-size:11px; display:flex; gap:7px; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #e3e9ee; }
+/* B: hierarchy / video-list-inspired scan, not YouTube clone */
+.b { --base:#fbfaf7; --brand:#253e55; --accent:#ee6b42; font-family:Roboto,"Arial",system-ui,sans-serif; display:grid; grid-template-columns:118px minmax(0,1fr); }
+.b aside { background:var(--brand); color:#f7fbff; padding:17px 11px; }
+.b .brand { letter-spacing:-.035em; font-weight:800; font-size:19px; margin:0 0 23px 7px; }
+.b .nav { padding:10px 8px; font-size:11px; font-weight:600; margin-bottom:5px; color:#c6d7e2; border-radius:7px; }
+.b .nav.sel { background:#3f5970; color:#fff; }
+.b .work { padding:18px 16px; min-width:0; }
+.b h3 { font-size:27px; font-weight:800; letter-spacing:-.043em; line-height:1.08; margin:10px 0 4px; }
+.b .summarytext { font-size:12px; color:#73818d; margin:0 0 16px; }
+.b .feature { background:#f1ede6; display:flex; justify-content:space-between; align-items:center; gap:9px; padding:11px; border-radius:9px; border:1px solid #ebe4d9; margin-bottom:17px; }
+.b .feature b { font-size:11px; display:block; color:#334454; }
+.b .feature span { display:block; font-size:10px; color:#71818a; margin-top:3px; }
+.b .subhead { font-size:13px; font-weight:760; margin:0 0 8px; }
+.b .activity { display:flex; gap:10px; padding:9px 0; border-top:1px solid #e8e5df; align-items:center; }
+.b .thumb { flex:0 0 32px; height:30px; display:grid; place-items:center; border-radius:6px; background:#dfe9e5; color:#2b6656; font-size:12px; font-weight:800; }
+.b .activity:nth-of-type(3) .thumb { background:#ffede3; color:#a95338; }
+.b .activity b { display:block; font-size:11px; line-height:1.3; }
+.b .activity small { display:block; font-size:10px; color:#79838d; line-height:1.35; margin-top:3px; }
+/* C: social activity hub / Facebook-inspired information scanning, not copy */
+.c { --base:#f0f5fb; --brand:#25638a; --accent:#19a8a1; font-family:Inter,system-ui,"Segoe UI",sans-serif; }
+.c .bar { display:flex; align-items:center; justify-content:space-between; gap:13px; padding:12px 18px; background:#fff; border-bottom:1px solid #dce5ef; }
+.c .brand { font-size:18px; font-weight:800; letter-spacing:-.04em; color:var(--brand); }
+.c .bar .topnav { display:flex; gap:10px; font-size:10px; color:#6a7b91; font-weight:650; }
+.c .bar .topnav .active { color:#2368a5; border-bottom:2px solid var(--accent); padding-bottom:4px; }
+.c .content { padding:17px 18px; }
+.c h3 { margin:4px 0 4px; font-size:25px; font-weight:760; letter-spacing:-.045em; }
+.c .summarytext { font-size:12px; line-height:1.5; margin:0 0 17px; color:#60738b; }
+.c .colwrap { display:grid; grid-template-columns:1.46fr .8fr; gap:12px; }
+.c .feed { background:#fff; border:1px solid #dbe5ef; border-radius:9px; padding:12px; }
+.c .feed h4 { font-size:12px; margin:0 0 12px; }
+.c .item { display:flex; gap:8px; align-items:flex-start; padding:9px 0; border-top:1px solid #e7edf3; }
+.c .avatar { flex:0 0 25px; height:25px; display:grid; place-items:center; border-radius:8px; background:#e3f5f2; color:#17847f; font-size:11px; font-weight:750; }
+.c .item strong { font-size:10.5px; display:block; line-height:1.35; }
+.c .item small { color:#7e8b9b; font-size:10px; }
+.c .sidecard { background:#e0ebf6; padding:12px; border-radius:9px; align-self:start; }
+.c .sidecard b { color:#255f86; font-size:12px; }
+.c .sidecard strong { display:block; font-size:28px; margin:9px 0 2px; letter-spacing:-.07em; }
+.c .sidecard p { color:#4c7791; font-size:10px; line-height:1.4; margin:0 0 15px; }
+.c .sidecard button { border:1px solid #81a6ba; background:white; color:#205b7f; border-radius:7px; font-size:10px; font-weight:700; padding:8px 7px; }
+/* D: editorial uni, distinct workboard */
+.d { --base:#faf9f3; --brand:#245847; --accent:#d89329; font-family:Manrope,system-ui,"Segoe UI",sans-serif; }
+.d .bar { background:var(--brand); padding:13px 19px; display:flex; align-items:center; justify-content:space-between; gap:10px; color:#fff; }
+.d .brand { font-weight:800; font-size:16px; letter-spacing:-.04em; }
+.d .topnav { display:flex; gap:10px; font-size:10px; color:#d3e7dd; }
+.d .content { padding:22px 18px 14px; }
+.d .introline { border-top:3px solid var(--accent); width:31px; margin-bottom:10px; }
+.d h3 { font-weight:760; letter-spacing:-.05em; font-size:28px; line-height:1.12; margin:5px 0 4px; }
+.d .summarytext { color:#6c8175; font-size:12px; line-height:1.5; margin:0 0 17px; }
+.d .board { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #d7e2d8; border-bottom:1px solid #d7e2d8; }
+.d .board .measure { padding:14px 0; }
+.d .board .measure:nth-child(2) { padding-left:19px; border-left:1px solid #d7e2d8; }
+.d .measure strong { display:block; font-size:29px; font-weight:780; letter-spacing:-.06em; color:#235e49; }
+.d .measure span { font-size:11px; color:#6e8074; }
+.d .split { display:grid; grid-template-columns: 1fr auto; gap:12px; margin-top:20px; }
+.d .split h4 { font-size:14px; margin:0 0 8px; letter-spacing:-.02em; }
+.d .split p { font-size:11px; line-height:1.5; color:#647a6e; margin:0; }
+.d .task { margin-top:16px; display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid #e3e9df; font-size:11px; gap:8px; }
+.d .task + .task { margin-top:0; }
+/* specimen variations */
+.concept[data-design="a"] .sample .text-title { letter-spacing:-.05em; font-weight:735; }
+.concept[data-design="b"] .sample { font-family:Roboto,Arial,system-ui,sans-serif; }
+.concept[data-design="b"] .sample .text-title { font-weight:850; letter-spacing:-.045em; }
+.concept[data-design="c"] .sample { font-family:Inter,system-ui,sans-serif; }
+.concept[data-design="c"] .sample .text-title { font-weight:770; }
+.concept[data-design="d"] .sample { font-family:Manrope,system-ui,sans-serif; }
+.concept[data-design="d"] .sample .text-title { font-weight:800; letter-spacing:-.045em; }
+.footer { max-width:1370px; padding:0 26px 52px; margin:auto; color:#657287; line-height:1.65; font-size:13px; }
+@media(max-width:1130px) { .gallery { grid-template-columns:1fr; } .mock { min-height:385px; } }
+@media(max-width:620px) { .wrap { padding:0 12px; } .intro { padding-top:28px; } .concept { padding:13px; } .concept-head { flex-direction:column-reverse; } .palette { align-self:flex-start; } .sample-grid { grid-template-columns:1fr 1fr; } .mock { min-height:350px; } .a { grid-template-columns:60px 1fr; } .a .work { padding:17px 12px; } .a aside { padding:15px 3px; } .a .numbers { gap:4px; } .a .numbers .cell:not(:first-child) { padding-left:7px; } .a .numbers strong { font-size:21px; } .b { grid-template-columns:78px 1fr; } .b aside { padding:12px 4px; } .b .work { padding:15px 10px; } .b .brand { font-size:16px; } .c .content { padding:14px 10px; } .c .colwrap { grid-template-columns:1fr; } .c .sidecard { display:none; } .d .content { padding:18px 12px; } }
+</style>
+</head>
+<body>
+<header class="wrap intro">
+  <div class="eyebrow">SGT / Laboratorio de dirección visual</div>
+  <h1>Más color, mejor tipografía.<br>Sin parecer una plantilla.</h1>
+  <p>Cuatro conceptos independientes inspirados en principios de composición y lectura de productos digitales destacados. Compara tamaños, pesos, títulos, subtítulos, textos y organización. La identidad visual final debe surgir de tu frontend real, no copiar ninguna plataforma.</p>
+  <div class="notice"><strong>Vista previa incluida en la skill.</strong> Todos los nombres y números son ficticios. No es una captura del SGT actual. La «Propuesta 0 · Evolución actual» se genera cuando Claude examine el repositorio.</div>
+</header>
+<div class="wrap"><nav class="tabs" aria-label="Filtrar conceptos">
+<button data-filter="all" aria-pressed="true">Ver todas</button><button data-filter="a" aria-pressed="false">A · Precisión</button><button data-filter="b" aria-pressed="false">B · Señal</button><button data-filter="c" aria-pressed="false">C · Conexión</button><button data-filter="d" aria-pressed="false">D · Editorial</button>
+</nav></div>
+<main class="wrap gallery">
+<section class="concept" data-design="a" aria-labelledby="name-a">
+ <div class="concept-head"><div><span class="concept-label">A / INSPIRACIÓN APPLE</span><h2 id="name-a">Precisión serena</h2><p class="desc">Jerarquía sutil, medidas exactas, amplitud controlada, navegación compacta. Limpio pero no vacío.</p></div><div class="palette" title="60 / 30 / 10: base, estructura, acento"><span style="background:#f6f8fb"></span><span style="background:#264461"></span><span style="background:#2caa9b"></span></div></div>
+ <div class="mock a"><aside><div class="brand">SGT</div><div class="sidelink sel">◫<br>Inicio</div><div class="sidelink">◷<br>Sesiones</div><div class="sidelink">▤<br>Reportes</div></aside><div class="work"><div class="micro muted">TUTORÍA UNIVERSITARIA / 2026-II</div><h3>Seguimiento tutorial</h3><p class="summarytext">Una visión clara de las sesiones y los registros del semestre.</p><div class="numbers"><div class="cell"><span class="mini-label">Sesiones</span><strong class="num">128</strong></div><div class="cell"><span class="mini-label">En revisión</span><strong class="num">21</strong></div><div class="cell"><span class="mini-label">Completadas</span><strong class="num">107</strong></div></div><div class="rowtop"><b>Registros recientes</b><button class="control" type="button">Crear sesión</button></div><div class="entry"><span>Entrevista individual</span><span class="status good">Completada</span></div><div class="entry"><span>Ficha de seguimiento</span><span class="status warn">Pendiente</span></div><div class="entry"><span>Informe de tutoría</span><span class="status info">En revisión</span></div></div></div>
+ <div class="type-sample"><div class="kicker">Muestra tipográfica / sistema y espacios</div><div class="sample-grid"><div class="sample"><span class="role">TÍTULO</span><div class="text-title">Seguimiento</div></div><div class="sample"><span class="role">SUBTÍTULO</span><div class="text-subtitle">Consulta el progreso de cada estudiante.</div></div><div class="sample"><span class="role">ETIQUETA Y ACCIÓN</span><div class="text-label">Período académico</div><span style="font-size:12px;color:#617587">Filtrar registros</span></div></div><div class="type-foot"><span>Fuente: system-ui</span><span>H1 30/700</span><span>Sección 20/650</span><span>Cuerpo 15/400</span></div></div>
+</section>
+<section class="concept" data-design="b" aria-labelledby="name-b">
+ <div class="concept-head"><div><span class="concept-label">B / INSPIRACIÓN YOUTUBE</span><h2 id="name-b">Señal y ritmo</h2><p class="desc">Títulos que captan la atención, contexto secundario y listas escaneables para trabajar con rapidez.</p></div><div class="palette" title="60 / 30 / 10"><span style="background:#fbfaf7"></span><span style="background:#253e55"></span><span style="background:#ee6b42"></span></div></div>
+ <div class="mock b"><aside><div class="brand">SGT</div><div class="nav sel">Panel general</div><div class="nav">Estudiantes</div><div class="nav">Tutorías</div><div class="nav">Documentos</div></aside><div class="work"><span class="micro muted">SEMESTRE 2026-II</span><h3>Todo bajo control.</h3><p class="summarytext">21 acciones esperan seguimiento esta semana.</p><div class="feature"><div><b>Tu siguiente actividad</b><span>Revisa los registros pendientes</span></div><button type="button" class="control accent">Revisar</button></div><h4 class="subhead">Actividad reciente</h4><div class="activity"><div class="thumb">01</div><div><b>Sesión de acompañamiento</b><small>Docente tutor · Completada ayer</small></div></div><div class="activity"><div class="thumb">02</div><div><b>Ficha de orientación académica</b><small>Estudiante · Pendiente de revisión</small></div></div><div class="activity"><div class="thumb">03</div><div><b>Informe de actividades</b><small>Comisión de tutoría · En proceso</small></div></div></div></div>
+ <div class="type-sample"><div class="kicker">Muestra tipográfica / lectura rápida</div><div class="sample-grid"><div class="sample"><span class="role">TÍTULO</span><div class="text-title">Tus tutorías</div></div><div class="sample"><span class="role">SUBTÍTULO</span><div class="text-subtitle">Lo más importante, en un vistazo.</div></div><div class="sample"><span class="role">ETIQUETA Y ACCIÓN</span><div class="text-label">Última actividad</div><span style="font-size:12px;color:#617587">Consultar registros</span></div></div><div class="type-foot"><span>Fuente: Roboto/Arial</span><span>H1 30/750</span><span>Sección 18/700</span><span>Metadatos 12/450</span></div></div>
+</section>
+<section class="concept" data-design="c" aria-labelledby="name-c">
+ <div class="concept-head"><div><span class="concept-label">C / INSPIRACIÓN FACEBOOK</span><h2 id="name-c">Conexión útil</h2><p class="desc">Actividad contextual, navegación familiar y flujos bien identificados. Lo social se transforma en seguimiento académico.</p></div><div class="palette" title="60 / 30 / 10"><span style="background:#f0f5fb"></span><span style="background:#25638a"></span><span style="background:#19a8a1"></span></div></div>
+ <div class="mock c"><div class="bar"><div class="brand">SGT · UNAS</div><div class="topnav"><span class="active">Inicio</span><span>Sesiones</span><span>Archivos</span></div></div><div class="content"><span class="micro muted">ÁREA DE TUTORÍA</span><h3>Bienvenido al seguimiento</h3><p class="summarytext">Actualizaciones relevantes de tus sesiones de tutoría.</p><div class="colwrap"><div class="feed"><h4>Últimos movimientos</h4><div class="item"><span class="avatar">S</span><div><strong>Sesión de tutoría registrada</strong><small>Hoy · 09:24</small></div></div><div class="item"><span class="avatar">F</span><div><strong>Ficha enviada para revisión</strong><small>Ayer · 15:10</small></div></div><div class="item"><span class="avatar">I</span><div><strong>Informe de seguimiento listo</strong><small>Hace 2 días</small></div></div></div><div class="sidecard"><b>Por atender</b><strong class="num">21</strong><p>Registros con acciones pendientes</p><button type="button">Ver pendientes</button></div></div></div></div>
+ <div class="type-sample"><div class="kicker">Muestra tipográfica / contexto y actividad</div><div class="sample-grid"><div class="sample"><span class="role">TÍTULO</span><div class="text-title">Tu actividad</div></div><div class="sample"><span class="role">SUBTÍTULO</span><div class="text-subtitle">Cambios recientes y tareas por hacer.</div></div><div class="sample"><span class="role">ETIQUETA Y ACCIÓN</span><div class="text-label">Último movimiento</div><span style="font-size:12px;color:#617587">Ver conversación</span></div></div><div class="type-foot"><span>Fuente: Inter/system-ui</span><span>H1 28/720</span><span>Sección 18/650</span><span>Cuerpo 15/450</span></div></div>
+</section>
+<section class="concept" data-design="d" aria-labelledby="name-d">
+ <div class="concept-head"><div><span class="concept-label">D / IDENTIDAD ACADÉMICA PROPIA</span><h2 id="name-d">Editorial institucional</h2><p class="desc">Una dirección distinta: estructura tipo cuaderno de trabajo, titulares expresivos y métricas integradas en el contenido.</p></div><div class="palette" title="60 / 30 / 10"><span style="background:#faf9f3"></span><span style="background:#245847"></span><span style="background:#d89329"></span></div></div>
+ <div class="mock d"><div class="bar"><div class="brand">SGT / Gestión de Tutoría</div><div class="topnav"><span>Inicio</span><span>Registro</span><span>Informes</span></div></div><div class="content"><div class="introline"></div><span class="micro muted">PANORAMA ACADÉMICO · 2026-II</span><h3>El progreso en perspectiva.</h3><p class="summarytext">Consolida el acompañamiento tutorial con información confiable.</p><div class="board"><div class="measure"><strong class="num">128</strong><span>Sesiones registradas</span></div><div class="measure"><strong class="num">84%</strong><span>Avance del período</span></div></div><div class="split"><div><h4>Próximas acciones</h4><p>Prioriza casos según su situación de seguimiento.</p></div><button class="control" type="button">Abrir</button></div><div class="task"><span>Validar fichas pendientes</span><span class="status warn">Pendiente</span></div><div class="task"><span>Revisar informe semestral</span><span class="status info">En proceso</span></div></div></div>
+ <div class="type-sample"><div class="kicker">Muestra tipográfica / identidad propia</div><div class="sample-grid"><div class="sample"><span class="role">TÍTULO</span><div class="text-title">Cada avance</div></div><div class="sample"><span class="role">SUBTÍTULO</span><div class="text-subtitle">Una mirada clara al acompañamiento.</div></div><div class="sample"><span class="role">ETIQUETA Y ACCIÓN</span><div class="text-label">Cierre semestral</div><span style="font-size:12px;color:#617587">Preparar informe</span></div></div><div class="type-foot"><span>Fuente: Manrope/system-ui</span><span>H1 31/700</span><span>Sección 19/650</span><span>Cuerpo 15/400</span></div></div>
+</section>
+</main>
+<footer class="footer">La proporción 60/30/10 es una referencia de peso visual, no una exigencia de que cada píxel pertenezca a exactamente tres colores. Los tamaños indicados son decisiones de partida para escritorio; el frontend real requiere auditar su densidad, contrastes, accesibilidad, roles y fuentes ya instaladas. El HTML no incluye fuentes de Apple, YouTube ni Facebook: utiliza familias y alternativas de sistema sin empaquetar activos propietarios.</footer>
+<script>
+const filters = document.querySelectorAll('[data-filter]');
+const concepts = document.querySelectorAll('.concept');
+filters.forEach(button=> button.addEventListener('click',()=>{
+  const filter = button.getAttribute('data-filter');
+  filters.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  concepts.forEach(card=>card.hidden=(filter!=='all' && card.getAttribute('data-design')!==filter));
+}));
+</script>
+</body>
+</html>

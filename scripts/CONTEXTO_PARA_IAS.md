@@ -1,6 +1,6 @@
 # Contexto compartido — Tutoría UNAS
 
-Actualizado: **16 de noviembre de 2026**. Este archivo conserva el traspaso de trabajo
+Actualizado: **20 de noviembre de 2026** (sección 21). Este archivo conserva el traspaso de trabajo
 solicitado por el usuario para Claude, Codex y otras IA. Las cifras son una fotografía
 de esa fecha; una sesión posterior debe verificar los cambios antes de repetirlas como actuales.
 
@@ -518,3 +518,42 @@ la mezcla estaba en los procesos que servían la aplicación y se corrigió en e
 - Al pulsar un tramo disponible del calendario se rellenan fecha, inicio y fin. La hora se
   elige en pasos de 30 minutos, conserva la duración actual y verifica todo el intervalo.
   También se puede elegir con Intro y mover el tramo con las flechas.
+
+## 21. Carga del login y del panel (20 de noviembre de 2026, commit `c56d29f`)
+
+Copia de trabajo: `C:\Users\UNAS\Downloads\Tutoria\tutoria-unas-nube` (clon de GitHub, rama
+`main`). El usuario **prefiere su diseño actual**: rechazó las propuestas de rediseño y el
+color de las tarjetas KPI (`Stat` recibe `tone`, pero no existe CSS `.stat--*`; se dejó así).
+Toda optimización debe conservar la apariencia al píxel.
+
+- Arranque local: `scripts/Preparar-Postgres.ps1` (5449), `scripts/Start-Backend.ps1` (5080) y
+  `frontend/dev.ps1` (5173). Pruebas de API: `scripts/Test-Postgres.ps1` (base aparte
+  `tutoria_unas_tests`).
+- Login: iconos de acceso en SVG (`FormField` recibe un componente `Icono`; se eliminó
+  `iconVariant`) y foto con `fetchPriority="high"`. El CSS de Font Awesome se importa en
+  `AppLayout`, porque varias pantallas del portal usan clases `fa-*` sin importarlo.
+- `preloadLoginDestination` precarga ECharts al enviar el acceso. `echarts.min.js` es ahora un
+  subconjunto de ECharts 6.0.0 (line, bar, pie, grid, tooltip, legend, axisPointer,
+  `LegacyGridContainLabel`, canvas): 363 → 187 kB comprimido. Para otro tipo de gráfica hay que
+  regenerarlo; la cabecera del archivo lo indica. `containLabel: true` requiere
+  `LegacyGridContainLabel`, y la compilación necesita `process.env.NODE_ENV=production`.
+- `frontend/scripts/subconjunto-fontawesome.mjs` también recorta `src/assets/webfonts/fa-*.woff2`
+  desde `fa-*.full.woff2` (178 → 8 kB) si se define `SUBSET_FONT` (ruta a `subset-font`
+  instalado fuera del proyecto). Se corrigieron alias agrupados que se descartaban, el `src`
+  perdido de `@font-face`, las caras Brands y los glifos ASCII (`fa-plus` = `\2b`). Volvieron
+  iconos que faltaban: `heart-pulse`, caras de F04/F05/F10 y botones del editor de formatos.
+  **Al añadir un icono `fa-*` hay que ejecutar el script con `SUBSET_FONT`.**
+- Backend: `OrderBy` antes de `Take` en `SistemaService` (personas, usuarios, actividades) y en
+  `CredencialesCuentaService`; readiness con `AnyAsync`. Desaparece el aviso EF 10102.
+- `frontend/.prettierrc.json` usa `endOfLine: auto`; `format:check` pasa en Windows.
+- La depuración de `falcon-theme.css` pendiente en la sección 12 ya está hecha con
+  `scripts/purgar-falcon.mjs` (893 → 86 kB); volver a ejecutarlo no reduce más.
+- Medido (build demo, CPU 4×, 1,6 Mbps): gráficas del panel 3,5 → 2,3 s; login 692 → 513 kB;
+  JS del panel 399 → 226 kB; CLS 0. Verificado: 306 pruebas frontend, 124 de API, el script
+  `verificar-graficas-estables.mjs` en los 3 roles y 48 rutas del portal comparadas con capturas.
+- También se subieron `.gemini/` (skill impeccable para Gemini, con hooks) y
+  `university-tutoring-ui-redesign-skill/`, por pedido del usuario.
+- **Pendiente acordado:** el LCP del login (~1,6 s con red lenta) depende del JS inicial
+  (≈184 kB comprimido). El usuario lo dejó para después: medir primero qué JS necesita `/login`
+  y proponer opciones antes de editar. Tampoco se midió la API con datos reales (requiere su
+  sesión).
