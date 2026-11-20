@@ -44,7 +44,7 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
     {
         var actor = await Actor("crear", ct);
         actor.ExigirEscuelaParaGestion();
-        TutoriaError.Exigir(rol is "estudiante" or "tutor" or "coordinacion" && buscar.Length <= 150, "Filtros inválidos.");
+        TutoriaError.Exigir(rol is "estudiante" or "tutor" && buscar.Length <= 150, "Filtros inválidos.");
         if (buscar.Trim().Length < 2) return [];
         var tipo = rol == "estudiante" ? "estudiante" : "tutor";
         var personas = await db.Personas.AsNoTracking().Where(p => p.Activa && p.Tipo == tipo && (p.EscuelaId == actor.EscuelaId || (tipo == "tutor" && p.EscuelaId == ""))).ToArrayAsync(ct);
@@ -56,7 +56,7 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
     {
         var actor = await Actor("crear", ct); var email = seguridad.Correo(input.Correo);
         actor.ExigirEscuelaParaGestion();
-        TutoriaError.Exigir(input.Rol is "estudiante" or "tutor" or "coordinacion", "Elige un perfil válido.");
+        TutoriaError.Exigir(input.Rol is "estudiante" or "tutor", "Elige un perfil válido: estudiante o docente.");
         TutoriaError.Exigir(input.Ciclo is null or >= 1 and <= 10 && (input.Codigo?.Length ?? 0) <= 40, "Revisa el código y ciclo del alumno.");
         await using var tx = await credenciales.Bloquear(email, ct);
         TutoriaError.Exigir(!await db.CredencialesCuenta.AnyAsync(c => c.CorreoNormalizado == email && c.Rol == input.Rol, ct), "Ya existe una cuenta con este correo y perfil.", 409);

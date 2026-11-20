@@ -211,7 +211,6 @@ export function CrearCuenta({ onClose, rolInicial }: { onClose(): void; rolInici
               >
                 <option value="estudiante">Estudiante</option>
                 <option value="tutor">Docente</option>
-                <option value="coordinacion">Coordinación</option>
               </select>
             </label>
             {esAdmin && rol === 'tutor' && (

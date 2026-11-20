@@ -99,10 +99,10 @@ public sealed class CuentasCorreoTests(CuentasFixture fixture) : IClassFixture<C
         (await Ok<JsonElement>(await c.PostAsJsonAsync("/api/auth/login", new LoginLocalDto(email, password, rol)))).GetProperty("accessToken").GetString()!;
 
     [PostgresFact]
-    public async Task AdministracionCreaLosTresPerfilesYNoAceptaOtraEscuela()
+    public async Task AdministracionCreaLosPerfilesYNoAceptaOtraEscuela()
     {
         using var admin = await fixture.Admin();
-        foreach (var rol in new[] { "estudiante", "tutor", "coordinacion" })
+        foreach (var rol in new[] { "estudiante", "tutor" })
         {
             var email = Email("admin-");
             var creada = await Ok<CuentaCreadaDto>(await admin.PostAsJsonAsync("/api/cuentas", new CrearCuentaInput(email, rol, "Nombre ficticio", "Apellido ficticio")));

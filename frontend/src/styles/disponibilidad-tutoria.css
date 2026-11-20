@@ -164,10 +164,6 @@ ul.disponibilidad__leyenda {
   background: color-mix(in srgb, var(--danger) 30%, white);
   border-color: var(--danger);
 }
-.disponibilidad__leyenda li[data-tipo='seleccion']::before {
-  background: color-mix(in srgb, var(--green-300) 55%, transparent);
-  border: 2px solid var(--green-900);
-}
 .disponibilidad__grilla {
   display: grid;
   grid-template-columns: max-content repeat(var(--dias), minmax(0, 1fr));
@@ -233,8 +229,7 @@ ul.disponibilidad__leyenda {
   background: var(--surface);
 }
 .disponibilidad__linea,
-.disponibilidad__bloque,
-.disponibilidad__seleccion {
+.disponibilidad__bloque {
   position: absolute;
   inset-inline: 0;
 }
@@ -249,16 +244,6 @@ ul.disponibilidad__leyenda {
   border-left: 3px solid var(--danger);
   border-radius: 4px;
   background: color-mix(in srgb, var(--danger) 26%, white);
-}
-.disponibilidad__seleccion {
-  inset-inline: 1px;
-  border: 2px solid var(--green-900);
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--green-300) 55%, transparent);
-  pointer-events: none;
-}
-.disponibilidad__seleccion[data-cruce='true'] {
-  border-color: var(--ink-900);
 }
 .disponibilidad__cruces {
   margin: 0;

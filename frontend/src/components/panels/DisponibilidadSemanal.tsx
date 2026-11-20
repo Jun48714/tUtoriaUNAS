@@ -62,7 +62,6 @@ export function DisponibilidadSemanal({
       <ul className="disponibilidad__leyenda" aria-label="Leyenda del horario">
         <li data-tipo="libre">{completos ? 'Libre' : 'Sin confirmar'}</li>
         <li data-tipo="ocupado">Ocupado</li>
-        <li data-tipo="seleccion">Tu horario</li>
       </ul>
       {horasValidas && (
         <span className="sr-only" aria-live="polite">
@@ -131,17 +130,6 @@ export function DisponibilidadSemanal({
                     }}
                   />
                 ))}
-                {d.fecha === fecha && horasValidas && (
-                  <span
-                    className="disponibilidad__seleccion"
-                    aria-hidden="true"
-                    data-cruce={cruce}
-                    style={{
-                      top: `${escala(inicio)}%`,
-                      height: `${escala(fin) - escala(inicio)}%`,
-                    }}
-                  />
-                )}
               </div>
             </div>
           );
