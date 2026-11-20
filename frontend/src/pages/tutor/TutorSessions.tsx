@@ -405,12 +405,6 @@ export function TutorSessions() {
                   fin={nuevaFin}
                   ahora={ahora}
                   seleccionar={setNuevaFecha}
-                  seleccionarTramo={(fecha, inicio, fin) => {
-                    setNuevaFecha(fecha);
-                    setNuevaInicio(inicio);
-                    setNuevaFin(fin);
-                    setError('');
-                  }}
                 />
               ) : API_MODE && consultar && disponibilidadApi.isError ? (
                 <div className="stack">

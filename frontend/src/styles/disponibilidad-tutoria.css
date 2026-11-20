@@ -107,14 +107,15 @@ dialog.sheet.programacion-tutoria {
 }
 
 .disponibilidad {
-  --agenda-alto: 174px;
+  --agenda-alto: 236px;
   display: grid;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--ink-200);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(16 24 40 / 5%);
 }
 .disponibilidad__espera {
   margin: 0;
@@ -135,14 +136,37 @@ dialog.sheet.programacion-tutoria {
 }
 .disponibilidad__cabecera h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 650;
 }
-.disponibilidad__leyenda .badge {
-  padding: 2px 7px;
-  font-size: var(--text-ui-small);
+ul.disponibilidad__leyenda {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 4px 16px;
+  font-size: 0.75rem;
+  color: var(--ink-600);
 }
-.disponibilidad__indicacion {
-  margin-inline-start: auto;
+.disponibilidad__leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.disponibilidad__leyenda li::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--ok-bg);
+  border: 1px solid color-mix(in srgb, var(--green-700) 35%, transparent);
+}
+.disponibilidad__leyenda li[data-tipo='ocupado']::before {
+  background: color-mix(in srgb, var(--danger) 30%, white);
+  border-color: var(--danger);
+}
+.disponibilidad__leyenda li[data-tipo='seleccion']::before {
+  background: color-mix(in srgb, var(--green-300) 55%, transparent);
+  border: 2px solid var(--green-900);
 }
 .disponibilidad__grilla {
   display: grid;
@@ -167,7 +191,7 @@ dialog.sheet.programacion-tutoria {
   border-radius: var(--r-sm);
   background: transparent;
   color: var(--ink-800);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.15;
   cursor: pointer;
 }
@@ -189,8 +213,8 @@ dialog.sheet.programacion-tutoria {
   align-self: end;
   height: var(--agenda-alto);
   min-width: 2.3rem;
-  font: 0.65rem var(--font-mono, monospace);
-  color: var(--ink-600);
+  font: 0.68rem var(--font-mono, monospace);
+  color: var(--ink-500);
 }
 .disponibilidad__horas span {
   position: absolute;
@@ -202,26 +226,15 @@ dialog.sheet.programacion-tutoria {
   min-width: 0;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--ok-bg);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.disponibilidad__pista:disabled,
-.disponibilidad__pista[data-bloqueado='true'] {
-  cursor: not-allowed;
-}
-.disponibilidad__pista:focus-visible {
-  outline: 2px solid var(--green-700);
-  outline-offset: 1px;
 }
 .disponibilidad__pista[data-parcial='true'] {
   background: var(--surface);
 }
 .disponibilidad__linea,
 .disponibilidad__bloque,
-.disponibilidad__seleccion,
-.disponibilidad__preseleccion {
+.disponibilidad__seleccion {
   position: absolute;
   inset-inline: 0;
 }
@@ -232,23 +245,20 @@ dialog.sheet.programacion-tutoria {
   border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
 }
 .disponibilidad__bloque {
-  background: color-mix(in srgb, var(--danger) 68%, var(--danger-line));
+  inset-inline: 2px;
+  border-left: 3px solid var(--danger);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--danger) 26%, white);
 }
 .disponibilidad__seleccion {
+  inset-inline: 1px;
   border: 2px solid var(--green-900);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--green-300) 55%, transparent);
   pointer-events: none;
 }
 .disponibilidad__seleccion[data-cruce='true'] {
   border-color: var(--ink-900);
-}
-.disponibilidad__preseleccion {
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--green-700);
-  background: color-mix(in srgb, var(--green-300) 70%, transparent);
-  color: var(--green-900);
-  font: 600 0.64rem / 1 var(--font-mono, monospace);
-  pointer-events: none;
 }
 .disponibilidad__cruces {
   margin: 0;
@@ -261,7 +271,7 @@ dialog.sheet.programacion-tutoria {
 }
 @media (max-width: 420px) {
   .disponibilidad {
-    --agenda-alto: 148px;
+    --agenda-alto: 168px;
     padding-inline: 8px;
   }
   .disponibilidad__fecha {

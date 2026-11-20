@@ -1,16 +1,12 @@
-import { useId, useState } from 'react';
+
 import type { CSSProperties } from 'react';
-import { Badge } from '../ui/StatusBadge';
 import { aIso, desdeIso, formatFecha, sumarDias } from '../../utils/fechas';
 import { crucesDeBloque, origenOcupacion } from '../../services/disponibilidadTutoria';
 import type { DisponibilidadTutoria } from '../../services/disponibilidadTutoria';
 import '../../styles/disponibilidad-tutoria.css';
 
 const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const paso = 30;
 const minutos = (hora: string) => Number(hora.slice(0, 2)) * 60 + Number(hora.slice(3));
-const horaDe = (minuto: number) =>
-  `${String(Math.floor(minuto / 60)).padStart(2, '0')}:${String(minuto % 60).padStart(2, '0')}`;
 const formatoSemana = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' });
 
 export function DisponibilidadSemanal({
@@ -20,7 +16,6 @@ export function DisponibilidadSemanal({
   fin,
   ahora,
   seleccionar,
-  seleccionarTramo,
 }: {
   datos: DisponibilidadTutoria;
   fecha: string;
@@ -28,14 +23,8 @@ export function DisponibilidadSemanal({
   fin: string;
   ahora: number;
   seleccionar(fecha: string): void;
-  seleccionarTramo(fecha: string, inicio: string, fin: string): void;
 }) {
-  const ayuda = useId();
-  const [puntero, setPuntero] = useState<{ fecha: string; minuto: number | undefined } | null>(
-    null,
-  );
   const horasValidas = Boolean(inicio && fin && inicio < fin);
-  const duracion = horasValidas ? minutos(fin) - minutos(inicio) : 60;
   const completos = datos.sinHorario === 0;
   const lunes = desdeIso(datos.lunes);
   const semana = dias
@@ -58,11 +47,6 @@ export function DisponibilidadSemanal({
   const marcas = horas.filter(
     (h) => h === primeraHora || h === ultimaHora || (h - primeraHora) % 3 === 0,
   );
-  const ultimoInicio = Math.min(ultimaHora * 60, 24 * 60 - 1) - duracion;
-  const inicios = Array.from(
-    { length: Math.max(0, Math.floor((ultimoInicio - primeraHora * 60) / paso) + 1) },
-    (_, i) => primeraHora * 60 + i * paso,
-  );
   const cruceActual = horasValidas ? crucesDeBloque(datos, fecha, inicio, fin) : [];
   const ocupacionDelDia = bloques.filter((b) => b.fecha === fecha);
   const ultimaFecha = semana.at(-1)!.fecha;
@@ -75,14 +59,11 @@ export function DisponibilidadSemanal({
           {formatoSemana.formatRange(lunes, desdeIso(ultimaFecha))}
         </span>
       </div>
-      <div className="disponibilidad__leyenda" aria-label="Leyenda del horario">
-        <Badge tone={completos ? 'ok' : 'neutro'}>{completos ? 'Libre' : 'Sin confirmar'}</Badge>
-        <Badge tone="riesgo">Ocupado</Badge>
-        <span className="disponibilidad__indicacion small muted">Elige un tramo libre</span>
-      </div>
-      <span id={ayuda} className="sr-only">
-        Pulsa Intro para elegir un tramo o usa las flechas arriba y abajo para cambiar la hora.
-      </span>
+      <ul className="disponibilidad__leyenda" aria-label="Leyenda del horario">
+        <li data-tipo="libre">{completos ? 'Libre' : 'Sin confirmar'}</li>
+        <li data-tipo="ocupado">Ocupado</li>
+        <li data-tipo="seleccion">Tu horario</li>
+      </ul>
       {horasValidas && (
         <span className="sr-only" aria-live="polite">
           {formatFecha(fecha)}, {inicio} a {fin}.
@@ -98,35 +79,6 @@ export function DisponibilidadSemanal({
         </div>
         {semana.map((d) => {
           const bloquesDia = bloques.filter((b) => b.fecha === d.fecha);
-          const ocupados = bloquesDia.map((b) => ({
-            inicio: minutos(b.horaInicio),
-            fin: minutos(b.horaFin),
-          }));
-          const medianoche = Date.parse(`${d.fecha}T00:00:00-05:00`);
-          const tramos = inicios.filter(
-            (m) =>
-              medianoche + m * 60_000 > ahora &&
-              !ocupados.some((b) => m < b.fin && b.inicio < m + duracion),
-          );
-          const minutoActual = minutos(inicio);
-          const sugerido = tramos.find((m) => m >= minutoActual) ?? tramos[0];
-          const confirmar = (m: number | undefined) => {
-            if (m === undefined) return;
-            setPuntero(null);
-            seleccionarTramo(d.fecha, horaDe(m), horaDe(m + duracion));
-          };
-          const tramoApuntado = (pista: HTMLButtonElement, y: number) => {
-            const { top, height } = pista.getBoundingClientRect();
-            const minuto = primeraHora * 60 + ((y - top) / height) * rango;
-            if (ocupados.some((b) => minuto >= b.inicio && minuto < b.fin)) return undefined;
-            const candidato = Math.floor(minuto / paso) * paso;
-            return tramos.find((m) => m === candidato);
-          };
-          const sobreDia = puntero?.fecha === d.fecha;
-          const previo =
-            sobreDia && puntero.minuto !== undefined && tramos.includes(puntero.minuto)
-              ? puntero.minuto
-              : undefined;
           const cruce = horasValidas && crucesDeBloque(datos, d.fecha, inicio, fin).length > 0;
           const pasado = horasValidas && Date.parse(d.fecha + 'T' + inicio + ':00-05:00') <= ahora;
           const estado = !horasValidas
@@ -152,36 +104,11 @@ export function DisponibilidadSemanal({
                 </strong>
                 <small data-estado={estado}>{estado}</small>
               </button>
-              <button
-                type="button"
+              <div
                 className="disponibilidad__pista"
-                disabled={!tramos.length}
                 data-parcial={!completos}
-                data-bloqueado={sobreDia && previo === undefined}
-                aria-label={`Elegir horario del ${d.nombre} ${formatFecha(d.fecha)}`}
-                aria-describedby={ayuda}
-                onPointerMove={(e) => {
-                  if (e.pointerType === 'touch') return;
-                  const minuto = tramoApuntado(e.currentTarget, e.clientY);
-                  if (puntero?.fecha !== d.fecha || puntero.minuto !== minuto) {
-                    setPuntero({ fecha: d.fecha, minuto });
-                  }
-                }}
-                onPointerLeave={() => setPuntero(null)}
-                onClick={(e) =>
-                  confirmar(e.detail ? tramoApuntado(e.currentTarget, e.clientY) : sugerido)
-                }
-                onKeyDown={(e) => {
-                  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-                  e.preventDefault();
-                  confirmar(
-                    d.fecha !== fecha
-                      ? sugerido
-                      : e.key === 'ArrowUp'
-                        ? tramos.filter((m) => m < minutoActual).at(-1)
-                        : tramos.find((m) => m > minutoActual),
-                  );
-                }}
+                role="img"
+                aria-label={`Ocupación del ${d.nombre} ${formatFecha(d.fecha)}`}
               >
                 {horas.slice(1, -1).map((h) => (
                   <span
@@ -215,19 +142,7 @@ export function DisponibilidadSemanal({
                     }}
                   />
                 )}
-                {previo !== undefined && (
-                  <span
-                    className="disponibilidad__preseleccion"
-                    aria-hidden="true"
-                    style={{
-                      top: `${((previo - primeraHora * 60) / rango) * 100}%`,
-                      height: `${(duracion / rango) * 100}%`,
-                    }}
-                  >
-                    <span>{horaDe(previo)}</span>
-                  </span>
-                )}
-              </button>
+              </div>
             </div>
           );
         })}
