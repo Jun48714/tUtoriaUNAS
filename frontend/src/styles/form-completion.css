@@ -144,3 +144,17 @@
     display: none;
   }
 }
+
+/* Dentro del modal la ilustración se reduce para que la confirmación quepa sin scroll. */
+.sheet--instrumento .form-completion {
+  padding: 4px 0 8px;
+}
+.sheet--instrumento .fc-stage {
+  max-width: 340px;
+}
+.sheet--instrumento .fc-detail {
+  margin: 4px auto 10px;
+}
+.sheet--instrumento .fc-actions {
+  margin-top: 10px;
+}

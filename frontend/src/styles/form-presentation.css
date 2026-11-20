@@ -300,30 +300,45 @@
 /* Formularios del tutor en modal ancho: los campos cortos comparten fila y los
    largos (texto, opciones, tablas) ocupan todo el ancho. Reduce el scroll. */
 @media (min-width: 900px) {
-  .sheet--form .tutoring-form:not(.tutoring-form--read) .tutoring-fields {
+  .sheet--instrumento .tutoring-form:not(.tutoring-form--read) .tutoring-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px 24px;
     align-items: start;
   }
-  .sheet--form .tutoring-form:not(.tutoring-form--read) .tutoring-fields > * {
+  .sheet--instrumento .tutoring-form:not(.tutoring-form--read) .tutoring-fields > * {
     grid-column: 1 / -1;
   }
-  .sheet--form
+  .sheet--instrumento
     .tutoring-form:not(.tutoring-form--read)
     .tutoring-fields
     > [data-tipo='texto'],
-  .sheet--form
+  .sheet--instrumento
     .tutoring-form:not(.tutoring-form--read)
     .tutoring-fields
     > [data-tipo='numero'],
-  .sheet--form
+  .sheet--instrumento
     .tutoring-form:not(.tutoring-form--read)
     .tutoring-fields
     > [data-tipo='fecha'],
-  .sheet--form
+  .sheet--instrumento
     .tutoring-form:not(.tutoring-form--read)
     .tutoring-fields
     > [data-tipo='seleccion'] {
     grid-column: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .sheet--instrumento .tutoring-form:not(.tutoring-form--read) .tutoring-fields {
+    gap: 14px 24px;
+  }
+  .sheet--instrumento .sheet__body > .tutoring-form:not(.tutoring-form--read) > .tutoring-form__actions {
+    position: sticky;
+    bottom: -16px;
+    z-index: 1;
+    margin-inline: calc(-1 * var(--instrumento-inline));
+    padding: 12px var(--instrumento-inline);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
   }
 }

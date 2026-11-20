@@ -1266,6 +1266,15 @@ dialog.sheet--instrumento {
   height: min(460px, calc(100dvh - 32px));
   max-height: calc(100dvh - 32px);
 }
+/* Formularios con preguntas: más anchos y de alto adaptable para evitar el scroll. */
+@media (min-width: 900px) {
+  dialog.sheet--instrumento:has(.tutoring-form) {
+    width: min(1100px, calc(100vw - 48px));
+    /* Alto contenido y constante entre secciones: el scroll, si hace falta, es
+       solo del cuerpo y los botones quedan fijos abajo. */
+    height: min(620px, calc(100dvh - 64px));
+  }
+}
 .sheet--instrumento .sheet__head,
 .sheet--instrumento .sheet__foot {
   padding: 12px var(--instrumento-inline);
