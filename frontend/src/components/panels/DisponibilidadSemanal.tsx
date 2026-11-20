@@ -1,4 +1,3 @@
-
 import type { CSSProperties } from 'react';
 import { aIso, desdeIso, formatFecha, sumarDias } from '../../utils/fechas';
 import { crucesDeBloque, origenOcupacion } from '../../services/disponibilidadTutoria';

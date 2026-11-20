@@ -231,11 +231,14 @@
   position: absolute;
   left: 13px;
   width: 18px;
-  height: 18px;
+  height: 0.88rem;
+  /* Misma posición que tenía el glifo de la fuente de iconos. */
+  translate: 0 -2px;
   pointer-events: none;
   color: var(--muted);
-  font-size: 0.88rem;
-  text-align: center;
+}
+.d01 .field__toggle .portal-icon {
+  width: auto;
 }
 .d01 .field__input {
   flex: 1;

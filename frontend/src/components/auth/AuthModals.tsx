@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { modalDefinitions } from './modalContent';
+import { X } from '../ui/icons';
 import type { AuthModalId, AuthVariant, ModalRow } from './modalContent';
 
 interface AuthModalsProps {
@@ -120,7 +121,7 @@ export function AuthModals({ variant, active, onClose }: AuthModalsProps) {
                 aria-label="Cerrar modal"
                 onClick={onClose}
               >
-                <i className="fa-solid fa-xmark" aria-hidden="true" />
+                <X aria-hidden="true" />
               </button>
             </div>
 

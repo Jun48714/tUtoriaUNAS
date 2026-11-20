@@ -16,7 +16,7 @@ public sealed class DatabaseReadiness(IServiceScopeFactory factory, IOptions<Dat
             var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
             await db.Periodos.CountAsync(cancellationToken);
             if (!await db.Permisos.AnyAsync(cancellationToken) || await db.Catalogos.CountAsync(c => c.Tipo == "formatos", cancellationToken) != 12) return HealthCheckResult.Unhealthy("Aplica las migraciones del sistema.");
-            await db.Notificaciones.Take(1).CountAsync(cancellationToken);
+            await db.Notificaciones.AnyAsync(cancellationToken);
             return HealthCheckResult.Healthy();
         }
         catch (Exception e) when (e is not OperationCanceledException) { return HealthCheckResult.Unhealthy("La base de datos no está disponible."); }

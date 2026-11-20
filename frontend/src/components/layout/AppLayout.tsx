@@ -18,6 +18,8 @@ import {
   parseDisplayPreferences,
   serializeDisplayPreferences,
 } from '../../utils/displayPreferences';
+// Las pantallas del portal usan clases `fa-*`; el acceso usa solo iconos SVG.
+import '../../assets/vendor/fontawesome.min.css';
 import '../../styles/ui.css';
 import '../../styles/falcon-layout.css';
 import '../../styles/app.css';

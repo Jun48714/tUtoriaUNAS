@@ -47,14 +47,14 @@ public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHash
         if (options.Value.AliasPrueba)
         {
             var alias = await db.Usuarios.AsNoTracking().Where(u => u.Issuer == "local-development" && u.Identificador.ToLower() == identifier &&
-                (input.Role == null || u.Rol == input.Role)).Select(u => new { u.PersonaId, u.Rol }).Take(2).ToArrayAsync(ct);
+                (input.Role == null || u.Rol == input.Role)).OrderBy(u => u.Id).Select(u => new { u.PersonaId, u.Rol }).Take(2).ToArrayAsync(ct);
             if (alias.Length == 1) { rolAlias = alias[0].Rol; personaAlias = alias[0].PersonaId; }
         }
         var rolFiltro = input.Role ?? rolAlias;
         var correos = await (from c in db.CredencialesCuenta.AsNoTracking() join u in db.Usuarios on c.UsuarioId equals u.Id
             where (rolFiltro == null || c.Rol == rolFiltro) && (c.CorreoNormalizado == identifier || u.Identificador == identifier ||
                 c.CorreoNormalizado == completo || u.Identificador == completo || (personaAlias != null && u.PersonaId == personaAlias))
-            select c.CorreoNormalizado).Distinct().Take(2).ToArrayAsync(ct);
+            select c.CorreoNormalizado).Distinct().OrderBy(c => c).Take(2).ToArrayAsync(ct);
         if (correos.Length == 0) { _ = hasher.VerifyHashedPassword(new(), DummyHash.Value, input.Password); return null; }
         TutoriaError.Exigir(correos.Length == 1, "Ingresa tu correo institucional para continuar.", 401);
         var email = correos[0];

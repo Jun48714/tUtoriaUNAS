@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import type { ComponentType } from 'react';
+import echartsUrl from '../assets/vendor/echarts.min.js?url';
 
 /** La navegación y la precarga comparten una única descarga por módulo. */
 function precargable<T extends ComponentType>(loader: () => Promise<{ default: T }>) {
@@ -207,5 +208,13 @@ export function preloadPortalRoute(path: string) {
 export function preloadLoginDestination() {
   for (const page of [AppLayout, StudentDashboard, TutorDashboard, CoordDashboard]) {
     void page.preload().catch(() => undefined);
+  }
+  // Los tres paneles abren con gráficas: así ECharts baja en paralelo y no tras montar el panel.
+  if (!document.querySelector(`link[href="${echartsUrl}"]`)) {
+    const enlace = document.createElement('link');
+    enlace.rel = 'preload';
+    enlace.as = 'script';
+    enlace.href = echartsUrl;
+    document.head.append(enlace);
   }
 }

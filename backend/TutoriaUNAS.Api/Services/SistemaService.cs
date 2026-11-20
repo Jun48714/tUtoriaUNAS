@@ -53,8 +53,8 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
             .Where(m => (institucional || m.EscuelaId == actor.EscuelaId) && (m.EmisorId == actor.Usuario.Id || (m.Estado == "publicado" && m.Destinatarios.Any(d => d.UsuarioId == actor.Usuario.Id)))).OrderByDescending(m => m.Creado).Take(500).ToArrayAsync(ct) : [];
         // Diccionarios de nombres con tope defensivo: la vista institucional puede
         // alcanzar escuelas con miles de personas; sin límite el snapshot crece sin control.
-        var personas = await db.Personas.AsNoTracking().Where(p => institucional ? p.EscuelaId == "" || escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId).Take(2000).ToDictionaryAsync(p => p.Id, ct);
-        var usuarios = await db.Usuarios.AsNoTracking().Where(u => institucional ? u.EscuelaId == "" || escuelasActivas.Contains(u.EscuelaId) : u.EscuelaId == actor.EscuelaId).Take(2000).ToDictionaryAsync(u => u.Id, ct);
+        var personas = await db.Personas.AsNoTracking().Where(p => institucional ? p.EscuelaId == "" || escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId).OrderBy(p => p.Id).Take(2000).ToDictionaryAsync(p => p.Id, ct);
+        var usuarios = await db.Usuarios.AsNoTracking().Where(u => institucional ? u.EscuelaId == "" || escuelasActivas.Contains(u.EscuelaId) : u.EscuelaId == actor.EscuelaId).OrderBy(u => u.Id).Take(2000).ToDictionaryAsync(u => u.Id, ct);
         var contactos = await db.Contactos.AsNoTracking().Where(c => personas.Keys.Contains(c.PersonaId)).ToDictionaryAsync(c => c.PersonaId, ct);
         JsonElement Mensaje(MensajeEntity m)
         {
@@ -68,7 +68,7 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
         }
         var notificaciones = actor.Puede("comunicacion", "ver") ? await db.Notificaciones.AsNoTracking().Where(n => n.UsuarioId == actor.Usuario.Id).OrderByDescending(n => n.Fecha).Take(500).ToArrayAsync(ct) : [];
         var solicitudes = actor.Puede("solicitudes", "ver") ? await db.SolicitudesCambio.AsNoTracking().Where(s => (institucional ? escuelasActivas.Contains(s.EscuelaId) : s.EscuelaId == actor.EscuelaId) && (actor.Rol == "coordinacion" || s.EstudianteId == actor.Id)).OrderByDescending(s => s.Creado).Take(500).ToArrayAsync(ct) : [];
-        var actividades = actor.Puede("planes", "ver") ? await db.ActividadesPlan.AsNoTracking().Where(a => institucional ? escuelasActivas.Contains(a.EscuelaId) : a.EscuelaId == actor.EscuelaId).Take(500).ToArrayAsync(ct) : [];
+        var actividades = actor.Puede("planes", "ver") ? await db.ActividadesPlan.AsNoTracking().Where(a => institucional ? escuelasActivas.Contains(a.EscuelaId) : a.EscuelaId == actor.EscuelaId).OrderBy(a => a.Id).Take(500).ToArrayAsync(ct) : [];
         var permisos = await db.Permisos.AsNoTracking().Where(p => actor.Rol == "coordinacion" || p.Rol == actor.Rol).ToArrayAsync(ct);
         var config = institucional ? null : await db.ConfiguracionPeriodos.AsNoTracking().SingleOrDefaultAsync(c => c.PeriodoId == periodo.Id, ct);
         var periodosEscuela = institucional ? await (from p in db.Periodos.AsNoTracking()

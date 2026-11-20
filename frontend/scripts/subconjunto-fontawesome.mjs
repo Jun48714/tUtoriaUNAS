@@ -8,9 +8,17 @@
  *
  * Regenerar tras añadir iconos nuevos: node scripts/subconjunto-fontawesome.mjs
  * (lee fontawesome.full.css y reescribe fontawesome.min.css).
+ *
+ * También recorta `src/assets/webfonts/fa-*.woff2` a los glifos de esa hoja y a los
+ * `content: '\f…'` de los estilos propios, a partir de `fa-*.full.woff2`. Para eso
+ * necesita `subset-font`, que no es dependencia del proyecto: instálalo en una carpeta
+ * aparte (`pnpm add subset-font`) y pasa su ruta en SUBSET_FONT, p. ej.
+ *   SUBSET_FONT=C:/tmp/fuentes/node_modules/subset-font node scripts/subconjunto-fontawesome.mjs
+ * Sin SUBSET_FONT las fuentes no se tocan y un icono nuevo se vería vacío.
  */
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const raiz = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const srcDir = join(raiz, 'src');
@@ -32,9 +40,19 @@ const SAFELIST = new Set([
   'face-frown',
   'face-frown-open',
   'face-meh',
+  // EditorEstructura.tsx / EditorPregunta.tsx (icono="…" de los botones del editor)
+  'pen',
+  'arrow-up',
+  'arrow-down',
+  'copy',
+  'trash-can',
+  'chevron-left',
+  'chevron-right',
+  'xmark',
 ]);
 
 const usados = new Set(SAFELIST);
+const codigosPropios = new Set();
 function recolectar(dir) {
   for (const entrada of readdirSync(dir)) {
     const ruta = join(dir, entrada);
@@ -46,6 +64,8 @@ function recolectar(dir) {
     if (ruta.includes('vendor')) continue; // el vendor no se auto-referencia
     const texto = readFileSync(ruta, 'utf8');
     for (const m of texto.matchAll(/\bfa-([a-z0-9-]+)\b/g)) usados.add(m[1]);
+    for (const m of texto.matchAll(/content:\s*['"]\\(f[0-9a-f]{3,4})['"]/gi))
+      codigosPropios.add(parseInt(m[1], 16));
   }
 }
 recolectar(srcDir);
@@ -130,6 +150,8 @@ function parsearNodos(css) {
       i++;
     }
   }
+  // La última declaración de un bloque no lleva `;` (p. ej. `src:url(…)` en @font-face).
+  if (buf.trim()) nodos.push({ at: buf.trim() });
   return nodos;
 }
 
@@ -144,7 +166,7 @@ function procesar(nodos) {
     const sel = nodo.selector;
     if (sel.startsWith('@')) {
       // @font-face de Brands fuera: la app no usa fa-brands.
-      if (sel.startsWith('@font-face') && nodo.body.includes('"Font Awesome 6 Brands"')) continue;
+      if (sel.startsWith('@font-face') && /Brands|fa-brands/.test(nodo.body)) continue;
       salida.push(sel + '{' + procesar(parsearNodos(nodo.body)) + '}');
       continue;
     }
@@ -154,9 +176,10 @@ function procesar(nodos) {
       salida.push(sel + '{' + nodo.body + '}');
       continue;
     }
-    // Regla de glifo: conservar solo si todos sus iconos están en uso (mínimo 1).
-    const glifos = partes.map((p) => p.match(GLIFO)[1]);
-    if (glifos.every((g) => usados.has(g))) salida.push(sel + '{' + nodo.body + '}');
+    // Regla de glifo: Font Awesome agrupa alias (`.fa-close,…,.fa-xmark`); se conservan
+    // solo los selectores en uso, de modo que un alias sin usar no descarta el glifo.
+    const enUso = partes.filter((p) => usados.has(p.match(GLIFO)[1]));
+    if (enUso.length) salida.push(enUso.join(',') + '{' + nodo.body + '}');
   }
   return salida.join('');
 }
@@ -166,3 +189,27 @@ writeFileSync(objetivo, resultado, 'utf8');
 console.log(
   `fontawesome.min.css: ${(original.length / 1024).toFixed(0)} KB -> ${(resultado.length / 1024).toFixed(0)} KB`,
 );
+
+const codigos = new Set(codigosPropios);
+// Algunos glifos usan códigos ASCII (`fa-plus` es "\2b"), no solo el área privada \f000.
+for (const m of resultado.matchAll(/content:"\\([0-9a-f]{1,6})"/gi))
+  codigos.add(parseInt(m[1], 16));
+if (!process.env.SUBSET_FONT) {
+  console.warn(
+    'AVISO: sin SUBSET_FONT no se regeneraron las fuentes; ver la cabecera de este script.',
+  );
+} else {
+  const { default: subsetFont } = await import(
+    pathToFileURL(join(process.env.SUBSET_FONT, 'index.js')).href
+  );
+  const webfonts = join(srcDir, 'assets', 'webfonts');
+  const texto = String.fromCodePoint(...codigos);
+  for (const fuente of ['fa-solid-900', 'fa-regular-400']) {
+    const completa = readFileSync(join(webfonts, `${fuente}.full.woff2`));
+    const recortada = await subsetFont(completa, texto, { targetFormat: 'woff2' });
+    writeFileSync(join(webfonts, `${fuente}.woff2`), recortada);
+    console.log(
+      `${fuente}.woff2: ${(completa.length / 1024).toFixed(0)} KB -> ${(recortada.length / 1024).toFixed(0)} KB (${codigos.size} glifos)`,
+    );
+  }
+}

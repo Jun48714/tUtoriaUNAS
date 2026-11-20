@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
 import { FormField } from '../../components/forms/FormField';
+import { IdCardSolid, Lock } from '../../components/ui/icons';
 import { dashboardPath } from '../../utils/roles';
 import { API_MODE } from '../../services/apiConfig';
 import { ActivacionRequerida } from '../../services/cuentas';
@@ -76,8 +77,7 @@ export function LoginPage() {
         <FormField
           id="identifier"
           label="Correo institucional o usuario"
-          icon="fa-solid fa-id-card"
-          iconVariant="classic"
+          icon={IdCardSolid}
           placeholder="nombre@unas.edu.pe"
           autoComplete="username"
           maxLength={254}
@@ -89,8 +89,7 @@ export function LoginPage() {
         <FormField
           id="password"
           label="Contraseña"
-          icon="fa-solid fa-lock"
-          iconVariant="classic"
+          icon={Lock}
           type="password"
           placeholder="••••••••••"
           autoComplete="current-password"

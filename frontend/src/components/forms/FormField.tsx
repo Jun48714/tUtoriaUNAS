@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import type { InputHTMLAttributes, Ref } from 'react';
-import { IconoBase } from '../ui/icons';
+import { Eye, EyeOff } from '../ui/icons';
+import type { Icono } from '../ui/icons';
 
 interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  /** Identificador semántico compatible con clases existentes, p. ej. `fa-solid fa-id-card`. */
-  icon: string;
-  /** Permite conservar los pictogramas anteriores sólo en el formulario que los solicita. */
-  iconVariant?: 'illustration' | 'classic';
+  /** Icono SVG del contenido del campo, p. ej. `Lock`. */
+  icon: Icono;
   error?: string;
   ref?: Ref<HTMLInputElement>;
 }
@@ -19,8 +18,7 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
  */
 export function FormField({
   label,
-  icon,
-  iconVariant = 'illustration',
+  icon: IconoCampo,
   error,
   type = 'text',
   id,
@@ -32,11 +30,7 @@ export function FormField({
     <label className="field">
       <span className="field__label">{label}</span>
       <span className="field__shell">
-        {iconVariant === 'classic' ? (
-          <i className={`${icon} field__fa-icon`} aria-hidden="true" />
-        ) : (
-          <IconoBase nombre={icon} className="field__fa-icon" aria-hidden="true" />
-        )}
+        <IconoCampo className="field__fa-icon" aria-hidden="true" />
         <input
           {...props}
           id={id}
@@ -53,13 +47,7 @@ export function FormField({
             aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             aria-pressed={visible}
           >
-            <i className="fa-regular fa-eye" data-eye aria-hidden="true" hidden={visible} />
-            <i
-              className="fa-regular fa-eye-slash"
-              data-eye-off
-              aria-hidden="true"
-              hidden={!visible}
-            />
+            {visible ? <EyeOff data-eye-off /> : <Eye data-eye />}
           </button>
         )}
       </span>

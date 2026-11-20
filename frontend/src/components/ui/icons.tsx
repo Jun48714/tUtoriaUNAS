@@ -106,6 +106,7 @@ export const TrendingUp = crearIcono('arrow-trend-up');
 export const Activity = crearIcono('wave-square');
 export const History = crearIcono('clock-rotate-left');
 export const IdCard = crearIcono('id-card', 'regular');
+export const IdCardSolid = crearIcono('id-card');
 export const KeyRound = crearIcono('key');
 export const Lock = crearIcono('lock');
 /* Se evita repetir el mismo glifo en nombres con significados distintos: antes
@@ -155,6 +156,7 @@ export const Trash = crearIcono('trash-can');
    Comunicación, bienestar y servicios
    ========================================================================== */
 export const Mail = crearIcono('envelope', 'regular');
+export const MailSolid = crearIcono('envelope');
 export const MailCheck = crearIcono('envelope-circle-check');
 export const MailOpen = crearIcono('envelope-open');
 export const MailPlus = crearIcono('envelope-open-text');

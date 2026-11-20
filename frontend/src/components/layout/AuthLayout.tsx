@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { AuthModals } from '../auth/AuthModals';
+import { ArrowLeft } from '../ui/icons';
 import type { AuthModalId } from '../auth/modalContent';
 import crest from '../../assets/unas-logo-mark-120.png';
 import forest from '../../assets/selva.jpg';
-import '../../assets/vendor/fontawesome.min.css';
 import '../../styles/auth.css';
 
 /** Acceso UNAS: proporciones Falcon, fotografía local y formulario compartido. */
@@ -18,7 +18,14 @@ export function AuthLayout() {
     <main id="main-content" className="d01">
       <div className={`d01__frame${variant === 'recovery' ? ' d01__frame--recovery' : ''}`}>
         <section className="d01__brand" aria-label="Universidad Nacional Agraria de la Selva">
-          <img className="d01__photo" src={forest} alt="" width="1400" height="875" />
+          <img
+            className="d01__photo"
+            src={forest}
+            alt=""
+            width="1400"
+            height="875"
+            fetchPriority="high"
+          />
 
           <Link className="d01__logo" to="/login" aria-label="UNAS · Inicio de sesión">
             <img className="d01__crest" src={crest} alt="Escudo UNAS" width="54" height="64" />
@@ -37,7 +44,7 @@ export function AuthLayout() {
           <header className="d01__panel-head">
             {variant === 'recovery' && (
               <Link to="/login" className="d01__back-btn">
-                <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+                <ArrowLeft aria-hidden="true" />
                 Volver al login
               </Link>
             )}

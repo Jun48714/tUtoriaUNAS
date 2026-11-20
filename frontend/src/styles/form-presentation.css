@@ -332,7 +332,10 @@
   .sheet--instrumento .tutoring-form:not(.tutoring-form--read) .tutoring-fields {
     gap: 14px 24px;
   }
-  .sheet--instrumento .sheet__body > .tutoring-form:not(.tutoring-form--read) > .tutoring-form__actions {
+  .sheet--instrumento
+    .sheet__body
+    > .tutoring-form:not(.tutoring-form--read)
+    > .tutoring-form__actions {
     position: sticky;
     bottom: -16px;
     z-index: 1;

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FormField } from '../../components/forms/FormField';
+import { KeyRound, Lock, MailSolid } from '../../components/ui/icons';
 import { useCuentaSetup } from '../../hooks/useCuentaSetup';
 import type { ModoCuenta } from '../../hooks/useCuentaSetup';
 import type { Role } from '../../types/auth';
@@ -61,8 +62,7 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
                 <FormField
                   id="account-email"
                   label="Correo institucional"
-                  icon="fa-solid fa-envelope"
-                  iconVariant="classic"
+                  icon={MailSolid}
                   type="email"
                   autoComplete="email"
                   placeholder="nombre@unas.edu.pe"
@@ -119,8 +119,7 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
             <FormField
               id="account-code"
               label="Código de verificación"
-              icon="fa-solid fa-key"
-              iconVariant="classic"
+              icon={KeyRound}
               autoComplete="one-time-code"
               inputMode="numeric"
               pattern="[0-9]{6}"
@@ -150,8 +149,7 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
             <FormField
               id="account-password"
               label="Nueva contraseña"
-              icon="fa-solid fa-lock"
-              iconVariant="classic"
+              icon={Lock}
               type="password"
               autoComplete="new-password"
               minLength={10}
@@ -164,8 +162,7 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
             <FormField
               id="account-confirm"
               label="Confirmar nueva contraseña"
-              icon="fa-solid fa-lock"
-              iconVariant="classic"
+              icon={Lock}
               type="password"
               autoComplete="new-password"
               minLength={10}

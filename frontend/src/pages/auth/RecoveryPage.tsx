@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField } from '../../components/forms/FormField';
+import { CircleCheck, MailSolid } from '../../components/ui/icons';
 import { API_MODE } from '../../services/apiConfig';
 import { AccountSetupPage } from './AccountSetupPage';
 
@@ -76,7 +77,7 @@ function DemoRecoveryPage() {
           <FormField
             id="recovery-email"
             label="Correo institucional"
-            icon="fa-solid fa-envelope"
+            icon={MailSolid}
             type="email"
             placeholder="ejemplo@unas.edu.pe"
             autoComplete="email"
@@ -102,7 +103,7 @@ function DemoRecoveryPage() {
       {sentTo !== null && (
         <div className="recovery-success" id="recovery-success" role="status">
           <div className="recovery-success__icon" aria-hidden="true">
-            <i className="fa-solid fa-circle-check" aria-hidden="true" />
+            <CircleCheck aria-hidden="true" />
           </div>
           <h3 className="recovery-success__title">¡Enlace enviado!</h3>
           <p className="recovery-success__desc">
