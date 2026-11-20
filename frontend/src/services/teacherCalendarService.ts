@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import { calendarBlocksOverlap, calendarInputSchema, occurrenceDates } from '../types/calendar';
 import type {
   CalendarActor,
@@ -10,13 +10,14 @@ import { asignacionDe, bloquesTutoria, sesiones } from '../data/tutoria';
 import { semestreActual, semestres } from '../data/catalogos';
 
 export const TEACHER_CALENDAR_KEY = 'unas:teacher-calendar:v1';
-const persistedSchema = z.object({
-  blocks: z.array(
-    z
-      .object({ id: z.string(), tutorId: z.string(), createdAt: z.string() })
-      .and(calendarInputSchema),
+const persistedSchema = v.object({
+  blocks: v.array(
+    v.intersect([
+      v.object({ id: v.string(), tutorId: v.string(), createdAt: v.string() }),
+      calendarInputSchema,
+    ]),
   ),
-  deletedIds: z.array(z.string()),
+  deletedIds: v.array(v.string()),
 });
 
 const institutional: TeacherCalendarBlock[] = bloquesTutoria.map((block) => ({
@@ -43,9 +44,9 @@ export class BrowserTeacherCalendarService implements TeacherCalendarService {
   private read() {
     const raw = this.storage().getItem(TEACHER_CALENDAR_KEY);
     if (!raw) return { blocks: [] as TeacherCalendarBlock[], deletedIds: [] as string[] };
-    const result = persistedSchema.safeParse(JSON.parse(raw));
+    const result = v.safeParse(persistedSchema, JSON.parse(raw));
     if (!result.success) throw new Error('No se pudieron leer los horarios guardados.');
-    return result.data;
+    return result.output;
   }
   private all(): TeacherCalendarBlock[] {
     const stored = this.read();
@@ -70,7 +71,7 @@ export class BrowserTeacherCalendarService implements TeacherCalendarService {
     id?: string,
   ): Promise<TeacherCalendarBlock> {
     if (actor.role !== 'tutor') throw new Error('Sólo el docente puede registrar su horario.');
-    const parsed = calendarInputSchema.parse(input);
+    const parsed = v.parse(calendarInputSchema, input);
     const all = this.all();
     const existing = id ? all.find((block) => block.id === id) : undefined;
     if (id && (!existing || existing.tutorId !== actor.id))

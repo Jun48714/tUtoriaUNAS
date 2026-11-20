@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { InputHTMLAttributes, Ref } from 'react';
-import { Eye, EyeOff } from '../ui/icons';
-import type { Icono } from '../ui/icons';
+import { Eye, EyeOff } from '../ui/iconosAcceso';
+import type { Icono } from '../ui/fabricaIconos';
 
 interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

@@ -1,18 +1,22 @@
 import { SuccessNotice } from '../ui/SuccessNotice';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import * as v from 'valibot';
 import { useSistema } from '../../hooks/useSistema';
 import { guardarContactoApi } from '../../services/apiSistema';
 import { Alert } from '../ui/Alert';
 
-const schema = z.object({
-  correo: z.email('Revisa el correo de contacto.').max(254),
-  telefono: z.string().max(40, 'Usa como máximo 40 caracteres.'),
-  version: z.number().int().nonnegative(),
+const schema = v.object({
+  correo: v.pipe(
+    v.string('Revisa el correo de contacto.'),
+    v.email('Revisa el correo de contacto.'),
+    v.maxLength(254),
+  ),
+  telefono: v.pipe(v.string(), v.maxLength(40, 'Usa como máximo 40 caracteres.')),
+  version: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
-type Contacto = z.infer<typeof schema>;
+type Contacto = v.InferOutput<typeof schema>;
 export function ContactoPersistente() {
   const sistema = useSistema();
   const data = sistema?.contacto;
@@ -24,7 +28,7 @@ export function ContactoPersistente() {
     reset,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<Contacto>({
-    resolver: zodResolver(schema),
+    resolver: valibotResolver(schema),
     defaultValues: {
       correo: data?.correo ?? '',
       telefono: data?.telefono ?? '',

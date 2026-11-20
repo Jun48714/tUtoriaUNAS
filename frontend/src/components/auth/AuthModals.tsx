@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { modalDefinitions } from './modalContent';
-import { X } from '../ui/icons';
+import { X } from '../ui/iconosAcceso';
 import type { AuthModalId, AuthVariant, ModalRow } from './modalContent';
 
 interface AuthModalsProps {

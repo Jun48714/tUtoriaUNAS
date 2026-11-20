@@ -39,6 +39,13 @@
   color: #fff;
   background: #344d40;
 }
+/* El <picture> ocupa el panel como capa de fondo, fuera del flujo, igual que antes la imagen. */
+.d01 .d01__brand picture {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  display: block;
+}
 .d01 .d01__photo {
   position: absolute;
   inset: 0;

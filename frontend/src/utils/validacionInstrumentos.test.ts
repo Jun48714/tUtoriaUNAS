@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as v from 'valibot';
 import { definicionPorCodigo, definicionesFormato } from '../data/formatos';
 import {
   crearEsquemaFormulario,
@@ -11,12 +12,12 @@ import {
 const f04 = definicionPorCodigo('F04')!;
 const f06 = definicionPorCodigo('F06')!;
 
-describe('esquemas Zod de los instrumentos', () => {
+describe('esquemas Valibot de los instrumentos', () => {
   it.each(definicionesFormato.map((d) => [d.codigo, d] as const))(
     '%s dispone de un resolver compatible con borradores vacíos',
     (_, definicion) => {
       const valores = deserializarFormulario(definicion, {});
-      expect(() => crearEsquemaFormulario(definicion).safeParse(valores)).not.toThrow();
+      expect(() => v.safeParse(crearEsquemaFormulario(definicion), valores)).not.toThrow();
       expect(serializarFormulario(valores)).toEqual(
         Object.fromEntries(
           definicion.secciones
@@ -101,18 +102,17 @@ describe('esquemas Zod de los instrumentos', () => {
   });
   it('el resolver y la validación del adaptador señalan la misma tabla y los mismos campos', () => {
     const respuestas = { fecha: '2026-02-30', asistentes: '[{}]' };
-    const raw = crearEsquemaRespuestas(f06).safeParse(respuestas);
-    const formulario = crearEsquemaFormulario(f06).safeParse(
+    const raw = v.safeParse(crearEsquemaRespuestas(f06), respuestas);
+    const formulario = v.safeParse(
+      crearEsquemaFormulario(f06),
       deserializarFormulario(f06, respuestas),
     );
     expect(raw.success).toBe(false);
     expect(formulario.success).toBe(false);
     if (!raw.success && !formulario.success) {
-      expect(formulario.error.issues.map((i) => i.path.join('.'))).toContain('tablas.asistentes');
-      expect(formulario.error.issues.map((i) => i.path.join('.'))).toContain('respuestas.fecha');
-      expect(formulario.error.issues.map((i) => i.message)).toEqual(
-        raw.error.issues.map((i) => i.message),
-      );
+      expect(formulario.issues.map((i) => v.getDotPath(i))).toContain('tablas.asistentes');
+      expect(formulario.issues.map((i) => v.getDotPath(i))).toContain('respuestas.fecha');
+      expect(formulario.issues.map((i) => i.message)).toEqual(raw.issues.map((i) => i.message));
     }
   });
 });

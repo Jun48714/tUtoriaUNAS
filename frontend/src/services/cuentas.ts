@@ -1,15 +1,15 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import type { Role } from '../types/auth';
 import { apiJson } from './apiClient';
 
-const activacionSchema = z.object({
-  tokenActivacion: z.string().length(64),
-  correo: z.email(),
-  role: z.enum(['estudiante', 'tutor', 'coordinacion']),
-  expira: z.number(),
+const activacionSchema = v.object({
+  tokenActivacion: v.pipe(v.string(), v.length(64)),
+  correo: v.pipe(v.string(), v.email()),
+  role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
+  expira: v.number(),
 });
 const ACTIVACION_KEY = 'unas:activacion:v1';
-export type ActivacionPendiente = z.infer<typeof activacionSchema>;
+export type ActivacionPendiente = v.InferOutput<typeof activacionSchema>;
 let activacionMemoria: ActivacionPendiente | null = null;
 export class ActivacionRequerida extends Error {
   constructor() {
@@ -34,11 +34,12 @@ export function guardarActivacion(
 }
 export function leerActivacion(): ActivacionPendiente | null {
   try {
-    const data = activacionSchema.safeParse(
+    const data = v.safeParse(
+      activacionSchema,
       JSON.parse(sessionStorage.getItem(ACTIVACION_KEY) ?? 'null'),
     );
-    return data.success && data.data.expira > Date.now()
-      ? data.data
+    return data.success && data.output.expira > Date.now()
+      ? data.output
       : activacionMemoria && activacionMemoria.expira > Date.now()
         ? activacionMemoria
         : null;

@@ -30,9 +30,21 @@ export default defineConfig({
               test: /node_modules[\\/].*(react|react-dom|scheduler|react-router|react-router-dom)[\\/]/,
               priority: 20,
             },
+            // La sesión y las respuestas de acceso se validan con valibot (~10 KB): sí va con el login.
             {
-              name: 'vendor-datos',
-              test: /node_modules[\\/].*(@tanstack|react-hook-form|@hookform|zod)[\\/]/,
+              name: 'vendor-validacion',
+              test: /node_modules[\\/]valibot[\\/]/,
+              priority: 10,
+            },
+            // Separados: el login no usa ninguno, así que cada uno se descarga solo si una pantalla lo pide.
+            {
+              name: 'vendor-consultas',
+              test: /node_modules[\\/].*@tanstack[\\/]/,
+              priority: 10,
+            },
+            {
+              name: 'vendor-formularios',
+              test: /node_modules[\\/].*(react-hook-form|@hookform)[\\/]/,
               priority: 10,
             },
           ],

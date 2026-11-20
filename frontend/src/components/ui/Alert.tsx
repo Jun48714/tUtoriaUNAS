@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from './icons';
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from './iconosAcceso';
 
 type TonoAlerta = 'info' | 'ok' | 'alerta' | 'riesgo';
 

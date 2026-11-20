@@ -10,15 +10,23 @@
  *     código fuente de `src/` o `index.html` (conservador: cualquier token
  *     palabra en el código cuenta como uso).
  *
+ * El resultado se reparte en dos archivos para que /login no descargue el CSS del portal:
+ *   - falcon-theme.css:  reglas sin clases y de clases usadas por el acceso (JavaScript alcanzable
+ *                        desde main.tsx y las pantallas públicas lazy, más sus .css). Se carga con la app.
+ *   - falcon-portal.css: el resto; lo importa AppLayoutConConsultas y baja con el portal.
+ *   El orden relativo de las reglas se conserva dentro de cada archivo. Si una pantalla pública nueva
+ *   (fuera de AppLayout) usa clases del tema, agrégala a RAICES_PUBLICAS.
+ *
  * Regenerar tras añadir clases nuevas del tema: node scripts/purgar-falcon.mjs
- * (lee falcon-theme.full.css y reescribe falcon-theme.css).
+ * (lee falcon-theme.full.css y reescribe falcon-theme.css y falcon-portal.css).
  */
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 const raiz = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const srcDir = join(raiz, 'src');
 const objetivo = join(srcDir, 'assets', 'vendor', 'falcon-theme.css');
+const objetivoPortal = join(srcDir, 'assets', 'vendor', 'falcon-portal.css');
 const origen = join(srcDir, 'assets', 'vendor', 'falcon-theme.full.css');
 
 // 1. Tokens usados en el código (clases, ids y palabras en general: es deliberadamente
@@ -53,6 +61,67 @@ import { readdirSync, statSync } from 'node:fs';
 recolectar(srcDir);
 const indexHtml = readFileSync(join(raiz, 'index.html'), 'utf8');
 for (const m of indexHtml.matchAll(/[a-zA-Z0-9_-]+/g)) usados.add(m[0]);
+
+// 1b. Tokens del acceso: solo los archivos que se descargan con /login y con las pantallas públicas
+//     (recorrido de imports estáticos; los import() dinámicos pertenecen al portal).
+const RAICES_PUBLICAS = [
+  'main.tsx',
+  'pages/auth/RecoveryPage.tsx',
+  'pages/auth/AccountSetupPage.tsx',
+  'pages/auth/UnauthorizedPage.tsx',
+  'pages/not-found/NotFoundPage.tsx',
+];
+function resolverImport(desde, especificador) {
+  if (!especificador.startsWith('.')) return null;
+  const base = resolve(dirname(desde), especificador.split('?')[0]);
+  for (const candidato of [
+    base,
+    base + '.ts',
+    base + '.tsx',
+    join(base, 'index.ts'),
+    join(base, 'index.tsx'),
+  ]) {
+    if (existsSync(candidato) && statSync(candidato).isFile()) return candidato;
+  }
+  return null;
+}
+const usadosAcceso = new Set([
+  'active',
+  'show',
+  'fade',
+  'in',
+  'open',
+  'collapsed',
+  'disabled',
+  'selected',
+  'is-open',
+  'is-active',
+]);
+{
+  const vistos = new Set();
+  const pendientes = RAICES_PUBLICAS.map((r) => join(srcDir, r));
+  while (pendientes.length) {
+    const archivo = pendientes.pop();
+    if (vistos.has(archivo)) continue;
+    vistos.add(archivo);
+    // El vendor no cuenta como "uso": el subconjunto se genera desde el código de la app.
+    if (archivo.includes(join('assets', 'vendor'))) continue;
+    const texto = readFileSync(archivo, 'utf8');
+    for (const m of texto.matchAll(/[a-zA-Z0-9_-]+/g)) usadosAcceso.add(m[0]);
+    if (!/\.(ts|tsx)$/.test(archivo)) continue;
+    // import ... from '...' | import '...' | export ... from '...' (se ignoran import type e import()).
+    for (const m of texto.matchAll(
+      /^\s*(?:import|export)\s+(?!type\b)(?:[^'"]*?\sfrom\s+)?['"]([^'"]+)['"]/gm,
+    )) {
+      const destino = resolverImport(archivo, m[1]);
+      if (destino) pendientes.push(destino);
+      else if (/\.css$/.test(m[1])) {
+        const css = resolve(dirname(archivo), m[1]);
+        if (existsSync(css)) pendientes.push(css);
+      }
+    }
+  }
+}
 
 // 2. Parseo del CSS (soporta reglas anidadas y bloques @media/@supports).
 function quitarComentarios(css) {
@@ -128,11 +197,13 @@ function parsearNodos(css) {
 }
 
 const SIN_CLASES_QUE_RECURSAN = ['media', 'supports', 'container', 'layer', 'scope', 'document'];
+/** Devuelve el CSS que se queda con la app (base) y el que solo usa el portal (portal). */
 function procesar(nodos) {
-  const salida = [];
+  const base = [];
+  const portal = [];
   for (const nodo of nodos) {
     if (nodo.at) {
-      salida.push(nodo.at + ';');
+      base.push(nodo.at + ';');
       continue;
     }
     const sel = nodo.selector;
@@ -143,15 +214,16 @@ function procesar(nodos) {
         .toLowerCase();
       if (SIN_CLASES_QUE_RECURSAN.includes(nombre)) {
         const interno = procesar(parsearNodos(nodo.body));
-        if (interno.trim()) salida.push(sel + '{' + interno + '}');
+        if (interno.base.trim()) base.push(sel + '{' + interno.base + '}');
+        if (interno.portal.trim()) portal.push(sel + '{' + interno.portal + '}');
       } else {
-        salida.push(sel + '{' + nodo.body + '}');
+        base.push(sel + '{' + nodo.body + '}');
       }
       continue;
     }
     const clases = [...sel.matchAll(/\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)/g)].map((m) => m[1]);
     if (clases.length === 0) {
-      salida.push(sel + '{' + nodo.body + '}');
+      base.push(sel + '{' + nodo.body + '}');
       continue;
     }
     // Selector agrupado: separar por comas (fuera de paréntesis) y conservar solo
@@ -172,17 +244,23 @@ function procesar(nodos) {
       const cs = [...parte.matchAll(/\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)/g)].map((m) => m[1]);
       return cs.length === 0 || cs.every((c) => usados.has(c));
     });
-    if (vivos.length > 0) salida.push(vivos.join(',') + '{' + nodo.body + '}');
+    const clasesDe = (parte) =>
+      [...parte.matchAll(/\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)/g)].map((m) => m[1]);
+    const deAcceso = vivos.filter((parte) => clasesDe(parte).every((c) => usadosAcceso.has(c)));
+    const soloPortal = vivos.filter((parte) => !deAcceso.includes(parte));
+    if (deAcceso.length > 0) base.push(deAcceso.join(',') + '{' + nodo.body + '}');
+    if (soloPortal.length > 0) portal.push(soloPortal.join(',') + '{' + nodo.body + '}');
   }
-  return salida.join('');
+  return { base: base.join(''), portal: portal.join('') };
 }
 
 const original = readFileSync(origen, 'utf8');
 // Conservar eventuales comentarios de licencia /*! */
 const licencias = [...original.matchAll(/\/\*![\s\S]*?\*\//g)].map((m) => m[0]).join('\n');
-const purgado = procesar(parsearNodos(quitarComentarios(original)));
-const resultado = (licencias ? licencias + '\n' : '') + purgado;
-writeFileSync(objetivo, resultado, 'utf8');
+const { base, portal } = procesar(parsearNodos(quitarComentarios(original)));
+const conLicencia = (css) => (licencias ? licencias + '\n' : '') + css;
+writeFileSync(objetivo, conLicencia(base), 'utf8');
+writeFileSync(objetivoPortal, conLicencia(portal), 'utf8');
 console.log(
-  `falcon-theme.css: ${(original.length / 1024).toFixed(0)} KB -> ${(resultado.length / 1024).toFixed(0)} KB`,
+  `falcon: ${(original.length / 1024).toFixed(0)} KB -> falcon-theme.css ${(base.length / 1024).toFixed(1)} KB + falcon-portal.css ${(portal.length / 1024).toFixed(1)} KB`,
 );

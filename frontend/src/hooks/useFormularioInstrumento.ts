@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import type { DefinicionFormato, Instrumento } from '../types/domain';
 import type { Portal } from './usePortal';
 import { contextualizarDefinicion, precargarInstrumentoConOrigen } from '../utils/instrumentos';
@@ -30,7 +30,7 @@ export function useFormularioInstrumento(
   const defaults = deserializarFormulario(contexto, precarga.valores);
   const formulario = useForm<ValoresFormularioInstrumento>({
     defaultValues: defaults,
-    resolver: zodResolver(esquema),
+    resolver: valibotResolver(esquema),
     shouldUnregister: false,
     shouldFocusError: false,
   });

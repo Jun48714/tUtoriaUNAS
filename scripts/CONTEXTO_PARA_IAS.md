@@ -553,7 +553,34 @@ Toda optimización debe conservar la apariencia al píxel.
   `verificar-graficas-estables.mjs` en los 3 roles y 48 rutas del portal comparadas con capturas.
 - También se subieron `.gemini/` (skill impeccable para Gemini, con hooks) y
   `university-tutoring-ui-redesign-skill/`, por pedido del usuario.
-- **Pendiente acordado:** el LCP del login (~1,6 s con red lenta) depende del JS inicial
-  (≈184 kB comprimido). El usuario lo dejó para después: medir primero qué JS necesita `/login`
-  y proponer opciones antes de editar. Tampoco se midió la API con datos reales (requiere su
-  sesión).
+- El LCP del login se trabajó el 20 de noviembre (sección 22). Sigue sin medirse la API con datos
+  reales (requiere la sesión del usuario).
+
+## 22. LCP del login: arranque liviano (20 de noviembre de 2026, sin commit)
+
+Informe completo y evidencias en `artifacts/lcp-login-2026-11-20/INFORME.md` (carpeta ignorada por
+git; incluye los scripts de medición). Resumen:
+
+- El «LCP de 3572 ms» medido antes era el `<h1>`. El LCP real es `selva.jpg`: 5108 ms en la base
+  (CPU 4x, 1,6 Mbps, build demo sin compresión) → 2992 ms; con gzip y caché (nginx, build API)
+  3212 → 1552 ms. Meta de 2500 ms: cumplida en producción, no en el perfil sin compresión.
+- Causa raíz: 514–595 kB de JS y 92 kB de CSS antes del primer render, la mitad sin uso en
+  `/login`. Ahora 312 kB de JS y 71 kB de CSS (gzip 98 y 19 kB).
+- Cambios: `apiAuthService` carga `apiTutoria` con `import()`; `services/authService.ts` separado de
+  `serviceRegistry`; iconos del acceso en `components/ui/iconosAcceso.tsx` (+ `fabricaIconos.tsx` y
+  `assets/vendor/fontawesome-acceso.ts`; `scripts/vendor-falcon-icons.mjs` genera los dos mapas);
+  `LoginPage` sin react-hook-form (`utils/validacionAcceso.ts`); React Query dentro de
+  `AppLayoutConConsultas` (`services/clienteConsultas.ts`, `services/limpiezaConsultas.ts`);
+  Recuperación, activación, no autorizado y 404 con `lazy()`; chunks `vendor-*` en
+  `vite.config.ts`; `scripts/purgar-falcon.mjs` genera `falcon-theme.css` (acceso) y
+  `falcon-portal.css` (portal); foto en `<picture>` AVIF 1000w/1400w con JPG de respaldo y preload
+  en `index.html` (`fetchpriority="low"`).
+- Reglas nuevas: los módulos que cargan con `/login` importan iconos de `iconosAcceso`, nunca de
+  `icons`; una pantalla pública nueva que use clases Falcon se agrega a `RAICES_PUBLICAS` de
+  `purgar-falcon.mjs`; no usar `display: contents` en el `<picture>` del acceso (desplaza el logo).
+- Verificado: tsc, ESLint, Prettier, 309 pruebas unitarias; E2E con los mismos 56 fallos que el
+  código original (57 antes); comparación visual de 133 capturas (portal idéntico; en el acceso solo
+  cambia la foto por la recompresión AVIF). Sin ejecutar: Lighthouse y el login con API real.
+- Fallos E2E anteriores (no se tocaron): p. ej. `application.spec.ts` espera relleno izquierdo de
+  42 px en los campos del acceso y hay 40 px; también fallan `theme-consistency`,
+  `tutoring-workflow` y otros.

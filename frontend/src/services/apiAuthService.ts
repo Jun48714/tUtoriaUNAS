@@ -1,31 +1,40 @@
 import type { AuthService } from '../types/auth';
 import { apiJson, getApiSession, setApiSession } from './apiClient';
-import { aplicarEstadoApi, refrescarApi, vaciarApi } from './apiTutoria';
+import type * as ApiTutoria from './apiTutoria';
 import type { EstadoApi } from './apiTutoria';
 import { ActivacionRequerida, borrarActivacion, guardarActivacion } from './cuentas';
-import { z } from 'zod';
+import * as v from 'valibot';
 
-const respuestaLogin = z.union([
-  z.object({
-    accessToken: z.string().min(1),
-    expiresIn: z.number().positive(),
-    estado: z.custom<EstadoApi>().optional(),
+// El almacén del expediente arrastra los catálogos y formatos (unos 70 KB): se descarga al iniciar
+// sesión, en paralelo con la petición, y no al abrir /login. Sin cargar, no hay estado que vaciar.
+let tutoria: typeof ApiTutoria | undefined;
+const cargarTutoria = () => import('./apiTutoria').then((modulo) => (tutoria = modulo));
+const vaciar = () => tutoria?.vaciarApi();
+
+const respuestaLogin = v.union([
+  v.object({
+    accessToken: v.pipe(v.string(), v.minLength(1)),
+    expiresIn: v.pipe(v.number(), v.gtValue(0)),
+    estado: v.optional(v.custom<EstadoApi>(() => true)),
   }),
-  z.object({
-    activacionRequerida: z.literal(true),
-    tokenActivacion: z.string().length(64),
-    correo: z.email(),
-    expiraEn: z.number().positive(),
-    role: z.enum(['estudiante', 'tutor', 'coordinacion']),
+  v.object({
+    activacionRequerida: v.literal(true),
+    tokenActivacion: v.pipe(v.string(), v.length(64)),
+    correo: v.pipe(v.string(), v.email()),
+    expiraEn: v.pipe(v.number(), v.gtValue(0)),
+    role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
   }),
-  z.object({ pendienteVinculacion: z.literal(true) }),
+  v.object({ pendienteVinculacion: v.literal(true) }),
 ]);
 
 export const apiAuthService: AuthService = {
   async login(credentials, remember) {
     setApiSession(null);
-    vaciarApi();
-    const result = respuestaLogin.parse(
+    vaciar();
+    const cargando = cargarTutoria();
+    cargando.catch(() => undefined); // El fallo se informa más abajo; aquí no debe quedar sin atender.
+    const result = v.parse(
+      respuestaLogin,
       await apiJson<unknown>('/api/auth/login', 'POST', {
         identifier: credentials.identifier.trim(),
         password: credentials.password,
@@ -58,9 +67,10 @@ export const apiAuthService: AuthService = {
       false,
     );
     try {
-      const data = result.estado ?? (await refrescarApi());
+      const api = await cargando;
+      const data = result.estado ?? (await api.refrescarApi());
       if (!data) throw new Error('No se pudo validar la cuenta con el servidor.');
-      if (result.estado) aplicarEstadoApi(data);
+      if (result.estado) api.aplicarEstadoApi(data);
       setApiSession(
         {
           accessToken: result.accessToken,
@@ -72,18 +82,18 @@ export const apiAuthService: AuthService = {
       return data.usuario;
     } catch (e) {
       setApiSession(null);
-      vaciarApi();
+      vaciar();
       throw e;
     }
   },
   restore: () => {
     const user = getApiSession()?.user ?? null;
-    vaciarApi();
+    vaciar();
     return user;
   },
   logout() {
     borrarActivacion();
     setApiSession(null);
-    vaciarApi();
+    vaciar();
   },
 };

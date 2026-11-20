@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
 export const STUDENT_NOTICES_EVENT = 'unas:student-notices-updated';
 export const preferenciasAvisos = [
@@ -34,18 +34,19 @@ export const preferenciasAvisos = [
   },
 ] as const;
 
-const preferenciasSchema = z.object({
-  sesiones: z.boolean().default(true),
-  formularios: z.boolean().default(true),
-  apoyo: z.boolean().default(true),
-  bienestar: z.boolean().default(false),
-  resumen: z.boolean().default(false),
+const preferenciasSchema = v.object({
+  sesiones: v.optional(v.boolean(), true),
+  formularios: v.optional(v.boolean(), true),
+  apoyo: v.optional(v.boolean(), true),
+  bienestar: v.optional(v.boolean(), false),
+  resumen: v.optional(v.boolean(), false),
 });
-const estadoSchema = z.object({
-  leidas: z.record(z.string(), z.boolean()).default({}),
-  preferencias: preferenciasSchema.prefault({}),
+const estadoSchema = v.object({
+  leidas: v.optional(v.record(v.string(), v.boolean()), {}),
+  // El valor por defecto también pasa por el esquema, de modo que completa cada preferencia.
+  preferencias: v.optional(preferenciasSchema, {}),
 });
-export type EstadoAvisosEstudiante = z.infer<typeof estadoSchema>;
+export type EstadoAvisosEstudiante = v.InferOutput<typeof estadoSchema>;
 export type PreferenciaAviso = (typeof preferenciasAvisos)[number]['id'];
 
 export function claveAvisosEstudiante(estudianteId: string) {
@@ -54,9 +55,9 @@ export function claveAvisosEstudiante(estudianteId: string) {
 
 export function leerEstadoAvisos(raw: string | null): EstadoAvisosEstudiante {
   try {
-    return estadoSchema.parse(JSON.parse(raw ?? '{}'));
+    return v.parse(estadoSchema, JSON.parse(raw ?? '{}'));
   } catch {
-    return estadoSchema.parse({});
+    return v.parse(estadoSchema, {});
   }
 }
 
@@ -65,7 +66,7 @@ export function guardarEstadoAvisos(estudianteId: string, estado: EstadoAvisosEs
   try {
     localStorage.setItem(
       claveAvisosEstudiante(estudianteId),
-      JSON.stringify(estadoSchema.parse(estado)),
+      JSON.stringify(v.parse(estadoSchema, estado)),
     );
   } catch {
     throw new Error(

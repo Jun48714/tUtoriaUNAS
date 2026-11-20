@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import { API_MODE } from './apiConfig';
 import type { Sesion } from '../types/domain';
 import type { Role } from '../types/auth';
@@ -6,33 +6,30 @@ import { sesionFinalizo } from '../utils/evaluacionesSesion';
 
 export const ATTENDANCE_KEY = 'unas:session-attendance:v1';
 export const ATTENDANCE_EVENT = 'unas:session-attendance-updated';
-const asistenteSchema = z.object({
-  estudianteId: z.string(),
-  estado: z.enum(['asistio', 'tarde', 'falto', 'justificado']),
-  horaRegistro: z
-    .string()
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-    .nullable(),
-  observacion: z.string().nullable(),
+const asistenteSchema = v.object({
+  estudianteId: v.string(),
+  estado: v.picklist(['asistio', 'tarde', 'falto', 'justificado']),
+  horaRegistro: v.nullable(v.pipe(v.string(), v.regex(/^([01]\d|2[0-3]):[0-5]\d$/))),
+  observacion: v.nullable(v.string()),
 });
-const acuerdoSchema = z.object({
-  id: z.string(),
-  descripcion: z.string(),
-  responsable: z.enum(['tutor', 'tutorado', 'ambos']),
-  fechaCompromiso: z.string().nullable(),
-  estado: z.enum(['pendiente', 'cumplido', 'vencido']),
+const acuerdoSchema = v.object({
+  id: v.string(),
+  descripcion: v.string(),
+  responsable: v.picklist(['tutor', 'tutorado', 'ambos']),
+  fechaCompromiso: v.nullable(v.string()),
+  estado: v.picklist(['pendiente', 'cumplido', 'vencido']),
 });
-const registroSchema = z.object({
-  tutorId: z.string(),
-  asistentes: z.array(asistenteSchema),
-  acuerdos: z.array(acuerdoSchema),
+const registroSchema = v.object({
+  tutorId: v.string(),
+  asistentes: v.array(asistenteSchema),
+  acuerdos: v.array(acuerdoSchema),
 });
-const registrosSchema = z.record(z.string(), registroSchema);
-export type RegistrosAsistencia = z.infer<typeof registrosSchema>;
+const registrosSchema = v.record(v.string(), registroSchema);
+export type RegistrosAsistencia = v.InferOutput<typeof registrosSchema>;
 
 export function leerRegistros(raw: string | null): RegistrosAsistencia {
   try {
-    return registrosSchema.parse(JSON.parse(raw ?? '{}'));
+    return v.parse(registrosSchema, JSON.parse(raw ?? '{}'));
   } catch {
     return {};
   }
@@ -81,7 +78,7 @@ export function guardarAsistencia(
   const actual = aplicarRegistro(sesion, registros);
   const texto = mensaje.trim();
   if (texto.length > 2000) throw new Error('El acuerdo admite hasta 2000 caracteres.');
-  const registro = registroSchema.parse({
+  const registro = v.parse(registroSchema, {
     tutorId: sesion.tutorId,
     asistentes,
     acuerdos: texto

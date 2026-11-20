@@ -21,7 +21,9 @@ export const PreferencesPage = precargable(() =>
   import('../pages/comun/PreferencesPage').then((m) => ({ default: m.PreferencesPage })),
 );
 export const AppLayout = precargable(() =>
-  import('../components/layout/AppLayout').then((m) => ({ default: m.AppLayout })),
+  import('../components/layout/AppLayoutConConsultas').then((m) => ({
+    default: m.AppLayoutConConsultas,
+  })),
 );
 
 // Tutorado

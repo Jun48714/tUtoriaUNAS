@@ -1,5 +1,5 @@
 import type { DemoUser } from '../types/auth';
-import { z } from 'zod';
+import * as v from 'valibot';
 
 export interface ApiSession {
   accessToken: string;
@@ -7,18 +7,18 @@ export interface ApiSession {
   user: DemoUser | null;
 }
 const SESSION_KEY = 'unas:api-session:v1';
-const sessionSchema = z.object({
-  accessToken: z.string().min(1),
-  expiresAt: z.number().finite(),
-  user: z.object({
-    id: z.string().min(1),
-    role: z.enum(['estudiante', 'tutor', 'coordinacion']),
-    name: z.string(),
-    identifier: z.string(),
-    email: z.string(),
-    personaId: z.string().optional(),
-    adminInstitucional: z.boolean().optional(),
-    coordinadorEscuela: z.boolean().optional(),
+const sessionSchema = v.object({
+  accessToken: v.pipe(v.string(), v.minLength(1)),
+  expiresAt: v.pipe(v.number(), v.finite()),
+  user: v.object({
+    id: v.pipe(v.string(), v.minLength(1)),
+    role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
+    name: v.string(),
+    identifier: v.string(),
+    email: v.string(),
+    personaId: v.optional(v.string()),
+    adminInstitucional: v.optional(v.boolean()),
+    coordinadorEscuela: v.optional(v.boolean()),
   }),
 });
 let session: ApiSession | null = null;
@@ -26,8 +26,8 @@ let escuelaAdministrada: string | undefined;
 try {
   const raw = sessionStorage.getItem(SESSION_KEY);
   if (raw) {
-    const parsed = sessionSchema.safeParse(JSON.parse(raw));
-    if (parsed.success) session = parsed.data;
+    const parsed = v.safeParse(sessionSchema, JSON.parse(raw));
+    if (parsed.success) session = parsed.output;
   }
 } catch {
   /* Requiere volver a iniciar sesión. */

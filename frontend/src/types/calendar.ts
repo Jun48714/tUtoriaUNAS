@@ -1,43 +1,71 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import type { DemoUser } from './auth';
 
-const date = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Selecciona una fecha válida.')
-  .refine((value) => {
+const date = v.pipe(
+  v.string(),
+  v.regex(/^\d{4}-\d{2}-\d{2}$/, 'Selecciona una fecha válida.'),
+  v.check((value) => {
     const parsed = new Date(`${value}T12:00:00Z`);
     return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-  }, 'Selecciona una fecha válida.');
-const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Selecciona una hora válida.');
+  }, 'Selecciona una fecha válida.'),
+);
+const time = v.pipe(
+  v.string(),
+  v.regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Selecciona una hora válida.'),
+);
 
-export const calendarInputSchema = z
-  .object({
-    kind: z.enum(['curso', 'tutoria']),
-    title: z.string().trim().min(3, 'Escribe el nombre del curso.').max(100),
-    semesterId: z.string().regex(/^\d{4}-(I|II)$/),
-    days: z.array(z.number().int().min(1).max(7)).min(1, 'Selecciona al menos un día.').max(7),
+export const calendarInputSchema = v.pipe(
+  v.object({
+    kind: v.picklist(['curso', 'tutoria']),
+    title: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(3, 'Escribe el nombre del curso.'),
+      v.maxLength(100),
+    ),
+    semesterId: v.pipe(v.string(), v.regex(/^\d{4}-(I|II)$/)),
+    days: v.pipe(
+      v.array(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(7))),
+      v.minLength(1, 'Selecciona al menos un día.'),
+      v.maxLength(7),
+    ),
     dateFrom: date,
     dateTo: date,
     startTime: time,
     endTime: time,
-    location: z.string().trim().min(2, 'Indica el aula o enlace.').max(180),
-    modality: z.enum(['presencial', 'virtual', 'mixta']),
-    capacity: z.number().int().min(1).max(200).optional(),
-  })
-  .refine((input) => input.startTime < input.endTime, {
-    message: 'La hora final debe ser posterior a la inicial.',
-    path: ['endTime'],
-  })
-  .refine((input) => input.dateFrom <= input.dateTo, {
-    message: 'La fecha final debe ser posterior a la inicial.',
-    path: ['dateTo'],
-  })
-  .refine((input) => Date.parse(input.dateTo) - Date.parse(input.dateFrom) <= 366 * 86400000, {
-    message: 'El horario no puede abarcar más de un año.',
-    path: ['dateTo'],
-  });
+    location: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(2, 'Indica el aula o enlace.'),
+      v.maxLength(180),
+    ),
+    modality: v.picklist(['presencial', 'virtual', 'mixta']),
+    capacity: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200))),
+  }),
+  v.forward(
+    v.check(
+      (input) => input.startTime < input.endTime,
+      'La hora final debe ser posterior a la inicial.',
+    ),
+    ['endTime'],
+  ),
+  v.forward(
+    v.check(
+      (input) => input.dateFrom <= input.dateTo,
+      'La fecha final debe ser posterior a la inicial.',
+    ),
+    ['dateTo'],
+  ),
+  v.forward(
+    v.check(
+      (input) => Date.parse(input.dateTo) - Date.parse(input.dateFrom) <= 366 * 86400000,
+      'El horario no puede abarcar más de un año.',
+    ),
+    ['dateTo'],
+  ),
+);
 
-export type CalendarInput = z.infer<typeof calendarInputSchema>;
+export type CalendarInput = v.InferOutput<typeof calendarInputSchema>;
 export interface TeacherCalendarBlock extends CalendarInput {
   id: string;
   tutorId: string;

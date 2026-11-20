@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { AuthModals } from '../auth/AuthModals';
-import { ArrowLeft } from '../ui/icons';
+import { ArrowLeft } from '../ui/iconosAcceso';
 import type { AuthModalId } from '../auth/modalContent';
 import crest from '../../assets/unas-logo-mark-120.png';
 import forest from '../../assets/selva.jpg';
+import forest1000 from '../../assets/selva-1000.avif';
+import forest1400 from '../../assets/selva-1400.avif';
 import '../../styles/auth.css';
 
 /** Acceso UNAS: proporciones Falcon, fotografía local y formulario compartido. */
@@ -18,14 +20,23 @@ export function AuthLayout() {
     <main id="main-content" className="d01">
       <div className={`d01__frame${variant === 'recovery' ? ' d01__frame--recovery' : ''}`}>
         <section className="d01__brand" aria-label="Universidad Nacional Agraria de la Selva">
-          <img
-            className="d01__photo"
-            src={forest}
-            alt=""
-            width="1400"
-            height="875"
-            fetchPriority="high"
-          />
+          {/* AVIF en dos anchos (1000 px basta para pantallas 1x; 1400 px para las densas); el JPG
+              original queda de respaldo para navegadores sin AVIF. Misma foto, encuadre y proporción. */}
+          <picture>
+            <source
+              type="image/avif"
+              srcSet={`${forest1000} 1000w, ${forest1400} 1400w`}
+              sizes="(max-width: 991px) min(100vw, 510px), 1000px"
+            />
+            <img
+              className="d01__photo"
+              src={forest}
+              alt=""
+              width="1400"
+              height="875"
+              fetchPriority="high"
+            />
+          </picture>
 
           <Link className="d01__logo" to="/login" aria-label="UNAS · Inicio de sesión">
             <img className="d01__crest" src={crest} alt="Escudo UNAS" width="54" height="64" />

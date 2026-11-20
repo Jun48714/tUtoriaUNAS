@@ -4,10 +4,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthLayout } from '../components/layout/AuthLayout';
 import { PageLoading } from '../components/ui/PageLoading';
 import { LoginPage } from '../pages/auth/LoginPage';
-import { RecoveryPage } from '../pages/auth/RecoveryPage';
-import { AccountSetupPage } from '../pages/auth/AccountSetupPage';
-import { UnauthorizedPage } from '../pages/auth/UnauthorizedPage';
-import { NotFoundPage } from '../pages/not-found/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { useAuth } from '../hooks/useAuth';
 import { dashboardPath } from '../utils/roles';
@@ -60,6 +56,19 @@ import {
  * cada portal se descargan bajo demanda, de modo que la carga inicial no
  * arrastre las 35 páginas ni los datos ficticios que no se van a consultar.
  */
+// Pantallas secundarias del acceso: se descargan al visitarlas, no con /login (traen sus propios formularios).
+const RecoveryPage = lazy(() =>
+  import('../pages/auth/RecoveryPage').then((m) => ({ default: m.RecoveryPage })),
+);
+const AccountSetupPage = lazy(() =>
+  import('../pages/auth/AccountSetupPage').then((m) => ({ default: m.AccountSetupPage })),
+);
+const UnauthorizedPage = lazy(() =>
+  import('../pages/auth/UnauthorizedPage').then((m) => ({ default: m.UnauthorizedPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('../pages/not-found/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
 const CoordPadron = lazy(() =>
   import('../pages/coordinacion/CoordPadron').then((m) => ({ default: m.CoordPadron })),
 );

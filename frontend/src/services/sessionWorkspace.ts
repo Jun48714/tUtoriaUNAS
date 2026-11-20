@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import { API_MODE } from './apiConfig';
 import { snapshotApi } from './apiTutoria';
 import type { Instrumento, Sesion } from '../types/domain';
@@ -17,28 +17,30 @@ import { enlaceVirtualSesion } from '../utils/evaluacionesSesion';
 
 export const SESSIONS_KEY = 'unas:scheduled-sessions:v1';
 export const SESSIONS_EVENT = 'unas:scheduled-sessions-updated';
-const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
-const entradaSchema = z.object({
-  tipo: z.enum(['individual', 'grupal']),
-  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+const hora = v.pipe(v.string(), v.regex(/^([01]\d|2[0-3]):[0-5]\d$/));
+const entradaSchema = v.object({
+  tipo: v.picklist(['individual', 'grupal']),
+  fecha: v.pipe(v.string(), v.regex(/^\d{4}-\d{2}-\d{2}$/)),
   horaInicio: hora,
   horaFin: hora,
-  modalidad: z.enum(['presencial', 'virtual', 'mixta']),
-  lugar: z.string().trim().min(1).max(300),
-  tema: z.string().trim().min(1).max(200),
-  objetivo: z.string().trim().min(1).max(2000),
-  estudiantes: z.array(z.string()).min(1),
+  modalidad: v.picklist(['presencial', 'virtual', 'mixta']),
+  lugar: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(300)),
+  tema: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(200)),
+  objetivo: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(2000)),
+  estudiantes: v.pipe(v.array(v.string()), v.minLength(1)),
 });
-export type ProgramacionSesion = z.infer<typeof entradaSchema>;
-const programadaSchema = entradaSchema.extend({
-  id: z.string(),
-  tutorId: z.string(),
-  semestreId: z.string(),
+export type ProgramacionSesion = v.InferOutput<typeof entradaSchema>;
+const programadaSchema = v.object({
+  ...entradaSchema.entries,
+  id: v.string(),
+  tutorId: v.string(),
+  semestreId: v.string(),
 });
+const programadasSchema = v.array(programadaSchema);
 
 export function leerProgramadas(raw: string | null): Sesion[] {
   try {
-    const filas = z.array(programadaSchema).parse(JSON.parse(raw ?? '[]'));
+    const filas = v.parse(programadasSchema, JSON.parse(raw ?? '[]'));
     return filas
       .filter(
         (s) =>
@@ -96,12 +98,12 @@ export function programarSesion(
 ): Sesion {
   if (API_MODE) throw new Error('La sesión debe programarse en el servidor.');
   if (actor.role !== 'tutor') throw new Error('Solo un docente tutor puede programar sesiones.');
-  const resultado = entradaSchema.safeParse(entrada);
+  const resultado = v.safeParse(entradaSchema, entrada);
   if (!resultado.success)
     throw new Error(
       'Completa la fecha, las horas, el lugar, el tema, el objetivo y los estudiantes.',
     );
-  const dato = resultado.data;
+  const dato = resultado.output;
   if (dato.modalidad === 'virtual' && !enlaceVirtualSesion(dato))
     throw new Error('Escribe el enlace completo de la sesión virtual (https://…).');
   if (dato.horaFin <= dato.horaInicio)
@@ -145,7 +147,7 @@ export function programarSesion(
   if (cruce)
     throw new Error(`El horario coincide con ${origenOcupacion[cruce.origen].toLowerCase()}.`);
   const raw = localStorage.getItem(SESSIONS_KEY);
-  const anteriores = z.array(programadaSchema).safeParse(JSON.parse(raw ?? '[]'));
+  const anteriores = v.safeParse(programadasSchema, JSON.parse(raw ?? '[]'));
   if (!anteriores.success)
     throw new Error(
       'No se pudo recuperar la agenda guardada. Revisa el almacenamiento antes de programar.',
@@ -156,7 +158,7 @@ export function programarSesion(
     tutorId: actor.id,
     semestreId: semestreActual,
   };
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify([...anteriores.data, nueva]));
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify([...anteriores.output, nueva]));
   window.dispatchEvent(new Event(SESSIONS_EVENT));
   return leerProgramadas(JSON.stringify([nueva]))[0]!;
 }

@@ -1,9 +1,6 @@
-import { demoAuthService } from './demoAuthService';
-import type { AuthService } from '../types/auth';
 import type { TeacherCalendarService } from '../types/calendar';
 import { browserTeacherCalendarService } from './teacherCalendarService';
 import { API_MODE } from './apiConfig';
-import { apiAuthService } from './apiAuthService';
 import { apiTeacherCalendarService } from './apiTeacherCalendarService';
 
 /**
@@ -17,7 +14,6 @@ import { apiTeacherCalendarService } from './apiTeacherCalendarService';
  * `./demoTutoringRepository` y `../types/tutoring`, que la refactorización eliminó y
  * dejaban el arranque de la aplicación sin compilar.
  */
-export const authService: AuthService = API_MODE ? apiAuthService : demoAuthService;
 export const teacherCalendarService: TeacherCalendarService = API_MODE
   ? apiTeacherCalendarService
   : browserTeacherCalendarService;

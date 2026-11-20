@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FormField } from '../../components/forms/FormField';
-import { KeyRound, Lock, MailSolid } from '../../components/ui/icons';
+import { KeyRound, Lock, MailSolid } from '../../components/ui/iconosAcceso';
 import { useCuentaSetup } from '../../hooks/useCuentaSetup';
 import type { ModoCuenta } from '../../hooks/useCuentaSetup';
 import type { Role } from '../../types/auth';

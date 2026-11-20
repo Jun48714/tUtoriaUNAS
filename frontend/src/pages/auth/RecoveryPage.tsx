@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import * as v from 'valibot';
 import { FormField } from '../../components/forms/FormField';
-import { CircleCheck, MailSolid } from '../../components/ui/icons';
+import { CircleCheck, MailSolid } from '../../components/ui/iconosAcceso';
 import { API_MODE } from '../../services/apiConfig';
 import { AccountSetupPage } from './AccountSetupPage';
 
-const schema = z.object({
-  email: z.email('Ingresa un correo válido.').max(254, 'El correo es demasiado largo.'),
+const schema = v.object({
+  email: v.pipe(
+    v.string('Ingresa un correo válido.'),
+    v.email('Ingresa un correo válido.'),
+    v.maxLength(254, 'El correo es demasiado largo.'),
+  ),
 });
-type RecoveryFields = z.infer<typeof schema>;
+type RecoveryFields = v.InferOutput<typeof schema>;
 
 const SEND_PAUSE = 800;
 const RESEND_PAUSE = 700;
@@ -35,7 +39,7 @@ function DemoRecoveryPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RecoveryFields>({ resolver: zodResolver(schema), defaultValues: { email: '' } });
+  } = useForm<RecoveryFields>({ resolver: valibotResolver(schema), defaultValues: { email: '' } });
 
   function submit(values: RecoveryFields) {
     setSending(true);
