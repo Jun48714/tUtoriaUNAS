@@ -810,6 +810,7 @@ function RespuestaCampo({
       data-reduced-motion={reduced}
       className={`tutoring-field${error ? ' tutoring-field--error' : ''}`}
       data-field={campo.codigo}
+      data-tipo={campo.tipo}
     >
       {grupo ? (
         <div className="tutoring-field__label" id={`${id}-label`}>

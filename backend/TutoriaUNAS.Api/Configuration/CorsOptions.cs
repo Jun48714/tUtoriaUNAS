@@ -8,5 +8,6 @@ public sealed class CorsOptions
     public bool IsValid() => AllowedOrigins.Length > 0 && AllowedOrigins.All(origin =>
         Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) &&
-        uri.GetLeftPart(UriPartial.Authority) == origin);
+        uri.UserInfo.Length == 0 && uri.PathAndQuery == "/" && uri.Fragment.Length == 0 &&
+        !origin.EndsWith('/') && !origin.Contains('*', StringComparison.Ordinal));
 }

@@ -1250,7 +1250,14 @@ dialog.sheet--wide {
   width: min(880px, calc(100vw - 32px));
 }
 dialog.sheet--form {
-  height: min(560px, calc(100dvh - 48px));
+  /* Alto adaptable: se ajusta al contenido y solo llega al tope de la ventana. */
+  height: auto;
+  max-height: calc(100dvh - 32px);
+}
+@media (min-width: 900px) {
+  dialog.sheet.sheet--form.sheet--wide {
+    width: min(1100px, calc(100vw - 48px));
+  }
 }
 dialog.sheet--instrumento {
   --instrumento-inline: clamp(16px, 3vw, 24px);

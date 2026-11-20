@@ -237,14 +237,9 @@ Cuando las herramientas estén conectadas:
    está conectado, conserva el traspaso en archivos y explica esa limitación con precisión;
    no afirmes haber guardado en una herramienta que no utilizaste.
 
-Referencias Engram: **#112** pedido inicial; **#113** estado contrastado; **#114** entrega
-revisada final; **#119** preferencia visual; **#120** cobertura; **#131** continuidad entre IA;
-**#132** archivos portables; **#133** alcance completo de los tres pedidos.
-Claves: `deliverable/informe-avance-2026-11-10`, `preference/informe-avance-estilo`,
-`quality/cobertura-informe-2026-11-10`, `preference/continuidad-entre-ias`,
-`continuity/portable-ai-handoff` y `request/informe-integral-y-correcciones`.
-La sesión manual usada por el asistente anterior fue `manual-save-tutoria-unas`;
-abre o usa tu propia sesión si tu cliente permite hacerlo, sin mezclar cierres concurrentes.
+Las observaciones y claves de memoria de asistentes anteriores no existen en el Engram de
+este equipo (instalado el 19 de noviembre de 2026, sin datos previos): el contexto
+histórico está solo en estos archivos. Abre tu propia sesión sin mezclar cierres concurrentes.
 
 ## 9. Texto para iniciar con Claude
 
@@ -252,8 +247,8 @@ abre o usa tu propia sesión si tu cliente permite hacerlo, sin mezclar cierres 
 Trabaja en C:\Users\UNAS\Downloads\Tutoria\tutoria-unas.
 Lee primero CLAUDE.md, AGENTS.md y scripts/CONTEXTO_PARA_IAS.md.
 Lee scripts/SOLICITUDES_USUARIO_INFORME.md para conservar mis pedidos y correcciones.
-Si tienes Engram conectado, consulta el proyecto tutoria-unas y las observaciones
-indicadas en la guía. Si no, usa el contexto y las evidencias locales.
+Si tienes Engram conectado, consulta el proyecto tutoria-unas. Si no, usa el contexto
+y las evidencias locales.
 Revisa el estado de Git y las fuentes actuales antes de editar; conserva mis cambios.
 El informe revisado ya está terminado. Usa la versión final y sus correcciones.
 Ahora la tarea concreta que quiero que hagas es: [escribe aquí la siguiente tarea].
