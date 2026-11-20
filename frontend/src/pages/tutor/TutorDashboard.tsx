@@ -79,15 +79,6 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
           icon={<Send />}
         />
       </div>
-      <section className="tutor-dashboard-charts" aria-label="Gráficos de tu actividad tutorial">
-        <header className="tutor-dashboard-charts__head">
-          <h2>Tu actividad</h2>
-          <Link to="/tutor/reportes">
-            Ver reportes <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-          </Link>
-        </header>
-        <PortalCharts scope={scope} simple />
-      </section>
       <div className="dashboard-focus-grid">
         <NextSession session={proxima} href="/tutor/sesiones" />
         <DashboardTasks
@@ -118,6 +109,15 @@ function TutorPanel({ scope }: { scope: DashboardScopeData }) {
           ]}
         />
       </div>
+      <section className="tutor-dashboard-charts" aria-label="Gráficos de tu actividad tutorial">
+        <header className="tutor-dashboard-charts__head">
+          <h2>Tu actividad</h2>
+          <Link to="/tutor/reportes">
+            Ver reportes <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+          </Link>
+        </header>
+        <PortalCharts scope={scope} simple />
+      </section>
     </div>
   );
 }

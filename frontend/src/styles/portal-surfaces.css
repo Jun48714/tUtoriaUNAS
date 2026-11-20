@@ -104,6 +104,9 @@
 .app-shell .workspace .stat__body {
   position: static;
   display: grid;
+  /* Con tarjetas de distinta altura (con o sin nota) el contenido se alinea arriba. */
+  align-content: start;
+  height: 100%;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 5px 12px;
