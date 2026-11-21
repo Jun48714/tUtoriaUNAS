@@ -136,7 +136,7 @@ async function solicitar<T>(
     };
     comprobarCuenta();
     if (
-      (response.status === 401 || (response.status === 403 && path === '/api/tutoria/estado')) &&
+      (response.status === 401 || (response.status === 403 && path.split('?')[0] === '/api/tutoria/estado')) &&
       !path.endsWith('/login')
     ) {
       setApiSession(null);

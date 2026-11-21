@@ -44,6 +44,23 @@ describe('acceso institucional del cliente', () => {
     expect(api.refrescar).not.toHaveBeenCalled();
     expect(getApiSession()?.user).toEqual(usuario);
   });
+  it('pide el estado aparte, comprimido, en lugar de dentro del login', async () => {
+    const usuario = {
+      id: 'EST-FICTICIO',
+      role: 'estudiante',
+      identifier: credentials.identifier,
+      name: 'Estudiante de prueba',
+      email: credentials.identifier,
+    };
+    respuesta({ accessToken: 'token-de-prueba', expiresIn: 3600 });
+    api.refrescar.mockResolvedValue({ usuario });
+    await expect(apiAuthService.login(credentials, false)).resolves.toEqual(usuario);
+    const cuerpo = JSON.parse(String(vi.mocked(fetch).mock.calls[0]![1]!.body)) as Record<string, unknown>;
+    expect(cuerpo.incluirEstado).toBe(false);
+    expect(api.refrescar).toHaveBeenCalledWith(true);
+    expect(api.aplicar).not.toHaveBeenCalled();
+    expect(getApiSession()?.user).toEqual(usuario);
+  });
   it('una contraseña temporal nunca se convierte en una sesión del portal', async () => {
     respuesta({
       activacionRequerida: true,

@@ -14,7 +14,9 @@ public sealed class TutoriaController(EstadoTutoriaService estado, AgendaService
 {
     [HttpGet("tutoria/estado")]
     [RequierePermiso("portal", "ver")]
-    public Task<EstadoTutoriaDto> Estado(CancellationToken ct) => estado.Obtener(ct);
+    // inicio=true: primera carga tras iniciar sesión. Administración abre en la vista de todas las escuelas,
+    // igual que cuando el estado viajaba dentro de la respuesta del login (que no se comprime).
+    public Task<EstadoTutoriaDto> Estado([FromQuery] bool inicio, CancellationToken ct) => estado.Obtener(ct, inicioInstitucional: inicio);
     [HttpPost("sesiones")]
     [RequierePermiso("sesiones", "crear")]
     public Task<SesionDto> Programar(ProgramarSesionDto input, CancellationToken ct) => agenda.Programar(input, ct);

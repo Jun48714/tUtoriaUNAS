@@ -10,6 +10,7 @@ import { usePortal } from '../../hooks/usePortal';
 import { escuelas } from '../../data/catalogos';
 import { escuelaDe, iniciales } from '../../data/personas';
 import { roleDetails } from '../../utils/roles';
+import { snapshotApi } from '../../services/apiTutoria';
 import { preloadPortalRoute } from '../../routes/portalPages';
 
 interface SidebarProps {
@@ -144,11 +145,14 @@ export function Sidebar({ onNavigate, mini = false, onToggleMini, onCerrar }: Si
       >
         <Icon aria-hidden="true" />
         <span className="sidebar__link-label">{item.label}</span>
-        {item.counter && valor > 0 && (
-          <span className="sidebar__link-count" aria-label={`${valor} pendientes`}>
-            {valor}
-          </span>
-        )}
+        {item.counter &&
+          (valor > 0 ? (
+            <span className="sidebar__link-count" aria-label={`${valor} pendientes`}>
+              {valor}
+            </span>
+          ) : (
+            <span className="sidebar__link-count sidebar__link-count--vacio" aria-hidden="true" />
+          ))}
       </Link>
     );
   }
@@ -217,7 +221,7 @@ export function Sidebar({ onNavigate, mini = false, onToggleMini, onCerrar }: Si
         </span>
         <strong>{ambito}</strong>
         <em>
-          {user.adminInstitucional && portal.institucional
+          {user.adminInstitucional && (portal.institucional || !snapshotApi().datos)
             ? 'Todas las escuelas'
             : escuelaDe(portal.escuelaId)}
         </em>
@@ -260,7 +264,15 @@ export function Sidebar({ onNavigate, mini = false, onToggleMini, onCerrar }: Si
                     >
                       <Icon aria-hidden="true" />
                       <span className="sidebar__link-label">{item.label}</span>
-                      {valor > 0 && <span className="sidebar__link-count">{valor}</span>}
+                      {item.counter &&
+                        (valor > 0 ? (
+                          <span className="sidebar__link-count">{valor}</span>
+                        ) : (
+                          <span
+                            className="sidebar__link-count sidebar__link-count--vacio"
+                            aria-hidden="true"
+                          />
+                        ))}
                       <ChevronRight className="sidebar__chevron" aria-hidden="true" />
                     </button>
                     <ul

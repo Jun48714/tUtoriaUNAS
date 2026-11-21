@@ -55,6 +55,9 @@ public sealed class AdministracionInstitucionalTests(PostgresFixture fixture) : 
         Assert.True(inicial.Usuario.AdminInstitucional);
         Assert.Contains(escuela, inicial.EscuelasAdministrables!);
         Assert.DoesNotContain(inicial.Estudiantes, e => e.GetProperty("id").GetString() == personaId);
+        // Primera carga tras el login (el estado ya no viaja dentro de la respuesta del login).
+        Assert.True((await admin.GetFromJsonAsync<EstadoTutoriaDto>("/api/tutoria/estado?inicio=true"))!.ConsultaInstitucional);
+        Assert.False((await coordinacion.GetFromJsonAsync<EstadoTutoriaDto>("/api/tutoria/estado?inicio=true"))!.ConsultaInstitucional);
 
         const string estado = "/api/tutoria/estado";
         var institucional = (await admin.GetFromJsonAsync<EstadoTutoriaDto>(estado + global))!;

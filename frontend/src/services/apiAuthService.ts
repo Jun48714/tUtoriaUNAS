@@ -39,7 +39,10 @@ export const apiAuthService: AuthService = {
         identifier: credentials.identifier.trim(),
         password: credentials.password,
         role: credentials.role,
-        incluirEstado: true,
+        // El estado se pide aparte con GET: así viaja comprimido (el login no se comprime por llevar
+        // el token) y deja fijada la etiqueta para la siguiente consulta. Medido en producción:
+        // 179 KB sin comprimir dentro del login.
+        incluirEstado: false,
       }),
     );
     if ('activacionRequerida' in result) {
@@ -68,7 +71,7 @@ export const apiAuthService: AuthService = {
     );
     try {
       const api = await cargando;
-      const data = result.estado ?? (await api.refrescarApi());
+      const data = result.estado ?? (await api.refrescarApi(true));
       if (!data) throw new Error('No se pudo validar la cuenta con el servidor.');
       if (result.estado) api.aplicarEstadoApi(data);
       setApiSession(

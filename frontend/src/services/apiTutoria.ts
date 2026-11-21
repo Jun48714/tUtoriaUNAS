@@ -136,13 +136,14 @@ export function aplicarEstadoApi(datos: EstadoApi) {
   };
   publicar();
 }
-export async function refrescarApi() {
+/** `inicio`: primera carga tras el login; administración abre en la vista de todas las escuelas. */
+export async function refrescarApi(inicio = false) {
   const token = getApiSession()?.accessToken;
   if (!token) return;
   const revision = ++revisionCarga;
   try {
     const respuesta = await apiJsonSiCambio<EstadoApi>(
-      '/api/tutoria/estado',
+      inicio ? '/api/tutoria/estado?inicio=true' : '/api/tutoria/estado',
       estado.datos ? etagEstado : null,
     );
     if (getApiSession()?.accessToken !== token || revision !== revisionCarga) return;
