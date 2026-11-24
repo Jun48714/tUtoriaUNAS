@@ -26,6 +26,7 @@ tools/
 artifacts/
 .cursor/
 .vercel/
+TutoriaUNAS/
 
 # --- Ruido del sistema ---
 *.log
