@@ -92,6 +92,7 @@ builder.Services.AddOptions<CorsSettings>().BindConfiguration(CorsSettings.Secti
 
 var database = builder.Configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new();
 if (database.Enabled && !builder.Configuration.GetValue<bool>("Tutoria:DisableDispatcher")) builder.Services.AddHostedService<PublicadorAvisos>();
+if (database.Enabled && !builder.Configuration.GetValue<bool>("Tutoria:DisableDispatcher")) builder.Services.AddHostedService<PrecalentamientoApi>();
 if (database.Enabled && cuentas.Enabled && !cuentas.DisableDispatcher) builder.Services.AddHostedService<DespachadorCorreoCuenta>();
 if (database.Enabled && cuentas.Enabled && !cuentas.DisableDispatcher) builder.Services.AddHostedService<DespachadorRecordatorios>();
 if (database.Enabled)

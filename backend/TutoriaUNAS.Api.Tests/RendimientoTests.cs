@@ -75,6 +75,34 @@ public sealed class RendimientoTests(PostgresFixture fixture, ITestOutputHelper 
     }
 
     [PostgresFact]
+    public async Task LoginMideTiempoYConsultasConYSinEstado()
+    {
+        // Una aplicación por modalidad: cada una tiene su propio límite de 30 accesos por minuto.
+        foreach (var incluirEstado in new[] { false, true })
+        {
+            var contador = new ContadorConsultas();
+            await using var app = fixture.App.WithWebHostBuilder(b => b.ConfigureTestServices(s =>
+                s.ConfigureDbContext<TutoriaDbContext>(o => o.AddInterceptors(contador))));
+            using var client = app.CreateClient();
+            var tiempos = new List<double>();
+            var consultas = 0; var bytes = 0;
+            for (var i = 0; i < 21; i++)
+            {
+                var antes = contador.Total;
+                var reloj = Stopwatch.StartNew();
+                var response = await client.PostAsJsonAsync("/api/auth/login", new LoginLocalDto("DOC-0421", "tutoria2026", "tutor", incluirEstado));
+                var cuerpo = await response.Content.ReadAsByteArrayAsync();
+                reloj.Stop();
+                response.EnsureSuccessStatusCode();
+                if (i == 0) continue; // la primera llamada calienta JIT, conexiones y modelo de EF
+                tiempos.Add(reloj.Elapsed.TotalMilliseconds); consultas = contador.Total - antes; bytes = cuerpo.Length;
+            }
+            tiempos.Sort();
+            output.WriteLine($"login {(incluirEstado ? "con estado" : "sin estado")}: {consultas} consultas SQL, p50 {tiempos[tiempos.Count / 2]:0.0} ms, p95 {tiempos[(int)(tiempos.Count * 0.95)]:0.0} ms, máx {tiempos[^1]:0.0} ms, {bytes / 1024.0:0.0} KB");
+        }
+    }
+
+    [PostgresFact]
     public async Task EstadoSinCambiosResponde304YCambiaTrasEscribir()
     {
         using var tutor = await fixture.Login("DOC-0421", "tutor");

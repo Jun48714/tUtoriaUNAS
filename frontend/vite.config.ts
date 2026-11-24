@@ -12,6 +12,15 @@ export default defineConfig({
       // Esperar al cierre evita cachear un módulo sin sus exports durante HMR.
       awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 25 },
     },
+    // En desarrollo Vite compila cada módulo la primera vez que se pide: sin esto, el
+    // portal (cargado con import() tras el login) se compila mientras el usuario espera.
+    warmup: {
+      clientFiles: [
+        './src/components/layout/AppLayoutConConsultas.tsx',
+        './src/pages/*/*Dashboard.tsx',
+        './src/services/apiTutoria.ts',
+      ],
+    },
   },
   preview: {
     host: '127.0.0.1',
