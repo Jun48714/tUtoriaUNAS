@@ -17,7 +17,7 @@ import { PageHeading } from '../../components/ui/PageHeading';
 import { Meter } from '../../components/ui/Progress';
 import { Sheet } from '../../components/ui/Sheet';
 import { Badge, StatusBadge } from '../../components/ui/StatusBadge';
-import { escuelas, semestreActual } from '../../data/catalogos';
+import { escuelas, semestreVigente } from '../../data/catalogos';
 import { definicionPorCodigo } from '../../data/formatos';
 import { escuelaDe } from '../../data/personas';
 import { actividadesPlan } from '../../data/tutoria';
@@ -62,9 +62,9 @@ export function CoordPlan() {
   const actividades = (API_MODE ? persistidas : actividadesPlan).filter(
     (a) =>
       (!escuelaId || a.escuelaId === escuelaId) &&
-      a.semestreId === (periodos.get(a.escuelaId) ?? semestreActual),
+      a.semestreId === (periodos.get(a.escuelaId) ?? semestreVigente.id),
   );
-  const semestreEscuela = periodos.get(escuelaId) ?? semestreActual;
+  const semestreEscuela = periodos.get(escuelaId) ?? semestreVigente.id;
   const plan = escuelaId
     ? registros.find(
         (registro) =>
@@ -195,7 +195,7 @@ export function CoordPlan() {
         description={
           portal.institucional
             ? 'Actividades de todas las escuelas.'
-            : `${semestreActual} · ${escuelaDe(escuelaId)}`
+            : `${semestreVigente.id} · ${escuelaDe(escuelaId)}`
         }
         actions={
           API_MODE && (

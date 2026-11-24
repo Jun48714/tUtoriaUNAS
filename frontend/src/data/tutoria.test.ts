@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { asignacionDe, asignaciones, tutoradosDe } from './tutoria';
-import { semestreActual } from './catalogos';
+import { semestreVigente } from './catalogos';
 
 const originales = [...asignaciones];
 afterEach(() => asignaciones.splice(0, asignaciones.length, ...originales));
 
 describe('asignación vigente', () => {
   it('no toma el tutor de un semestre anterior aunque siga marcado como activo', () => {
-    const vigente = { ...originales[0]!, semestreId: semestreActual };
+    const vigente = { ...originales[0]!, semestreId: semestreVigente.id };
     const anterior = {
       ...vigente,
       id: 'ASG-ANTERIOR',

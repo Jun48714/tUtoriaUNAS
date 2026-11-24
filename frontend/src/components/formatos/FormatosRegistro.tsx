@@ -19,7 +19,7 @@ export function Formato06({ documento: d }: Props) {
   const filas = rellenar<Fila>(filasDe(r, 'asistentes'), 12, {});
   return (
     <Hoja documento={d}>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <tbody>
           <tr>
             <td className="fo-sombra-suave">
@@ -99,7 +99,7 @@ export function Formato07({ documento: d }: Props) {
   const hora = r.horaInicio ? `de ${r.horaInicio}${r.horaFin ? ` a ${r.horaFin}` : ''}` : '';
   return (
     <Hoja documento={d}>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <colgroup>
           <col style={{ width: '46%' }} />
           <col style={{ width: '27%' }} />
@@ -271,7 +271,7 @@ export function Formato12({ documento: d }: Props) {
       <p className="fo-fecha-derecha">
         <Campo etiqueta="FECHA" valor={fechaOficial(r.fecha) || '……/……/………'} />
       </p>
-      <table className="fo-tabla fo-holgada">
+      <table role="presentation" className="fo-tabla fo-holgada">
         <colgroup>
           <col style={{ width: '72%' }} />
           <col />

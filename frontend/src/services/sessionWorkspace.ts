@@ -4,7 +4,7 @@ import { snapshotApi } from './apiTutoria';
 import type { Instrumento, Sesion } from '../types/domain';
 import type { DemoUser } from '../types/auth';
 import { asignaciones, sesiones } from '../data/tutoria';
-import { semestreActual } from '../data/catalogos';
+import { semestreVigente } from '../data/catalogos';
 import {
   crucesDeBloque,
   disponibilidadDemo,
@@ -131,7 +131,7 @@ export function programarSesion(
           (a) =>
             a.estudianteId === id &&
             a.tutorId === actor.id &&
-            a.semestreId === semestreActual &&
+            a.semestreId === semestreVigente.id &&
             a.estado === 'activa',
         ),
     )
@@ -156,7 +156,7 @@ export function programarSesion(
     ...dato,
     id: `SES-${crypto.randomUUID()}`,
     tutorId: actor.id,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
   };
   localStorage.setItem(SESSIONS_KEY, JSON.stringify([...anteriores.output, nueva]));
   window.dispatchEvent(new Event(SESSIONS_EVENT));

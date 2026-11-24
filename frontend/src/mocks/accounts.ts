@@ -1,8 +1,8 @@
 import type { DemoUser } from '../types/auth';
 
-// Cuentas ficticias de demostración, visibles a propósito en el acceso y en el README.
-// No son secretos y nunca deben ser aceptadas por una autenticación de producción.
-export const DEMO_PASSWORD = 'tutoria2026';
+// Cuentas ficticias de demostración. La contraseña común se define en VITE_DEMO_PASSWORD
+// (frontend/.env.local) y nunca debe ser aceptada por una autenticación de producción.
+export const DEMO_PASSWORD: string = import.meta.env.VITE_DEMO_PASSWORD ?? '';
 
 export const demoAccounts: readonly DemoUser[] = [
   {

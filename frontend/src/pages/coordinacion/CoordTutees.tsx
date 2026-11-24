@@ -25,7 +25,7 @@ import { usePersonasPortal } from '../../hooks/usePersonasPortal';
 import { AccionesCuentas } from '../../components/panels/AccionesCuentas';
 import type { AlertaAcademica, Asignacion, Docente, Estudiante, Sesion } from '../../types/domain';
 import { escuelaDe, iniciales, nombreCompleto } from '../../data/personas';
-import { escuelas, semestreActual } from '../../data/catalogos';
+import { escuelas, semestreVigente } from '../../data/catalogos';
 import { useSistema } from '../../hooks/useSistema';
 import { cursoPorId, matriculaDe } from '../../data/academico';
 import { FichaEstudiante } from '../../components/panels/FichaEstudiante';
@@ -101,7 +101,7 @@ export function CoordTutees() {
         .filter(
           (a) =>
             a.estado === 'activa' &&
-            a.semestreId === (semestrePorEscuela.get(a.escuelaId) ?? semestreActual),
+            a.semestreId === (semestrePorEscuela.get(a.escuelaId) ?? semestreVigente.id),
         )
         .map((a) => [a.estudianteId, a]),
     );
@@ -109,7 +109,7 @@ export function CoordTutees() {
     for (const sesion of sesiones) {
       if (
         sesion.estado !== 'realizada' ||
-        sesion.semestreId !== (semestrePorEscuela.get(sesion.escuelaId ?? '') ?? semestreActual)
+        sesion.semestreId !== (semestrePorEscuela.get(sesion.escuelaId ?? '') ?? semestreVigente.id)
       )
         continue;
       for (const asistente of sesion.asistentes) {
@@ -399,7 +399,7 @@ export function CoordTutees() {
           title="Directorio de estudiantes"
           actions={
             <span className="directory-result">
-              {institucional ? 'Todas las escuelas' : `Semestre ${semestreActual}`}
+              {institucional ? 'Todas las escuelas' : `Semestre ${semestreVigente.id}`}
             </span>
           }
         />
@@ -477,7 +477,7 @@ export function CoordTutees() {
               caption={
                 institucional
                   ? 'Directorio institucional de estudiantes'
-                  : `Registro de estudiantes · semestre ${semestreActual}`
+                  : `Registro de estudiantes · semestre ${semestreVigente.id}`
               }
               rowKey={(fila) => fila.estudiante.id}
               pageSize={10}

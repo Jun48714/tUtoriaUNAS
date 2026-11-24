@@ -3,7 +3,7 @@ import { useSistema } from '../../hooks/useSistema';
 import { usePermiso } from '../../hooks/usePermiso';
 import { mutarSistema } from '../../services/apiSistema';
 import { rutaEscuela } from '../../services/apiClient';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import type { MensajePersistido } from '../../types/sistema';
 import { Sheet } from '../ui/Sheet';
 import { EscuelaGestion } from '../ui/EscuelaGestion';
@@ -60,7 +60,7 @@ export function RedactorAviso({
   return (
     <Sheet
       title={editando ? 'Editar aviso' : 'Redactar aviso'}
-      description={`Tutoría · ${semestreActual}`}
+      description={`Tutoría · ${semestreVigente.id}`}
       onClose={onCerrar}
       wide
       className="coord-form-sheet coord-notice-sheet"
@@ -108,6 +108,7 @@ export function RedactorAviso({
             {destinatarios.length === 1 ? 'seleccionado' : 'seleccionados'}
           </label>
           <div
+            role="presentation"
             className="coord-recipient-search"
             onBlur={(e) => {
               if (!e.currentTarget.contains(e.relatedTarget as Node | null))
@@ -187,7 +188,7 @@ export function RedactorAviso({
               if (e.target.value) {
                 setAsunto(e.target.value);
                 setCuerpo(
-                  `${e.target.value} · semestre ${semestreActual}. Revisa las actividades pendientes en tu portal de tutoría y comunícate con tu docente tutor si necesitas orientación.`,
+                  `${e.target.value} · semestre ${semestreVigente.id}. Revisa las actividades pendientes en tu portal de tutoría y comunícate con tu docente tutor si necesitas orientación.`,
                 );
               }
             }}

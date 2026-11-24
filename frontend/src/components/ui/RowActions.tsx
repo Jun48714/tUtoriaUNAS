@@ -51,6 +51,7 @@ export function RowActions({ children, label }: { children: ReactNode; label: st
         id={id}
         ref={menu}
         popover="auto"
+        role="presentation"
         className="ui-row-actions"
         onToggle={(event) => setOpen(event.currentTarget.matches(':popover-open'))}
         onClick={() => menu.current?.hidePopover()}

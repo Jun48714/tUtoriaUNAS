@@ -13,7 +13,7 @@ import { useSistema } from '../../hooks/useSistema';
 import { API_MODE } from '../../services/apiConfig';
 import { mutarSistema } from '../../services/apiSistema';
 import { cursoPorId, nombreCurso } from '../../data/academico';
-import { etapaAcademica, semestreActual } from '../../data/catalogos';
+import { etapaAcademica, semestreVigente } from '../../data/catalogos';
 import { escuelaDe } from '../../data/personas';
 import { formatFecha } from '../../utils/fechas';
 import '../../assets/vendor/fontawesome.min.css';
@@ -199,7 +199,7 @@ export function StudentTutor() {
                 </div>
                 <div>
                   <dt>Semestre</dt>
-                  <dd>{asignacion?.semestreId ?? semestreActual}</dd>
+                  <dd>{asignacion?.semestreId ?? semestreVigente.id}</dd>
                 </div>
               </dl>
               <dl className="student-tutor__assignment-details">

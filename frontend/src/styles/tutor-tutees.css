@@ -234,7 +234,7 @@
 }
 .tutee-cell-detail > summary::after {
   content: '\f107';
-  font-family: 'Font Awesome 6 Free';
+  font-family: 'Font Awesome 6 Free', sans-serif;
   font-weight: 900;
   font-size: 0.5rem;
 }

@@ -8,7 +8,7 @@ import { StudentFormsPanel } from '../../components/panels/StudentFormsPanel';
 import { filtroFormulario, filtrosFormularios } from '../../utils/filtrosFormularios';
 import { usePortal } from '../../hooks/usePortal';
 import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { esEvaluacionSesion } from '../../utils/evaluacionesSesion';
 import {
   formulariosDelEstudiante,
@@ -73,7 +73,9 @@ export function StudentInstruments() {
         eyebrow="Mi tutoría"
         title="Mis formularios"
         description={
-          estudiante.ciclo ? `Ciclo ${estudiante.ciclo} · ${semestreActual}` : semestreActual
+          estudiante.ciclo
+            ? `Ciclo ${estudiante.ciclo} · ${semestreVigente.id}`
+            : semestreVigente.id
         }
         actions={
           <span className={`sf-pill${pendientes ? '' : ' sf-pill--ok'}`}>

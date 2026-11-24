@@ -10,9 +10,10 @@ export async function mutarSistema<T = void>(
 ) {
   const token = getApiSession()?.accessToken;
   const result = await apiJson<T>(`/api/sistema/${path}`, method, body);
-  if (getApiSession()?.accessToken !== token) return result;
-  confirmado?.(result);
-  await refrescarApi().catch(() => undefined);
+  if (getApiSession()?.accessToken === token) {
+    confirmado?.(result);
+    await refrescarApi().catch(() => undefined);
+  }
   return result;
 }
 export const guardarContactoApi = (contacto: ContactoPerfil) =>

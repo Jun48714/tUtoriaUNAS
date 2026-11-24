@@ -1,5 +1,5 @@
 import type { CodigoFormato, Instrumento, ObservacionInstrumento } from '../types/domain';
-import { semestreActual } from './catalogos';
+import { semestreVigente } from './catalogos';
 import { estudiantes } from './personas';
 import { asignaciones, sesiones } from './tutoria';
 import { derivaciones } from './derivaciones';
@@ -70,7 +70,7 @@ estudiantes.forEach((estudiante, indice) => {
   instrumentos.push({
     id,
     formato: entrevista,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: asignacion.tutorId,
     estudianteId: estudiante.id,
     sesionId: null,
@@ -138,7 +138,7 @@ asignaciones.slice(0, 14).forEach((asignacion, indice) => {
   instrumentos.push({
     id,
     formato: 'F08',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: asignacion.tutorId,
     estudianteId: asignacion.estudianteId,
     sesionId: null,
@@ -178,7 +178,7 @@ TUTORES_ACTIVOS.forEach((tutorId, indice) => {
   instrumentos.push({
     id: `INST-F09-${tutorId}`,
     formato: 'F09',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId,
     estudianteId: null,
     sesionId: null,
@@ -203,7 +203,7 @@ TUTORES_ACTIVOS.forEach((tutorId, indice) => {
   instrumentos.push({
     id: `INST-F02-${tutorId}`,
     formato: 'F02',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId,
     estudianteId: null,
     sesionId: null,
@@ -227,7 +227,7 @@ TUTORES_ACTIVOS.forEach((tutorId, indice) => {
     instrumentos.push({
       id: `INST-F01-${escuelaId}`,
       formato: 'F01',
-      semestreId: semestreActual,
+      semestreId: semestreVigente.id,
       tutorId: 'DOC-0422',
       estudianteId: null,
       sesionId: null,

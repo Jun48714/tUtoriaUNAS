@@ -19,7 +19,7 @@ import {
   nombreCurso,
   resumenDe,
 } from '../../data/academico';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { escuelaDe } from '../../data/personas';
 import { DIAS_SEMANA, formatFecha } from '../../utils/fechas';
 import type { MatriculaCurso } from '../../types/domain';
@@ -89,7 +89,7 @@ export function StudentRecord() {
       <PageHeading
         eyebrow={`Estudiante · ${escuelaDe(estudiante.escuelaId)}`}
         title="Mis estudios"
-        description={`Semestre ${semestreActual} · Ciclo ${estudiante.ciclo ?? 'sin informar'}`}
+        description={`Semestre ${semestreVigente.id} · Ciclo ${estudiante.ciclo ?? 'sin informar'}`}
       />
       <MetricGroup label="Resumen académico">
         <Stat
@@ -133,7 +133,7 @@ export function StudentRecord() {
       <TabPanel id="matricula" activo={pestana}>
         <Card>
           <CardHead
-            title={`Matrícula ${semestreActual}`}
+            title={`Matrícula ${semestreVigente.id}`}
             description={`${cursosMatriculados.length} cursos${cursosMatriculados.every((c) => c.creditos !== null) ? ` · ${creditosMatriculados} créditos` : ''}`}
             actions={<StatusBadge estado={matricula?.estado ?? 'no-matriculado'} />}
           />

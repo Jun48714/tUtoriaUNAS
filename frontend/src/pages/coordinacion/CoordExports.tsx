@@ -18,7 +18,7 @@ import { useInstrumentWorkspace } from '../../hooks/useInstrumentWorkspace';
 import { API_MODE } from '../../services/apiConfig';
 import { definicionesFormato } from '../../data/formatos';
 import { muestrasFormatos } from '../../data/muestrasFormatos';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { escuelaDe, docentePorId, estudiantePorId, nombreCompleto } from '../../data/personas';
 import type { CodigoFormato, Estudiante } from '../../types/domain';
 import { esCierre } from '../../utils/cierreSemestre';
@@ -199,7 +199,7 @@ export function CoordExports() {
           {
             id: 'cierre',
             nombre: 'Cierre del semestre',
-            cantidad: completados.filter((d) => d.semestreId === semestreActual).length,
+            cantidad: completados.filter((d) => d.semestreId === semestreVigente.id).length,
           },
         ]}
         value={vista}
@@ -244,7 +244,7 @@ export function CoordExports() {
 
       {vista === 'cierre' ? (
         <CierreSemestre
-          semestreId={semestreActual}
+          semestreId={semestreVigente.id}
           momento={momento}
           asignaciones={portal.tutorados}
           sesiones={portal.sesiones}

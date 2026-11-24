@@ -1,5 +1,5 @@
 import type { Derivacion, EventoDerivacion, EstadoDerivacion } from '../types/domain';
-import { areasDerivacion, semestreActual } from './catalogos';
+import { areasDerivacion, semestreVigente } from './catalogos';
 import { estudiantes } from './personas';
 import { asignacionDe } from './tutoria';
 
@@ -129,7 +129,7 @@ estudiantes.forEach((estudiante, indice) => {
     formato: 'F12',
     estudianteId: estudiante.id,
     tutorId: asignacion.tutorId,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     area: base.area,
     motivo: base.motivo,
     detalle: base.detalle,

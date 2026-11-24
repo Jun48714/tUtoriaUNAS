@@ -62,7 +62,7 @@ export function StudentNotices() {
   function abrir(mensaje: MensajeEstudiante, origen: HTMLButtonElement) {
     origenDetalle.current = origen;
     setAbiertoId(mensaje.id);
-    if (!mensaje.leida) guardar(() => marcarLeidas([mensaje.id]), 'Aviso leído.');
+    if (!mensaje.leida) void guardar(() => marcarLeidas([mensaje.id]), 'Aviso leído.');
   }
   function cerrar() {
     setAbiertoId(null);

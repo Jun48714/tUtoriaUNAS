@@ -36,7 +36,7 @@ import { API_MODE } from '../../services/apiConfig';
 import { AccionesCuentas } from '../../components/panels/AccionesCuentas';
 import type { Docente } from '../../types/domain';
 import { comisionTutoria, escuelaDe, iniciales, nombreCompleto } from '../../data/personas';
-import { escuelas, semestreActual } from '../../data/catalogos';
+import { escuelas, semestreVigente } from '../../data/catalogos';
 import { bloquesDeTutor, nombreTutor } from '../../data/tutoria';
 import { horariosDocentes, nombreCurso } from '../../data/academico';
 import { DIAS_SEMANA, formatFecha, formatHora } from '../../utils/fechas';
@@ -89,7 +89,7 @@ export function CoordTutors() {
     const porEscuela = new Map(periodos?.map((p) => [p.escuelaId, p.semestreId]));
     return docentes
       .map((docente) =>
-        filaDeTutor(docente, portal, porEscuela.get(docente.escuelaId) ?? semestreActual),
+        filaDeTutor(docente, portal, porEscuela.get(docente.escuelaId) ?? semestreVigente.id),
       )
       .sort((a, b) => a.docente.apellidos.localeCompare(b.docente.apellidos, 'es'));
   }, [docentes, periodos, portal]);
@@ -163,7 +163,7 @@ export function CoordTutors() {
 
   const detalleFila = filas.find((fila) => fila.docente.id === detalle?.id);
   const semestreDetalle =
-    periodos?.find((p) => p.escuelaId === detalle?.escuelaId)?.semestreId ?? semestreActual;
+    periodos?.find((p) => p.escuelaId === detalle?.escuelaId)?.semestreId ?? semestreVigente.id;
   const tutoradosDelDetalle = detalle
     ? portal.tutorados.filter(
         (a) =>
@@ -317,7 +317,7 @@ export function CoordTutors() {
           title="Directorio de tutores"
           actions={
             <span className="directory-result">
-              {portal.institucional ? 'Todas las escuelas' : `Semestre ${semestreActual}`}
+              {portal.institucional ? 'Todas las escuelas' : `Semestre ${semestreVigente.id}`}
             </span>
           }
         />
@@ -371,7 +371,7 @@ export function CoordTutors() {
             <DataTable<FilaTutor>
               rows={filtro.filtrados}
               columns={columnas}
-              caption={`Registro de docentes tutores · semestre ${semestreActual}`}
+              caption={`Registro de docentes tutores · semestre ${semestreVigente.id}`}
               rowKey={(fila) => fila.docente.id}
               pageSize={10}
               pagination="auto"

@@ -20,7 +20,7 @@ import { SessionDetails } from '../../components/panels/SessionDetails';
 import { AccionesSesion } from '../../components/panels/AccionesTutoria';
 import { DisponibilidadSemanal } from '../../components/panels/DisponibilidadSemanal';
 
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { estudiantePorId, nombreCompleto } from '../../data/personas';
 import { API_MODE } from '../../services/apiConfig';
 import {
@@ -78,14 +78,14 @@ export function TutorSessions() {
       : tutorados
           .filter((a) => grupoActivo && a.grupo === grupoActivo)
           .map((a) => a.estudianteId)
-          .sort();
+          .sort((a, b) => a.localeCompare(b));
   const lunes = lunesDeSemana(nuevaFecha);
   const participantesValidos =
     convocados.length <= 100 && convocados.length >= (nuevoTipo === 'grupal' ? 2 : 1);
   const consultar =
     ventana?.tipo === 'programar' && Boolean(lunes) && participantesValidos && Boolean(docente);
   const disponibilidadApi = useQuery({
-    queryKey: ['disponibilidad-tutoria', docente?.id, semestreActual, lunes, convocados],
+    queryKey: ['disponibilidad-tutoria', docente?.id, semestreVigente.id, lunes, convocados],
     queryFn: ({ signal }) => consultarDisponibilidad(lunes, convocados, signal),
     enabled: API_MODE && consultar,
     refetchInterval: 12_000,

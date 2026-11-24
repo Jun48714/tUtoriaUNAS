@@ -10,7 +10,7 @@ import type { Portal } from '../../hooks/usePortal';
 import type { DemoUser } from '../../types/auth';
 import { API_MODE } from '../../services/apiConfig';
 import { escuelaDe } from '../../data/personas';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { formatFecha, formatFechaHora } from '../../utils/fechas';
 import { roleDetails } from '../../utils/roles';
 import '../../styles/tutor-profile.css';
@@ -93,7 +93,7 @@ export function AccountProfile({ user, portal }: { user: DemoUser; portal: Porta
           )}
           <span>
             <i className="fa-regular fa-calendar" aria-hidden="true" />
-            {semestreActual}
+            {semestreVigente.id}
           </span>
         </div>
         <div className="profile-activity" aria-label="Accesos de tu perfil">

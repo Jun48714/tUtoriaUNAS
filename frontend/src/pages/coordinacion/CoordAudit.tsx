@@ -14,7 +14,7 @@ import { Ban, Download, Lock, ScrollText, ShieldAlert, UserRound } from '../../c
 import { PageHeading } from '../../components/ui/PageHeading';
 import { Stat } from '../../components/ui/Stat';
 import { Badge } from '../../components/ui/StatusBadge';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { eventosAuditoria } from '../../data/institucional';
 import { escuelaDe } from '../../data/personas';
 import { usePortal } from '../../hooks/usePortal';
@@ -189,7 +189,10 @@ function AuditoriaDemostracion() {
   );
 
   const accionesDisponibles = useMemo(
-    () => [...new Set(eventosAuditoria.map((evento) => evento.accion))].sort(),
+    () =>
+      [...new Set(eventosAuditoria.map((evento) => evento.accion))].sort((a, b) =>
+        a.localeCompare(b),
+      ),
     [],
   );
 
@@ -249,7 +252,7 @@ function AuditoriaDemostracion() {
   function exportar() {
     const filas: string[][] = [
       ['Auditoría y trazabilidad · Sistema de Tutoría UNAS'],
-      ['Corresponde a', `${escuelaDe(portal.escuelaId)} · semestre ${semestreActual}`],
+      ['Corresponde a', `${escuelaDe(portal.escuelaId)} · semestre ${semestreVigente.id}`],
       ['Registros exportados', String(visibles.length)],
       [],
       ['ID', 'Fecha', 'Actor', 'Rol', 'Acción', 'Entidad', 'Detalle', 'IP de origen', 'Descarga'],
@@ -269,7 +272,7 @@ function AuditoriaDemostracion() {
     }
     // Se codifica antes de descargar para verificar el contenido exportado.
     const contenido = encodeCsv(filas);
-    if (contenido.length > 0) downloadCsv(filas, `auditoria-tutoria-${semestreActual}.csv`);
+    if (contenido.length > 0) downloadCsv(filas, `auditoria-tutoria-${semestreVigente.id}.csv`);
   }
 
   const columnas: Column<EventoAuditoria>[] = [
@@ -354,7 +357,7 @@ function AuditoriaDemostracion() {
   return (
     <DirectoryPage>
       <PageHeading
-        eyebrow={`Gestión institucional · Auditoría y historial de cambios · Semestre ${semestreActual}`}
+        eyebrow={`Gestión institucional · Auditoría y historial de cambios · Semestre ${semestreVigente.id}`}
         title="Historial de cambios"
         actions={
           <>

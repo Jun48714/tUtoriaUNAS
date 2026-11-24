@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Instrumento } from '../../types/domain';
-import { escuelas, semestreActual } from '../../data/catalogos';
+import { escuelas, semestreVigente } from '../../data/catalogos';
 import { CoordPlan } from './CoordPlan';
 
 const scope = vi.hoisted(() => ({
@@ -38,7 +38,7 @@ function informe(escuelaId: string): Instrumento {
     id: `F01-${escuelaId}`,
     formato: 'F01',
     escuelaId,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: 'COORD',
     estudianteId: null,
     sesionId: null,

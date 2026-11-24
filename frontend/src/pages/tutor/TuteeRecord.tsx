@@ -29,7 +29,7 @@ import { Tabs, TabPanel } from '../../components/ui/Tabs';
 import { Timeline } from '../../components/ui/Timeline';
 import { usePortal } from '../../hooks/usePortal';
 import { definicionPorCodigo } from '../../data/formatos';
-import { areasDerivacion, semestreActual } from '../../data/catalogos';
+import { areasDerivacion, semestreVigente } from '../../data/catalogos';
 import {
   escuelaDe,
   docentePorId,
@@ -104,7 +104,7 @@ export function TuteeRecord() {
     (asignacion) =>
       asignacion.estudianteId === estudianteId &&
       asignacion.tutorId === portal.docente?.id &&
-      asignacion.semestreId === semestreActual &&
+      asignacion.semestreId === semestreVigente.id &&
       asignacion.estado === 'activa',
   );
   if (!estudiante || !asignado) {
@@ -288,7 +288,7 @@ export function TuteeRecord() {
         <Link className="record-back" to="/tutor/tutorados">
           <ArrowLeft aria-hidden="true" /> Estudiantes
         </Link>
-        <span>Expediente · {semestreActual}</span>
+        <span>Expediente · {semestreVigente.id}</span>
       </div>
       <section className="record-identity" aria-label="Ficha del estudiante">
         <div className="record-identity__head">
@@ -1017,7 +1017,7 @@ export function TuteeRecord() {
               </div>
               <div>
                 <dt>Semestre</dt>
-                <dd>{semestreActual}</dd>
+                <dd>{semestreVigente.id}</dd>
               </div>
             </dl>
           </div>

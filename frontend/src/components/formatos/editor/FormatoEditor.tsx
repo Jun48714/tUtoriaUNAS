@@ -147,7 +147,6 @@ function ContenidoEditor({ inicial, onClose }: { inicial: EstadoEditorFormato; o
         ref={contenido}
         className="fe-content app-scroll"
         disabled={ocupado}
-        tabIndex={0}
         aria-label="Contenido del formato"
       >
         {tab === 'formulario' && (

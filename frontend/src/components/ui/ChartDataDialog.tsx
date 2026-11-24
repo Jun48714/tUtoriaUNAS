@@ -45,11 +45,11 @@ function useFilasVisibles(contenido: RefObject<HTMLDivElement | null>, tabla: Ta
         ? 0
         : (elemento.querySelector('thead')?.getBoundingClientRect().height ?? 0);
       const disponible =
-        parseFloat(getComputedStyle(dialogo).maxHeight) -
+        Number.parseFloat(getComputedStyle(dialogo).maxHeight) -
         cabecera.getBoundingClientRect().height -
         pie.getBoundingClientRect().height -
-        parseFloat(estilo.paddingTop) -
-        parseFloat(estilo.paddingBottom) -
+        Number.parseFloat(estilo.paddingTop) -
+        Number.parseFloat(estilo.paddingBottom) -
         encabezado;
       const limite = movil ? 2 : FILAS_POR_PAGINA;
       setCantidad(Math.max(1, Math.min(limite, Math.floor(disponible / altoFila))));

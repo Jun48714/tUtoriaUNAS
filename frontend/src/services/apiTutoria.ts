@@ -12,7 +12,7 @@ import type { DemoUser } from '../types/auth';
 import { estudiantes, docentes } from '../data/personas';
 import { asignaciones } from '../data/tutoria';
 import { matriculas, horariosAcademicos } from '../data/academico';
-import { establecerSemestreActual } from '../data/catalogos';
+import { semestreVigente } from '../data/catalogos';
 import { apiJson, apiJsonSiCambio, getApiSession } from './apiClient';
 import type { MomentoTutoria } from '../utils/instrumentos';
 import type { ProgramacionSesion } from './sessionWorkspace';
@@ -127,7 +127,7 @@ export function aplicarEstadoApi(datos: EstadoApi) {
   asignaciones.splice(0, asignaciones.length, ...datos.asignaciones);
   matriculas.splice(0, matriculas.length, ...datos.matriculas);
   horariosAcademicos.splice(0, horariosAcademicos.length, ...datos.horarios);
-  establecerSemestreActual(datos.semestreId);
+  semestreVigente.id = datos.semestreId;
   if (datos.sistema) aplicarDatosSistema(datos.sistema);
   estado = {
     datos,

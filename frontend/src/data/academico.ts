@@ -1,5 +1,5 @@
 import type { BloqueHorario, Matricula, ResumenAcademico } from '../types/domain';
-import { cursos, cursosDeEscuela, semestreActual } from './catalogos';
+import { cursos, cursosDeEscuela, semestreVigente } from './catalogos';
 import { estudiantes } from './personas';
 
 /**
@@ -37,7 +37,7 @@ export const matriculas: Matricula[] = estudiantes.map((estudiante) => {
   const seleccion = [...delCiclo, ...otros].slice(0, estudiante.etapa === 'ingresante' ? 5 : 6);
   return {
     estudianteId: estudiante.id,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     fecha: `2026-08-${String(entre(seed, 17, 28)).padStart(2, '0')}`,
     estado:
       estudiante.estado === 'reserva'
@@ -59,7 +59,7 @@ export const matriculas: Matricula[] = estudiantes.map((estudiante) => {
 
 export const resumenesAcademicos: ResumenAcademico[] = estudiantes.map((estudiante) => ({
   estudianteId: estudiante.id,
-  semestreId: semestreActual,
+  semestreId: semestreVigente.id,
   promedioPonderado: estudiante.promedioPonderado,
   creditosMatriculados:
     matriculas

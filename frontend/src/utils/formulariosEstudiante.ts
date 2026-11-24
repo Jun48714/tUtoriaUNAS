@@ -1,5 +1,5 @@
 import type { Instrumento, Sesion } from '../types/domain';
-import { semestreActual } from '../data/catalogos';
+import { semestreVigente } from '../data/catalogos';
 import { formulariosVigentes } from './entrevistas';
 import { esEvaluacionSesion, sesionFinalizo } from './evaluacionesSesion';
 import { formularioEnviado } from './filtrosFormularios';
@@ -71,7 +71,7 @@ export function formulariosDelEstudiante(
   momento: MomentoTutoria,
   ahora = Date.now(),
 ): FormularioEstudiante[] {
-  return formulariosVigentes(registros, ciclo, semestreActual)
+  return formulariosVigentes(registros, ciclo, semestreVigente.id)
     .filter(
       (r) =>
         (ciclo !== null && r.formato === formatoInicial(ciclo)) || esEvaluacionSesion(r.formato),

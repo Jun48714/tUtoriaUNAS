@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Instrumento, Sesion } from '../types/domain';
-import { semestreActual } from '../data/catalogos';
+import { semestreVigente } from '../data/catalogos';
 import {
   clasificarFormulario,
   formulariosDelEstudiante,
@@ -15,7 +15,7 @@ function instrumento(parcial: Partial<Instrumento>): Instrumento {
   return {
     id: 'X',
     formato: 'F10',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: 'DOC-1',
     estudianteId: EST,
     sesionId: 'SES-1',
@@ -42,7 +42,7 @@ function sesion(
     codigo: 'SES-1',
     tipo: 'individual',
     tutorId: 'DOC-1',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     fecha: '2026-10-20',
     horaInicio: '10:00',
     horaFin: '11:00',

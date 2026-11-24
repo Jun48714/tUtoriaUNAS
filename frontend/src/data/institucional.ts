@@ -447,7 +447,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Registró asistencia',
     entidad: 'Formato 06 · TUT-2026II-0012',
     detalle: 'Sesión individual con la estudiante Ana Lucía Quispe Rojas.',
-    origenIp: '10.20.4.31',
+    origenIp: '203.0.113.31',
     descarga: false,
   },
   {
@@ -458,7 +458,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Consultó expediente',
     entidad: 'Expediente académico',
     detalle: 'Consulta del resumen del semestre 2026-II.',
-    origenIp: '10.20.7.88',
+    origenIp: '203.0.113.88',
     descarga: false,
   },
   {
@@ -469,7 +469,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Descargó reporte',
     entidad: 'Reporte de cobertura',
     detalle: 'Cobertura por escuela y semestre 2026-II.',
-    origenIp: '10.20.1.12',
+    origenIp: '203.0.113.12',
     descarga: true,
   },
   {
@@ -480,7 +480,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Observó instrumento',
     entidad: 'Formato 02 · DOC-0423',
     detalle: 'Solicitó precisar el número de atenciones acumuladas.',
-    origenIp: '10.20.3.44',
+    origenIp: '203.0.113.44',
     descarga: false,
   },
   {
@@ -491,7 +491,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Registró derivación',
     entidad: 'Formato 12 · DER-2026II-0007',
     detalle: 'Derivación al Servicio de Psicopedagogía.',
-    origenIp: '10.20.4.31',
+    origenIp: '203.0.113.31',
     descarga: false,
   },
   {
@@ -502,7 +502,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Actualizó derivación',
     entidad: 'DER-2026II-0004',
     detalle: 'Registró la recomendación comunicable al tutor.',
-    origenIp: '10.20.9.7',
+    origenIp: '203.0.113.7',
     descarga: false,
   },
   {
@@ -513,7 +513,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Descargó instrumento',
     entidad: 'Formato 06 · TUT-2026II-0008',
     detalle: 'Descarga en PDF del registro de asistencia.',
-    origenIp: '10.20.5.19',
+    origenIp: '203.0.113.19',
     descarga: true,
   },
   {
@@ -524,7 +524,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Aprobó instrumento',
     entidad: 'Formato 01 · FIIS',
     detalle: 'Aprobación del informe consolidado de la FIIS.',
-    origenIp: '10.20.2.61',
+    origenIp: '203.0.113.61',
     descarga: false,
   },
   {
@@ -535,7 +535,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Actualizó regla',
     entidad: 'Regla sesiones-periodicidad',
     detalle: 'Cambió el estado a pendiente de validación.',
-    origenIp: '10.20.1.12',
+    origenIp: '203.0.113.12',
     descarga: false,
   },
   {
@@ -546,7 +546,7 @@ export const eventosAuditoria: EventoAuditoria[] = [
     accion: 'Rechazó acceso',
     entidad: 'Intento de consulta de historia clínica',
     detalle: 'El sistema bloqueó la consulta: el dato no está autorizado para tutoría.',
-    origenIp: '10.20.9.22',
+    origenIp: '203.0.113.22',
     descarga: false,
   },
 ];

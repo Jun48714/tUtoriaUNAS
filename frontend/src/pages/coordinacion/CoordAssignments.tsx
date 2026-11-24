@@ -31,7 +31,7 @@ import { Progress } from '../../components/ui/Progress';
 import { Sheet } from '../../components/ui/Sheet';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Badge, StatusBadge } from '../../components/ui/StatusBadge';
-import { escuelas, semestreActual } from '../../data/catalogos';
+import { escuelas, semestreVigente } from '../../data/catalogos';
 import { escuelaDe, docentePorId, iniciales, nombreCompleto } from '../../data/personas';
 import { asignaciones } from '../../data/tutoria';
 import { usePortal } from '../../hooks/usePortal';
@@ -178,7 +178,8 @@ export function CoordAssignments() {
     const porEscuela = new Map(periodos?.map((p) => [p.escuelaId, p.semestreId]));
     return registros.filter(
       (a) =>
-        a.estado === 'activa' && a.semestreId === (porEscuela.get(a.escuelaId) ?? semestreActual),
+        a.estado === 'activa' &&
+        a.semestreId === (porEscuela.get(a.escuelaId) ?? semestreVigente.id),
     );
   }, [periodos, registros]);
   const tutoresConTutorados = new Set(activas.map((asignacion) => asignacion.tutorId)).size;
@@ -266,7 +267,7 @@ export function CoordAssignments() {
       id: `ASG-${estudianteElegido.codigo}-${registros.length + 1}`,
       estudianteId: estudianteElegido.id,
       tutorId: nuevoTutor,
-      semestreId: semestreActual,
+      semestreId: semestreVigente.id,
       escuelaId: estudianteElegido.escuelaId,
       grupo: nuevoGrupo.trim() || null,
       fechaInicio: HOY_ISO,
@@ -386,7 +387,7 @@ export function CoordAssignments() {
         String(asignacion.historial.length),
       ]);
     }
-    downloadCsv(filas, `asignaciones-tutoria-${semestreActual}.csv`);
+    downloadCsv(filas, `asignaciones-tutoria-${semestreVigente.id}.csv`);
   }
 
   const columnas: Column<Asignacion>[] = [
@@ -546,7 +547,7 @@ export function CoordAssignments() {
           title="Asignaciones del semestre"
           actions={
             <span className="directory-result">
-              {portal.institucional ? 'Todas las escuelas' : `Semestre ${semestreActual}`}
+              {portal.institucional ? 'Todas las escuelas' : `Semestre ${semestreVigente.id}`}
             </span>
           }
         />
@@ -591,7 +592,7 @@ export function CoordAssignments() {
             <DataTable<Asignacion>
               rows={filtro.filtrados}
               columns={columnas}
-              caption={`Asignaciones tutor–estudiante del semestre ${semestreActual}`}
+              caption={`Asignaciones tutor–estudiante del semestre ${semestreVigente.id}`}
               rowKey={(asignacion) => asignacion.id}
               pageSize={10}
               pagination="auto"
@@ -744,7 +745,7 @@ export function CoordAssignments() {
       {altaAbierta && (
         <Sheet
           title="Asignar un tutor"
-          description={`Semestre ${semestreActual}`}
+          description={`Semestre ${semestreVigente.id}`}
           className="assignment-sheet"
           onClose={() => setAltaAbierta(false)}
           footer={

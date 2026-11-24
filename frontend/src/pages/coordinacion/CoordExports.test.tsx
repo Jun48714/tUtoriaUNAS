@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Asignacion, Instrumento, Sesion } from '../../types/domain';
 import { estudiantes, nombreCompleto } from '../../data/personas';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { CoordExports } from './CoordExports';
 
 const modo = vi.hoisted(() => ({ api: false }));
@@ -33,7 +33,7 @@ function entrevistaEnviada(estudianteId: string): Instrumento {
   return {
     id: `INST-F04-${estudianteId}`,
     formato: 'F04',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: 'DOC-0422',
     estudianteId,
     sesionId: null,
@@ -110,7 +110,7 @@ describe('CoordExports', () => {
         id: 'ASG-1',
         estudianteId: estudiante.id,
         tutorId: 'DOC-0422',
-        semestreId: semestreActual,
+        semestreId: semestreVigente.id,
         escuelaId: estudiante.escuelaId,
         grupo: 'G-01',
         fechaInicio: '2026-09-01',
@@ -129,7 +129,7 @@ describe('CoordExports', () => {
     fireEvent.click(screen.getByRole('button', { name: /Cierre del semestre/ }));
     // Título del panel y título de la portada en la vista previa.
     expect(
-      screen.getAllByRole('heading', { name: `Avance del semestre ${semestreActual}` }),
+      screen.getAllByRole('heading', { name: `Avance del semestre ${semestreVigente.id}` }),
     ).toHaveLength(2);
     expect(screen.getByRole('link', { name: 'Plan de tutoría' })).toHaveAttribute(
       'href',
@@ -149,7 +149,7 @@ describe('CoordExports', () => {
     const impresion = document.body.querySelector('.fo-impresion')!;
     expect(
       within(impresion as HTMLElement).getByRole('article', {
-        name: `Avance del semestre ${semestreActual}`,
+        name: `Avance del semestre ${semestreVigente.id}`,
       }),
     ).toBeInTheDocument();
     expect(impresion.querySelectorAll('.fo-hoja')).toHaveLength(3);

@@ -154,7 +154,6 @@ export function DataTable<T>({
         className="table-wrap data-table-panel__scroll"
         role="region"
         aria-label={caption}
-        tabIndex={0}
       >
         <table className={`data-table${compact ? ' data-table--compact' : ''}`}>
           <caption className="sr-only">{caption}</caption>

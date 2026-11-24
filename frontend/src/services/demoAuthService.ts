@@ -17,7 +17,12 @@ export class DemoAuthService implements AuthService {
         (!credentials.role || candidate.role === credentials.role),
     );
     const account = matches[0];
-    if (matches.length !== 1 || !account || credentials.password !== DEMO_PASSWORD) {
+    if (
+      matches.length !== 1 ||
+      !account ||
+      !DEMO_PASSWORD ||
+      credentials.password !== DEMO_PASSWORD
+    ) {
       throw new Error('El usuario o la contraseña de prueba son incorrectos.');
     }
     this.logout();

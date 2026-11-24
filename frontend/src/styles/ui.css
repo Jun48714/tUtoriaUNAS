@@ -834,7 +834,6 @@
 }
 
 .tabs button {
-  font-family: var(--font-heading);
   position: relative;
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,5 @@
 import type { Acuerdo, ActividadPlan, Asignacion, BloqueTutoria, Sesion } from '../types/domain';
-import { escuelas, semestreActual } from './catalogos';
+import { escuelas, semestreVigente } from './catalogos';
 import { docentes, estudiantes } from './personas';
 
 /**
@@ -38,7 +38,7 @@ export const asignaciones: Asignacion[] = estudiantes.map((estudiante, indice) =
     id: `ASG-${estudiante.codigo}`,
     estudianteId: estudiante.id,
     tutorId,
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     escuelaId: estudiante.escuelaId,
     grupo: `G-${estudiante.escuelaId.replace('E-', '')}-${(seed % 4) + 1}`,
     fechaInicio: '2026-09-07',
@@ -253,7 +253,7 @@ asignaciones.forEach((asignacion, indiceAsignacion) => {
       codigo: `TUT-2026II-${String(sesiones.length + 1).padStart(4, '0')}`,
       tipo: 'individual',
       tutorId: asignacion.tutorId,
-      semestreId: semestreActual,
+      semestreId: semestreVigente.id,
       fecha: item.fecha,
       horaInicio: `${String(15 + (seed % 3)).padStart(2, '0')}:00`,
       horaFin: `${String(16 + (seed % 3)).padStart(2, '0')}:00`,
@@ -301,7 +301,7 @@ escuelas.forEach((escuela, indiceEscuela) => {
       codigo: `TUT-2026II-G${String(indiceEscuela * 3 + indice + 1).padStart(3, '0')}`,
       tipo: 'grupal',
       tutorId,
-      semestreId: semestreActual,
+      semestreId: semestreVigente.id,
       fecha,
       horaInicio: '17:00',
       horaFin: '18:30',
@@ -385,7 +385,7 @@ export const actividadesPlan: ActividadPlan[] = escuelas
       const avance = [100, 65, 40, 15][(seed + indice) % 4] ?? 0;
       return {
         id: `PLAN-${escuela.id}-${indice + 1}`,
-        semestreId: semestreActual,
+        semestreId: semestreVigente.id,
         escuelaId: escuela.id,
         problematica:
           PROBLEMATICAS[escuela.id] ?? 'Problemática por definir con la comisión de tutoría.',
@@ -417,7 +417,7 @@ export function asignacionDe(estudianteId: string): Asignacion | undefined {
     (asignacion) =>
       asignacion.estudianteId === estudianteId &&
       asignacion.estado === 'activa' &&
-      asignacion.semestreId === semestreActual,
+      asignacion.semestreId === semestreVigente.id,
   );
 }
 
@@ -426,7 +426,7 @@ export function tutoradosDe(tutorId: string): Asignacion[] {
     (asignacion) =>
       asignacion.tutorId === tutorId &&
       asignacion.estado === 'activa' &&
-      asignacion.semestreId === semestreActual,
+      asignacion.semestreId === semestreVigente.id,
   );
 }
 

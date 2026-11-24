@@ -67,7 +67,7 @@ export function Formato01({ documento: d }: Props) {
           ))}
         </tbody>
       </table>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <tbody>
           <tr>
             <td className="fo-caja">
@@ -258,7 +258,7 @@ export function Formato09({ documento: d }: Props) {
   const r = d.respuestas;
   return (
     <Hoja documento={d}>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <colgroup>
           <col style={{ width: '50%' }} />
           <col />
@@ -303,7 +303,7 @@ export function Formato09({ documento: d }: Props) {
           ))}
         </tbody>
       </table>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <tbody>
           <tr>
             <td className="fo-caja">

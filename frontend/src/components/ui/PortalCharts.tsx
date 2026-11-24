@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import echartsUrl from '../../assets/vendor/echarts.min.js?url';
 import { usePortal } from '../../hooks/usePortal';
 import type { Portal } from '../../hooks/usePortal';
-import { semestreActual, semestres } from '../../data/catalogos';
+import { semestreVigente, semestres } from '../../data/catalogos';
 import { docentePorId, nombreCorto } from '../../data/personas';
 import { HOY_ISO } from '../../utils/fechas';
 import { CHART_COLORS, CHART_STATUS_COLORS, waveSeries } from '../../utils/chartStyles';
@@ -61,7 +61,7 @@ export function DashboardScope({
   coordinacion?: boolean;
 }) {
   const source = usePortal();
-  const [semestreId, setSemestreId] = useState(semestreActual);
+  const [semestreId, setSemestreId] = useState(semestreVigente.id);
   const [intervalo, setIntervalo] = useState<Intervalo>('semestre');
   const [tutorId, setTutorId] = useState('todos');
   const [desde, setDesde] = useState(HOY_ISO.slice(0, 8) + '01');
@@ -561,13 +561,15 @@ export function PortalCharts({
         (s) => s.tipo === tipo && ['programada', 'reprogramada'].includes(s.estado),
       ).length,
     }));
-    const formatos = [...new Set(instrumentos.map((i) => i.formato))].sort().map((formato) => {
-      const items = instrumentos.filter((i) => i.formato === formato);
-      return {
-        formato: `Formato ${formato.slice(1)}`,
-        avance: Math.round(items.reduce((sum, i) => sum + i.avance, 0) / items.length),
-      };
-    });
+    const formatos = [...new Set(instrumentos.map((i) => i.formato))]
+      .sort((a, b) => a.localeCompare(b))
+      .map((formato) => {
+        const items = instrumentos.filter((i) => i.formato === formato);
+        return {
+          formato: `Formato ${formato.slice(1)}`,
+          avance: Math.round(items.reduce((sum, i) => sum + i.avance, 0) / items.length),
+        };
+      });
     const ejes = {
       axisLine: { show: false },
       axisTick: { show: false },

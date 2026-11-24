@@ -19,7 +19,7 @@ import { useFiltro } from '../../hooks/useFiltro';
 import { DirectoryToolbar } from '../../components/ui/DirectoryToolbar';
 import type { DefinicionSelect } from '../../hooks/useFiltro';
 import { usePortal } from '../../hooks/usePortal';
-import { areasDerivacion, etiquetasEstadoDerivacion, semestreActual } from '../../data/catalogos';
+import { areasDerivacion, etiquetasEstadoDerivacion, semestreVigente } from '../../data/catalogos';
 import { definicionPorCodigo } from '../../data/formatos';
 import { escuelaDe, estudiantePorId, iniciales, nombreCompleto } from '../../data/personas';
 import type { Derivacion, Estudiante } from '../../types/domain';
@@ -278,12 +278,12 @@ export function TutorReferrals() {
   return (
     <div className="tutor-referrals">
       <PageHeading
-        eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Semestre ${semestreActual}`}
+        eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Semestre ${semestreVigente.id}`}
         title={enSeguimiento ? 'Seguimiento de solicitudes' : 'Solicitudes de apoyo'}
         description={
           enSeguimiento
-            ? `Citas, atenciones y seguimiento · ${semestreActual}`
-            : `${semestreActual} · ${escuelaDe(docente.escuelaId)} · Atención especializada`
+            ? `Citas, atenciones y seguimiento · ${semestreVigente.id}`
+            : `${semestreVigente.id} · ${escuelaDe(docente.escuelaId)} · Atención especializada`
         }
         actions={
           <>

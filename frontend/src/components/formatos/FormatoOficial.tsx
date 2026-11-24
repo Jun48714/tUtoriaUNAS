@@ -64,7 +64,7 @@ export function VistaPreviaHojas({
     return () => observador.disconnect();
   }, []);
   return (
-    <div ref={marco} className="fo-vista" role="region" aria-label={etiqueta} tabIndex={0}>
+    <div ref={marco} className="fo-vista" role="region" aria-label={etiqueta}>
       <div className="fo-vista__hojas" style={{ zoom: escala }}>
         {children}
       </div>

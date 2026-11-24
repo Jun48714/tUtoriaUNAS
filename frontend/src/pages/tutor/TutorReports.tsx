@@ -10,7 +10,7 @@ import type { Column } from '../../components/ui/DataTable';
 import { Grafica } from '../../components/ui/PortalCharts';
 import { Sheet } from '../../components/ui/Sheet';
 import { usePortal } from '../../hooks/usePortal';
-import { areasDerivacion, semestreActual } from '../../data/catalogos';
+import { areasDerivacion, semestreVigente } from '../../data/catalogos';
 import { reglasTutoria } from '../../data/institucional';
 import { escuelaDe, estudiantePorId, nombreCompleto } from '../../data/personas';
 import type { EstadoInstrumento, Sesion } from '../../types/domain';
@@ -227,7 +227,7 @@ export function TutorReports() {
     ],
   ];
 
-  const nombreArchivo = `reporte-tutorial-${semestreActual}-${docente?.codigo ?? 'docente'}.csv`;
+  const nombreArchivo = `reporte-tutorial-${semestreVigente.id}-${docente?.codigo ?? 'docente'}.csv`;
   const reglaConteo = reglasTutoria.find((regla) => regla.codigo === 'conteo-cobertura');
 
   const columnas: Column<FilaCiclo>[] = [
@@ -244,7 +244,9 @@ export function TutorReports() {
     { key: 'sesiones', header: 'Sesiones', render: (fila) => fila.sesiones },
     { key: 'cobertura', header: 'Cobertura', render: (fila) => `${fila.cobertura}%` },
   ];
-  const fechas = realizadas.map((sesion) => lunesDe(sesion.fecha)).sort();
+  const fechas = realizadas
+    .map((sesion) => lunesDe(sesion.fecha))
+    .sort((a, b) => a.localeCompare(b));
   const semanas: string[] = [];
   if (fechas.length) {
     for (
@@ -393,7 +395,7 @@ export function TutorReports() {
       <PageHeading
         eyebrow="Docente tutor · Reportes"
         title="Reportes de tutoría"
-        description={`${semestreActual} · ${escuelaDe(docente.escuelaId)}`}
+        description={`${semestreVigente.id} · ${escuelaDe(docente.escuelaId)}`}
         actions={
           <>
             <button
@@ -655,7 +657,7 @@ export function TutorReports() {
       {previaAbierta && (
         <Sheet
           title="Vista previa del reporte"
-          description={`Semestre ${semestreActual} · ${docente.codigo}`}
+          description={`Semestre ${semestreVigente.id} · ${docente.codigo}`}
           onClose={() => setPreviaAbierta(false)}
           wide
           footer={

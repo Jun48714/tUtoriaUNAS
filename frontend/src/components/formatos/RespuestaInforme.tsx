@@ -19,12 +19,7 @@ export function RespuestaInforme({
   const filas = filasDe(respuestas, campo.codigo);
   if (!filas.length) return <span className="ri-respuesta">Sin respuesta</span>;
   return (
-    <div
-      className="ri-tabla-contenedor"
-      role="region"
-      aria-label={`Tabla: ${campo.etiqueta}`}
-      tabIndex={0}
-    >
+    <div className="ri-tabla-contenedor" role="region" aria-label={`Tabla: ${campo.etiqueta}`}>
       <table className="ri-tabla">
         <caption className="sr-only">{campo.etiqueta}</caption>
         <thead>

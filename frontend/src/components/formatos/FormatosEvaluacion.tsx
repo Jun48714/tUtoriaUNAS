@@ -27,7 +27,7 @@ export function Formato10({ documento: d }: Props) {
   const sinSugerencia = r.tieneSugerencia === 'No, todo bien';
   return (
     <Hoja documento={d}>
-      <table className="fo-tabla">
+      <table role="presentation" className="fo-tabla">
         <colgroup>
           <col style={{ width: '30%' }} />
           <col style={{ width: '30%' }} />

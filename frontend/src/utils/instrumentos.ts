@@ -30,7 +30,7 @@ import {
   etapaDeCiclo,
   facultades,
   escuelas,
-  semestreActual,
+  semestreVigente,
 } from '../data/catalogos';
 import { respuestasRecordadas } from '../services/expediente';
 
@@ -267,7 +267,7 @@ export function precargarInstrumentoConOrigen(
   const identidad: Record<string, string> = {
     nombreTutor: docente ? nombreCompleto(docente) : '',
     telefonoTutor: docente?.telefono ?? '',
-    semestre: instrumento.semestreId || semestreActual,
+    semestre: instrumento.semestreId || semestreVigente.id,
     fecha: instrumento.enviado ?? fechaTutoria(),
     ...(estudiante
       ? {

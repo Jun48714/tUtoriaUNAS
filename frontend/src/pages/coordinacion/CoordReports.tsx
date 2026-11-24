@@ -21,7 +21,7 @@ import { PageHeading } from '../../components/ui/PageHeading';
 import { Meter } from '../../components/ui/Progress';
 import { Stat } from '../../components/ui/Stat';
 import { Badge, StatusBadge } from '../../components/ui/StatusBadge';
-import { areasDerivacion, escuelas, semestreActual, semestres } from '../../data/catalogos';
+import { areasDerivacion, escuelas, semestreVigente, semestres } from '../../data/catalogos';
 import { estadosDerivacionAbiertos } from '../../data/derivaciones';
 import { docentePorId, escuelaDe } from '../../data/personas';
 import { actividadesPlan, asignaciones } from '../../data/tutoria';
@@ -142,7 +142,7 @@ export function CoordReports() {
   const idSemestre = useId();
 
   const [escuelaId, setEscuelaId] = useState(portal.escuelaId);
-  const [semestreId, setSemestreId] = useState(semestreActual);
+  const [semestreId, setSemestreId] = useState(semestreVigente.id);
 
   const porEscuela = useMemo<Indicadores[]>(
     () =>

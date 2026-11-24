@@ -36,7 +36,7 @@ export function PortadaCierre({ resumen, generado }: { resumen: ResumenCierre; g
         <p className="fo-actor">Coordinación de tutoría</p>
       </header>
       <div className="fo-cuerpo">
-        <table className="fo-tabla">
+        <table role="presentation" className="fo-tabla">
           <colgroup>
             <col style={{ width: '50%' }} />
             <col />

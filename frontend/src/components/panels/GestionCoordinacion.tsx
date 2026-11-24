@@ -4,7 +4,7 @@ import { useSistema } from '../../hooks/useSistema';
 import { usePermiso } from '../../hooks/usePermiso';
 import { usePortal } from '../../hooks/usePortal';
 import { mutarSistema } from '../../services/apiSistema';
-import { semestreActual, semestres } from '../../data/catalogos';
+import { semestreVigente, semestres } from '../../data/catalogos';
 import { docentes, escuelaDe, estudiantePorId, nombreCompleto } from '../../data/personas';
 import type {
   ActividadPersistida,
@@ -78,7 +78,7 @@ export function EditorActividad({
   const id = useId();
   const puedeEliminar = usePermiso('planes', 'eliminar');
   const periodo = useSistema()?.configuracionPeriodo;
-  const sem = semestres.find((s) => s.id === semestreActual);
+  const sem = semestres.find((s) => s.id === semestreVigente.id);
   const [datos, setDatos] = useState(() =>
     actividad
       ? { ...actividad }

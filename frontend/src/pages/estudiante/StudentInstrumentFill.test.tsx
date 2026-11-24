@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Instrumento, Sesion } from '../../types/domain';
 import { estudiantes } from '../../data/personas';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { StudentInstrumentFill } from './StudentInstrumentFill';
 
 const estudiante = estudiantes.find((e) => e.ciclo !== null && e.ciclo <= 3)!;
@@ -24,7 +24,7 @@ function instrumento(parcial: Partial<Instrumento>): Instrumento {
   return {
     id: 'INST-PRUEBA',
     formato: 'F03',
-    semestreId: semestreActual,
+    semestreId: semestreVigente.id,
     tutorId: 'DOC-0421',
     estudianteId: estudiante.id,
     sesionId: null,
@@ -73,7 +73,7 @@ describe('Modal para responder un formulario', () => {
     expect(screen.getByRole('dialog', { name: 'Entrevista de ingreso' })).toHaveClass(
       'sheet--instrumento',
     );
-    expect(screen.getByText(`Formato 03 · ${semestreActual}`)).toBeInTheDocument();
+    expect(screen.getByText(`Formato 03 · ${semestreVigente.id}`)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
     // La cabecera ya dice el formato: el paso no lo repite.
@@ -89,7 +89,7 @@ describe('Modal para responder un formulario', () => {
         codigo: 'SES-1',
         tipo: 'individual',
         tutorId: 'DOC-0421',
-        semestreId: semestreActual,
+        semestreId: semestreVigente.id,
         fecha: '2026-10-20',
         horaInicio: '10:00',
         horaFin: '11:00',

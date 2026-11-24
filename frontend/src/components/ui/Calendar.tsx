@@ -511,7 +511,12 @@ function WeekView({
                 .filter(Boolean)
                 .join(' ');
               return (
-                <div key={iso} className={clases} onClick={() => onSeleccionar(iso)}>
+                <div
+                  key={iso}
+                  role="presentation"
+                  className={clases}
+                  onClick={() => onSeleccionar(iso)}
+                >
                   {horas.map((hora) => (
                     <span key={hora} className="calendar__slot" />
                   ))}
@@ -640,7 +645,12 @@ function MonthView({
             .filter(Boolean)
             .join(' ');
           return (
-            <div key={celda.iso} className={clases} onClick={() => onSeleccionar(celda.iso)}>
+            <div
+              key={celda.iso}
+              role="presentation"
+              className={clases}
+              onClick={() => onSeleccionar(celda.iso)}
+            >
               <button
                 type="button"
                 className="calendar__day-select"

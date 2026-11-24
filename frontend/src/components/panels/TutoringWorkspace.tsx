@@ -9,7 +9,7 @@ import { API_MODE } from '../../services/apiConfig';
 import { crearFormularioApi } from '../../services/apiTutoria';
 import { definicionPorCodigo } from '../../data/formatos';
 import { estudiantePorId, nombreCompleto } from '../../data/personas';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import type { CodigoFormato, Instrumento } from '../../types/domain';
 import { fechaTutoria, puedeEnviarFormato } from '../../utils/instrumentos';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -181,7 +181,7 @@ export function TutoringWorkspace() {
     abrir({
       id: `INST-${nuevo}-${crypto.randomUUID()}`,
       formato: nuevo,
-      semestreId: semestreActual,
+      semestreId: semestreVigente.id,
       tutorId: user.id,
       estudianteId,
       sesionId: null,

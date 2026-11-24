@@ -255,7 +255,7 @@ export function recordarRespuestas(
       [alcance]: {
         respuestas: { ...(previo?.respuestas ?? {}), ...nuevos },
         actualizado: hoy(),
-        formatos: [...formatos].sort(),
+        formatos: [...formatos].sort((a, b) => a.localeCompare(b)),
       },
     },
   });

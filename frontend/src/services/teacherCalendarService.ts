@@ -7,7 +7,7 @@ import type {
   TeacherCalendarService,
 } from '../types/calendar';
 import { asignacionDe, bloquesTutoria, sesiones } from '../data/tutoria';
-import { semestreActual, semestres } from '../data/catalogos';
+import { semestreVigente, semestres } from '../data/catalogos';
 
 export const TEACHER_CALENDAR_KEY = 'unas:teacher-calendar:v1';
 const persistedSchema = v.object({
@@ -25,10 +25,10 @@ const institutional: TeacherCalendarBlock[] = bloquesTutoria.map((block) => ({
   tutorId: block.tutorId,
   kind: 'tutoria',
   title: 'Tutoría',
-  semesterId: semestreActual,
+  semesterId: semestreVigente.id,
   days: [block.dia],
   dateFrom: block.vigenciaInicio,
-  dateTo: block.vigenciaFin ?? semestres.find((term) => term.id === semestreActual)!.fin,
+  dateTo: block.vigenciaFin ?? semestres.find((term) => term.id === semestreVigente.id)!.fin,
   startTime: block.horaInicio,
   endTime: block.horaFin,
   location: block.lugar,
@@ -105,7 +105,7 @@ export class BrowserTeacherCalendarService implements TeacherCalendarService {
       ...parsed,
       id:
         id ??
-        `CB-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
+        `CB-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${globalThis.crypto.getRandomValues(new Uint32Array(1))[0]!.toString(36)}`}`,
       tutorId: actor.id,
       createdAt: existing?.createdAt ?? new Date().toISOString(),
     };

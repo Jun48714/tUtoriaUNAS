@@ -13,7 +13,7 @@ import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { usePortal } from '../../hooks/usePortal';
 import { definicionPorCodigo } from '../../data/formatos';
-import { areasDerivacion, semestreActual } from '../../data/catalogos';
+import { areasDerivacion, semestreVigente } from '../../data/catalogos';
 import { downloadCsv } from '../../utils/csv';
 import { formatFecha } from '../../utils/fechas';
 import '../../assets/vendor/fontawesome.min.css';
@@ -87,10 +87,10 @@ export function StudentDocuments() {
       : [
           {
             id: 'CONST-TUTORIA',
-            periodo: semestreActual,
+            periodo: semestreVigente.id,
             tipo: 'constancia',
             titulo: 'Constancia de participación en el Programa de Tutoría',
-            referencia: `CONST-${semestreActual}-TUTORIA`,
+            referencia: `CONST-${semestreVigente.id}-TUTORIA`,
             fecha: '2026-10-14',
             estado: 'aprobado',
             detalle:
@@ -99,10 +99,10 @@ export function StudentDocuments() {
           },
           {
             id: 'CONST-MATRICULA',
-            periodo: semestreActual,
+            periodo: semestreVigente.id,
             tipo: 'constancia',
             titulo: 'Constancia de matrícula del semestre',
-            referencia: `CONST-${semestreActual}-MATRICULA`,
+            referencia: `CONST-${semestreVigente.id}-MATRICULA`,
             fecha: '2026-08-22',
             estado: 'aprobado',
             detalle: 'Emitida por la DIAA a partir del registro de matrícula.',
@@ -258,7 +258,7 @@ export function StudentDocuments() {
         <CardHead
           title="Mis archivos"
           description={`${documentos.length} ${documentos.length === 1 ? 'archivo' : 'archivos'} · ${descargables.length} con descarga disponible`}
-          actions={<Badge>{semestreActual}</Badge>}
+          actions={<Badge>{semestreVigente.id}</Badge>}
         />
         <CardBody>
           <DataTable
@@ -335,7 +335,7 @@ export function StudentDocuments() {
               </div>
               <div>
                 <dt>Periodo</dt>
-                <dd>{semestreActual}</dd>
+                <dd>{semestreVigente.id}</dd>
               </div>
             </dl>
             {!abierto.descargable && (

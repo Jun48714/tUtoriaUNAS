@@ -102,7 +102,6 @@ export function TeacherScheduleForm({
               required
               maxLength={100}
               defaultValue={existing?.title}
-              autoFocus
             />
           </label>
         )}

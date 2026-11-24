@@ -106,9 +106,7 @@ export function Sheet({
           <X aria-hidden="true" />
         </button>
       </header>
-      <div className="sheet__body app-scroll" tabIndex={0}>
-        {children}
-      </div>
+      <div className="sheet__body app-scroll">{children}</div>
       {footer && <footer className="sheet__foot">{footer}</footer>}
     </dialog>
   );

@@ -15,7 +15,7 @@ import { useFiltro } from '../../hooks/useFiltro';
 import { DirectoryToolbar } from '../../components/ui/DirectoryToolbar';
 import type { DefinicionSelect } from '../../hooks/useFiltro';
 import { usePortal } from '../../hooks/usePortal';
-import { semestreActual } from '../../data/catalogos';
+import { semestreVigente } from '../../data/catalogos';
 import { escuelaDe, estudiantePorId, iniciales, nombreCompleto } from '../../data/personas';
 import { resumenDe } from '../../data/academico';
 import type { Asignacion, Estudiante, Instrumento, NivelAlerta, Sesion } from '../../types/domain';
@@ -122,7 +122,9 @@ export function TutorTutees() {
   const ciclos = [...new Set(filas.map((fila) => fila.estudiante.ciclo))].sort(
     (a, b) => (a ?? Infinity) - (b ?? Infinity),
   );
-  const estados = [...new Set(filas.map((fila) => fila.estudiante.estado))].sort();
+  const estados = [...new Set(filas.map((fila) => fila.estudiante.estado))].sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   const selects: DefinicionSelect<FilaTutorado>[] = [
     {
@@ -360,14 +362,16 @@ export function TutorTutees() {
   const promedioGrupo = promedioDe(filas.map((fila) => fila.estudiante));
   const conAlertas = filas.filter((fila) => fila.alertaMaxima !== null).length;
   const pendientesTotales = filas.reduce((total, fila) => total + fila.instrumentosPendientes, 0);
-  const grupos = [...new Set(filas.map((fila) => fila.asignacion.grupo ?? 'Sin grupo'))].sort();
+  const grupos = [...new Set(filas.map((fila) => fila.asignacion.grupo ?? 'Sin grupo'))].sort(
+    (a, b) => a.localeCompare(b),
+  );
 
   return (
     <div className="tutor-tutees">
       <PageHeading
-        eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Semestre ${semestreActual}`}
+        eyebrow={`Docente tutor · ${escuelaDe(docente.escuelaId)} · Semestre ${semestreVigente.id}`}
         title="Mis estudiantes"
-        description={`${semestreActual} · ${escuelaDe(docente.escuelaId)}`}
+        description={`${semestreVigente.id} · ${escuelaDe(docente.escuelaId)}`}
         actions={
           <>
             <Link className="btn btn-falcon-default" to="/tutor/sesiones">

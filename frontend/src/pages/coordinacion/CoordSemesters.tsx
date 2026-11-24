@@ -10,7 +10,7 @@ import { PageHeading } from '../../components/ui/PageHeading';
 import { Sheet } from '../../components/ui/Sheet';
 import { Badge } from '../../components/ui/StatusBadge';
 import { Tabs, TabPanel } from '../../components/ui/Tabs';
-import { semestres, semestreActual } from '../../data/catalogos';
+import { semestres, semestreVigente } from '../../data/catalogos';
 import { escuelaDe } from '../../data/personas';
 import { definicionesFormato } from '../../data/formatos';
 import { useSistema } from '../../hooks/useSistema';
@@ -29,9 +29,9 @@ export function CoordSemesters() {
   const [vista, setVista] = useState('fechas');
   const [editar, setEditar] = useState(false);
   const [evento, setEvento] = useState<EventoCalendario | null>(null);
-  const seleccionado = eleccion ?? semestreActual;
+  const seleccionado = eleccion ?? semestreVigente.id;
   const semestre = semestres.find((s) => s.id === seleccionado);
-  const config = seleccionado === semestreActual ? sistema?.configuracionPeriodo : null;
+  const config = seleccionado === semestreVigente.id ? sistema?.configuracionPeriodo : null;
   if (!semestre) return <EmptyState title="Sin semestres registrados" />;
 
   const inicio = config?.inicio ?? semestre.inicio;

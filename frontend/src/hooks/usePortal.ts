@@ -14,7 +14,7 @@ import {
 import { useInstrumentWorkspace } from './useInstrumentWorkspace';
 import { puedeEnviarFormato } from '../utils/instrumentos';
 import { formulariosVigentes } from '../utils/entrevistas';
-import { semestreActual } from '../data/catalogos';
+import { semestreVigente } from '../data/catalogos';
 import { derivacionesDesdeInstrumentos } from '../utils/seguimientoInstrumentos';
 import { useAhora } from './useAhora';
 import type {
@@ -103,7 +103,7 @@ export function usePortal(): Portal {
         // El tutorado solo responde los instrumentos cuyo actor es él mismo
         // (entrevistas 03, 04 o 05 y evaluaciones 10 y 11). Los formatos que
         // llena el docente tutor pertenecen a su bandeja, no a la del tutorado.
-        instrumentos = formulariosVigentes(todosInstrumentos, estudiante.ciclo, semestreActual)
+        instrumentos = formulariosVigentes(todosInstrumentos, estudiante.ciclo, semestreVigente.id)
           .filter((item) => item.estudianteId === estudiante!.id)
           .filter((instrumento) => definicionPorCodigo(instrumento.formato)?.actor === 'tutorado');
         derivaciones = derivacionesDe(estudiante.id);
@@ -183,7 +183,7 @@ export function usePortal(): Portal {
           ),
       )
       .map((instrumento) => instrumento.id)
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
     return bloqueados.length === 0 ? '' : bloqueados.join('|');
   }, [alcance, ahora]);
 
