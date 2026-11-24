@@ -117,12 +117,19 @@ export const confirmarCodigoCuenta = (body: {
   retoId: string;
   codigo: string;
   tokenActivacion?: string;
-}) => apiJson<{ ticket: string; expiraEn: number }>('/api/auth/codigo/confirmar', 'POST', body);
+}) =>
+  apiJson<{ ticket: string; expiraEn: number; perfiles?: Role[] | null }>(
+    '/api/auth/codigo/confirmar',
+    'POST',
+    body,
+  );
 export const completarCuenta = (body: {
   retoId: string;
   ticket: string;
   password: string;
   confirmacion: string;
+  /** Solo si el correo tiene varios perfiles al recuperar la contraseña. */
+  rol?: Role;
 }) =>
   apiJson<{ identifier: string; role: Role; pendienteVinculacion: boolean }>(
     '/api/auth/cuenta/completar',

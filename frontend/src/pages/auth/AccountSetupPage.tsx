@@ -81,20 +81,21 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
                     ✓ {c.validacion.mensaje}
                   </p>
                 )}
-                <label className="field">
-                  <span className="field__label">Perfil</span>
-                  <select
-                    className="form-select"
-                    aria-label="Perfil"
-                    disabled={c.ocupado}
-                    value={c.rol}
-                    onChange={(e) => c.setRol(e.target.value as Role)}
-                  >
-                    <option value="estudiante">Estudiante</option>
-                    <option value="tutor">Docente</option>
-                    {modo === 'recuperacion' && <option value="coordinacion">Coordinación</option>}
-                  </select>
-                </label>
+                {modo === 'registro' && (
+                  <label className="field">
+                    <span className="field__label">Perfil</span>
+                    <select
+                      className="form-select"
+                      aria-label="Perfil"
+                      disabled={c.ocupado}
+                      value={c.rol}
+                      onChange={(e) => c.setRol(e.target.value as Role)}
+                    >
+                      <option value="estudiante">Estudiante</option>
+                      <option value="tutor">Docente</option>
+                    </select>
+                  </label>
+                )}
               </>
             )}
             <button
@@ -146,6 +147,28 @@ export function AccountSetupPage({ modo }: { modo: ModoCuenta }) {
         )}
         {c.fase === 'password' && (
           <>
+            {c.perfiles.length > 1 && (
+              <label className="field">
+                <span className="field__label">Perfil a recuperar</span>
+                <select
+                  className="form-select"
+                  aria-label="Perfil a recuperar"
+                  disabled={c.ocupado}
+                  value={c.perfilRecuperado}
+                  onChange={(e) => c.setPerfilRecuperado(e.target.value as Role)}
+                >
+                  {c.perfiles.map((perfil) => (
+                    <option key={perfil} value={perfil}>
+                      {perfil === 'tutor'
+                        ? 'Docente'
+                        : perfil === 'coordinacion'
+                          ? 'Coordinación'
+                          : 'Estudiante'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <FormField
               id="account-password"
               label="Nueva contraseña"

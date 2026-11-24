@@ -19,6 +19,8 @@ export function useCuentaSetup(modo: ModoCuenta) {
   const [activacion] = useState(leerActivacion);
   const [correo, setCorreo] = useState(modo === 'activacion' ? (activacion?.correo ?? '') : '');
   const [rol, setRol] = useState<Role>(activacion?.role ?? 'estudiante');
+  const [perfiles, setPerfiles] = useState<Role[]>([]);
+  const [perfilRecuperado, setPerfilRecuperado] = useState<Role>('estudiante');
   const [fase, setFase] = useState<'correo' | 'codigo' | 'password' | 'terminado'>('correo');
   const [codigo, setCodigo] = useState('');
   const [password, setPassword] = useState('');
@@ -107,6 +109,8 @@ export function useCuentaSetup(modo: ModoCuenta) {
         tokenActivacion: modo === 'activacion' ? activacion?.tokenActivacion : undefined,
       });
       setTicket(result.ticket);
+      setPerfiles(result.perfiles ?? []);
+      setPerfilRecuperado(result.perfiles?.[0] ?? 'estudiante');
       setCodigo('');
       setFase('password');
       setMensaje('');
@@ -118,7 +122,13 @@ export function useCuentaSetup(modo: ModoCuenta) {
       if (password.length < 10 || password.length > 128)
         throw new Error('Usa de 10 a 128 caracteres.');
       if (password !== confirmacion) throw new Error('Las contraseñas no coinciden.');
-      const result = await completarCuenta({ retoId: reto.retoId, ticket, password, confirmacion });
+      const result = await completarCuenta({
+        retoId: reto.retoId,
+        ticket,
+        password,
+        confirmacion,
+        rol: perfiles.length > 1 ? perfilRecuperado : undefined,
+      });
       borrarActivacion();
       setTicket('');
       setFase('terminado');
@@ -150,6 +160,9 @@ export function useCuentaSetup(modo: ModoCuenta) {
     setCorreo,
     rol,
     setRol,
+    perfiles,
+    perfilRecuperado,
+    setPerfilRecuperado,
     fase,
     codigo,
     setCodigo,

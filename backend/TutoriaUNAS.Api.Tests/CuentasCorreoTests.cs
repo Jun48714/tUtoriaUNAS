@@ -288,6 +288,47 @@ public sealed class CuentasCorreoTests(CuentasFixture fixture) : IClassFixture<C
     }
 
     [PostgresFact]
+    public async Task RecuperacionPorCorreoEncuentraElPerfilSinQueSeLoIndiquen()
+    {
+        using var c = fixture.App.CreateClient(); var email = Email("recuperar-docente-"); await fixture.Persona(email, "tutor");
+        var (r, ticket) = await Verificar(c, email, "tutor");
+        await Ok<CuentaCompletadaDto>(await c.PostAsJsonAsync("/api/auth/cuenta/completar", new CompletarCuentaInput(r.RetoId, ticket, Password, Password)));
+        await fixture.Modificar(async db => { foreach (var x in await db.RetosCorreo.Where(x => x.Correo == email).ToArrayAsync()) x.UltimoEnvio = DateTimeOffset.UtcNow.AddMinutes(-2); await db.SaveChangesAsync(); });
+        var reset = await Ok<CodigoEnCaminoDto>(await c.PostAsJsonAsync("/api/auth/codigo", new SolicitarCodigoInput(email, "recuperacion")));
+        var validado = await Ok<CodigoValidadoDto>(await c.PostAsJsonAsync("/api/auth/codigo/confirmar", new ConfirmarCodigoInput(reset.RetoId, await fixture.Codigo(email))));
+        Assert.Null(validado.Perfiles);
+        const string nueva = "Clave nueva del docente para recuperar 2026!";
+        var completada = await Ok<CuentaCompletadaDto>(await c.PostAsJsonAsync("/api/auth/cuenta/completar", new CompletarCuentaInput(reset.RetoId, validado.Ticket, nueva, nueva)));
+        Assert.Equal("tutor", completada.Role);
+        await Login(c, email, nueva, "tutor");
+    }
+
+    [PostgresFact]
+    public async Task RecuperacionConVariosPerfilesExigeElegirCualAlCompletar()
+    {
+        using var c = fixture.App.CreateClient(); var email = Email("recuperar-dos-");
+        var estudianteId = await fixture.Persona(email); var tutorId = await fixture.Persona(email, "tutor");
+        const string claveTutor = "Frase del segundo perfil de prueba 2026!";
+        await using (var scope = fixture.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
+            var credenciales = scope.ServiceProvider.GetRequiredService<CredencialesCuentaService>();
+            credenciales.Crear(await db.Personas.SingleAsync(p => p.Id == estudianteId), email, "estudiante", Password, false);
+            credenciales.Crear(await db.Personas.SingleAsync(p => p.Id == tutorId), email, "tutor", claveTutor, false);
+            await db.SaveChangesAsync();
+        }
+        var reset = await Ok<CodigoEnCaminoDto>(await c.PostAsJsonAsync("/api/auth/codigo", new SolicitarCodigoInput(email, "recuperacion")));
+        var validado = await Ok<CodigoValidadoDto>(await c.PostAsJsonAsync("/api/auth/codigo/confirmar", new ConfirmarCodigoInput(reset.RetoId, await fixture.Codigo(email))));
+        Assert.Equal(new[] { "estudiante", "tutor" }, validado.Perfiles!);
+        const string nueva = "Clave nueva elegida para el docente 2026!";
+        Assert.Equal(HttpStatusCode.BadRequest, (await c.PostAsJsonAsync("/api/auth/cuenta/completar", new CompletarCuentaInput(reset.RetoId, validado.Ticket, nueva, nueva))).StatusCode);
+        var completada = await Ok<CuentaCompletadaDto>(await c.PostAsJsonAsync("/api/auth/cuenta/completar", new CompletarCuentaInput(reset.RetoId, validado.Ticket, nueva, nueva, "tutor")));
+        Assert.Equal("tutor", completada.Role);
+        await Login(c, email, nueva, "tutor");
+        await Login(c, email, Password, "estudiante");
+    }
+
+    [PostgresFact]
     public async Task OutboxCifraElCodigoYReintentaSinDuplicarElMensajeAceptado()
     {
         await fixture.Drenar();

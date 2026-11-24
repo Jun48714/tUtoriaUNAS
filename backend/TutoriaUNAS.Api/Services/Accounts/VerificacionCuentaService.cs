@@ -15,7 +15,8 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
     public async Task<CodigoEnCaminoDto> Solicitar(SolicitarCodigoInput input, CancellationToken ct)
     {
         credenciales.ExigirDisponible();
-        TutoriaError.Exigir(input.Proposito is "registro" or "activacion" or "recuperacion" && input.Rol is "estudiante" or "tutor" or "coordinacion", "Solicitud de verificación inválida.");
+        TutoriaError.Exigir(input.Proposito is "registro" or "activacion" or "recuperacion", "Solicitud de verificación inválida.");
+        TutoriaError.Exigir(input.Proposito == "recuperacion" || input.Rol is "estudiante" or "tutor" or "coordinacion", "Solicitud de verificación inválida.");
         TutoriaError.Exigir(input.Proposito != "registro" || input.Rol != "coordinacion", "Coordinación crea las cuentas de este perfil.", 403);
         RetoCorreoEntity? activacion = null;
         if (input.Proposito == "activacion") activacion = await Activacion(input.TokenActivacion, ct);
@@ -59,9 +60,8 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
             }
             else
             {
-                var usuario = await (from c in db.CredencialesCuenta join u in db.Usuarios on c.UsuarioId equals u.Id
-                    where c.CorreoNormalizado == email && c.Rol == input.Rol && c.Verificada && u.Activo select u).SingleOrDefaultAsync(ct);
-                if (usuario is not null) { reto.UsuarioId = usuario.Id; reto.PersonaId = usuario.PersonaId; reto.VersionUsuario = usuario.Version; }
+                var usuario = (await UsuariosRecuperables(email, ct)).FirstOrDefault();
+                if (usuario is not null) { reto.Rol = usuario.Rol; reto.UsuarioId = usuario.Id; reto.PersonaId = usuario.PersonaId; reto.VersionUsuario = usuario.Version; }
                 else aviso = "sin-cuenta";
             }
             db.RetosCorreo.Add(reto);
@@ -89,6 +89,10 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         return new(reto.Id, 600, 60, options.Value.RevelarExistencia ? "Código enviado." : "Si está registrado, recibirás un mensaje.");
     }
 
+    private async Task<UsuarioEntity[]> UsuariosRecuperables(string email, CancellationToken ct) =>
+        await (from c in db.CredencialesCuenta join u in db.Usuarios on c.UsuarioId equals u.Id
+            where c.CorreoNormalizado == email && c.Verificada && u.Activo orderby u.Rol select u).ToArrayAsync(ct);
+
     private async Task<PersonaEntity[]> PersonasPorCorreo(string email, string tipo, CancellationToken ct) =>
         await db.Personas.FromSqlInterpolated($"SELECT * FROM \"Personas\" WHERE \"Tipo\" = {tipo} AND \"Activa\" AND lower(trim(\"DatosJson\"::json->>'correo')) = {email}")
             .AsNoTracking().ToArrayAsync(ct);
@@ -104,21 +108,21 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
 
     private async Task<EstadoCorreoDto> Diagnosticar(string proposito, string rol, string email, CancellationToken ct)
     {
-        var perfil = rol == "tutor" ? "docente" : rol == "coordinacion" ? "coordinación" : "estudiante";
         if (await BajaCorreo.Consultar(db, email, ct)) return new("deshabilitada", "Esta cuenta está deshabilitada. Consulta a coordinación.");
         if (proposito == "registro")
         {
+            var perfil = rol == "tutor" ? "docente" : rol == "coordinacion" ? "coordinación" : "estudiante";
             if (rol == "coordinacion") return new("no-aplica", "Coordinación crea estas cuentas.");
             if (await db.CredencialesCuenta.AnyAsync(c => c.CorreoNormalizado == email && c.Rol == rol, ct))
                 return new("cuenta-existente", $"Ya existe una cuenta de {perfil} con este correo. Inicia sesión.");
             var personas = await PersonasPorCorreo(email, rol == "estudiante" ? "estudiante" : "tutor", ct);
             return personas.Length == 1 ? new("ok", "Correo encontrado.") : new("sin-padron", $"Este correo no figura como {perfil} en el sistema.");
         }
-        var cuenta = await (from c in db.CredencialesCuenta.AsNoTracking() join u in db.Usuarios.AsNoTracking() on c.UsuarioId equals u.Id
-            where c.CorreoNormalizado == email && c.Rol == rol select new { c.Verificada, u.Activo }).FirstOrDefaultAsync(ct);
-        if (cuenta is null) return new("sin-cuenta", $"No hay una cuenta de {perfil} con este correo.");
-        if (!cuenta.Verificada) return new("sin-verificar", "Tu cuenta aún no está activada. Ingresa con tu contraseña temporal.");
-        return cuenta.Activo ? new("ok", "Cuenta encontrada.") : new("deshabilitada", "Esta cuenta está deshabilitada. Consulta a coordinación.");
+        var cuentas = await (from c in db.CredencialesCuenta.AsNoTracking() join u in db.Usuarios.AsNoTracking() on c.UsuarioId equals u.Id
+            where c.CorreoNormalizado == email select new { c.Verificada, u.Activo }).ToArrayAsync(ct);
+        if (cuentas.Length == 0) return new("sin-cuenta", "No hay una cuenta con este correo.");
+        if (!cuentas.Any(c => c.Verificada)) return new("sin-verificar", "Tu cuenta aún no está activada. Ingresa con tu contraseña temporal.");
+        return cuentas.Any(c => c.Verificada && c.Activo) ? new("ok", "Cuenta encontrada.") : new("deshabilitada", "Esta cuenta está deshabilitada. Consulta a coordinación.");
     }
 
     private (string Asunto, string Cuerpo) MensajeSinCodigo(string aviso, string proposito, string rol)
@@ -132,7 +136,7 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
             "cuenta-existente" => ("Ya tienes una cuenta · Tutoría UNAS",
                 $"Recibimos una solicitud para crear una cuenta con este correo, pero ya existe una con el perfil de {perfil}.\n\nInicia sesión aquí: {login}\nSi olvidaste tu contraseña, usa «¿Olvidaste tu clave?» en esa misma página." + cierre),
             "sin-cuenta" => ("Recuperación de contraseña · Tutoría UNAS",
-                $"Recibimos una solicitud para recuperar la contraseña de este correo con el perfil de {perfil}, pero no hay una cuenta activa con esos datos.\n\n• Si aún no creaste tu cuenta, hazlo aquí: {crear}\n• Si tu cuenta tiene otro perfil (estudiante, docente o coordinación), repite la solicitud eligiendo el perfil correcto." + cierre),
+                $"Recibimos una solicitud para recuperar la contraseña de este correo, pero no hay una cuenta activa asociada a él.\n\n• Si aún no creaste tu cuenta, hazlo aquí: {crear}\n• Si tu cuenta está deshabilitada, comunícate con coordinación." + cierre),
             _ => ("Solicitud de cuenta · Tutoría UNAS",
                 $"Recibimos una solicitud para crear una cuenta con este correo, pero no encontramos una ficha activa de {perfil} asociada a él en el padrón de la universidad.\n\nComunícate con la coordinación de tutoría de tu escuela profesional para que verifiquen tu registro. Cuando figures en el padrón podrás crear tu cuenta en {crear}." + cierre),
         };
@@ -165,8 +169,9 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         var ticket = SeguridadCuenta.Aleatorio(); reto.TicketHash = SeguridadCuenta.Hash(ticket); reto.Verificado = ahora; reto.Expira = ahora.AddMinutes(5);
         // El código ya no permite emitir otro ticket, incluso si aún no se cambió la contraseña.
         reto.CodigoHash = "";
+        var perfiles = reto.Proposito == "recuperacion" ? (await UsuariosRecuperables(reto.Correo, ct)).Select(u => u.Rol).ToArray() : [];
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
-        return new(ticket, 300);
+        return new(ticket, 300, perfiles.Length > 1 ? perfiles : null);
     }
 
     public async Task<CuentaCompletadaDto> Completar(CompletarCuentaInput input, CancellationToken ct)
@@ -178,7 +183,15 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         var reto = await db.RetosCorreo.SingleAsync(r => r.Id == input.RetoId, ct);
         var ahora = clock.GetUtcNow();
         TutoriaError.Exigir(reto.Verificado is not null && reto.Consumido is null && reto.Expira > ahora && input.Ticket.Length == 64 && SeguridadCuenta.Iguales(reto.TicketHash, SeguridadCuenta.Hash(input.Ticket)), "La verificación venció. Solicita un nuevo código.");
-        var persona = await db.Personas.SingleAsync(p => p.Id == reto.PersonaId, ct);
+        UsuarioEntity? destino = null;
+        if (reto.Proposito == "recuperacion")
+        {
+            var usuarios = await UsuariosRecuperables(reto.Correo, ct);
+            destino = usuarios.Length == 1 ? usuarios[0] : usuarios.SingleOrDefault(u => u.Rol == input.Rol);
+            TutoriaError.Exigir(destino is not null || usuarios.Length > 1, "La cuenta cambió. Vuelve a iniciar la verificación.", 409);
+            TutoriaError.Exigir(destino is not null, "Elige el perfil cuya contraseña vas a recuperar.");
+        }
+        var persona = await db.Personas.SingleAsync(p => p.Id == (destino != null ? destino.PersonaId : reto.PersonaId), ct);
         TutoriaError.Exigir(persona.Activa && JsonDatos.Texto(persona.DatosJson, "correo").Trim().Equals(reto.Correo, StringComparison.OrdinalIgnoreCase), "La vinculación institucional cambió. Consulta a coordinación.", 409);
         UsuarioEntity user;
         if (reto.Proposito == "registro")
@@ -190,9 +203,9 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         }
         else
         {
-            user = await db.Usuarios.SingleAsync(u => u.Id == reto.UsuarioId, ct);
+            user = destino ?? await db.Usuarios.SingleAsync(u => u.Id == reto.UsuarioId, ct);
             var cred = await db.CredencialesCuenta.SingleAsync(c => c.UsuarioId == user.Id, ct);
-            TutoriaError.Exigir(user.Activo && user.Version == reto.VersionUsuario && (reto.Proposito != "activacion" || cred.TemporalHasta > ahora), "La cuenta cambió. Vuelve a iniciar la verificación.", 409);
+            TutoriaError.Exigir(user.Activo && (user.Id != reto.UsuarioId || user.Version == reto.VersionUsuario) && (reto.Proposito != "activacion" || cred.TemporalHasta > ahora), "La cuenta cambió. Vuelve a iniciar la verificación.", 409);
             TutoriaError.Exigir(!credenciales.PasswordValida(cred, input.Password), "Elige una contraseña diferente de la anterior.");
             credenciales.CambiarPassword(cred, input.Password); cred.Verificada = true; cred.CambioObligatorio = false; cred.TemporalHasta = null;
             cred.IntentosFallidos = 0; cred.BloqueadaHasta = null; user.Version++;
