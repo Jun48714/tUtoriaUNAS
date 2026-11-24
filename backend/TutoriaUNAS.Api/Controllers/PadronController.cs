@@ -21,6 +21,7 @@ public sealed class PadronController(TutoriaDbContext db, TutoriaContext context
     // vez por proceso y se revalida con un sello barato (conteo, último Id y suma de
     // longitudes), en lugar de transferir y re-parsear todas las filas en cada consulta.
     private static readonly ConcurrentDictionary<string, JsonElement[]> CachePadron = new(StringComparer.Ordinal);
+    private static readonly string[] CamposBusqueda = ["codigo", "apellidos", "nombres", "correo", "departamento"];
 
     private async Task<ActorTutoria> ExigirCoordinacion(CancellationToken ct)
     {
@@ -48,7 +49,7 @@ public sealed class PadronController(TutoriaDbContext db, TutoriaContext context
         var ordenadas = CachePadron.GetOrAdd(sello, _ => CargarPadron(db, tipo, escuelaId, prefijo));
         var texto = buscar.Trim();
         var coincidencias = ordenadas.Where(p => texto.Length == 0 ||
-            CultureInfo.GetCultureInfo("es-PE").CompareInfo.IndexOf(string.Join(" ", new[] { "codigo", "apellidos", "nombres", "correo", "departamento" }
+            CultureInfo.GetCultureInfo("es-PE").CompareInfo.IndexOf(string.Join(" ", CamposBusqueda
                 .Select(k => p.TryGetProperty(k, out var v) ? v.GetString() : "")), texto, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0)
             .ToArray();
         const int tamano = 25;

@@ -25,7 +25,7 @@ public sealed class TutoriaController(EstadoTutoriaService estado, AgendaService
     public Task<DisponibilidadTutoriaDto> Disponibilidad(ConsultarDisponibilidadDto input, CancellationToken ct) => agenda.Disponibilidad(input, ct);
     [HttpPut("sesiones/{id}/asistencia")]
     [RequierePermiso("sesiones", "editar")]
-    [RequestSizeLimit(12_000_000)]
+    [RequestSizeLimit(7_500_000)]
     public Task<SesionDto> Asistencia(string id, RegistrarAsistenciaDto input, CancellationToken ct) => agenda.Asistencia(id, input, ct);
     [HttpGet("sesiones/{id}/evidencia")]
     [RequierePermiso("sesiones", "editar")]

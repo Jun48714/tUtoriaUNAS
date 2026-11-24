@@ -36,8 +36,10 @@ public sealed class LocalAuthController(IWebHostEnvironment environment, IConfig
             return cuentasHabilitadas ? Unauthorized(new ProblemDetails { Status = 401, Title = "Datos de acceso incorrectos." }) : NotFound();
         var db = HttpContext.RequestServices.GetRequiredService<TutoriaDbContext>();
         var identifier = input.Identifier.Trim().ToLowerInvariant();
+#pragma warning disable CA1862 // EF Core traduce ToLower() a SQL; string.Equals con StringComparison no se traduce.
         var candidatos = await db.Usuarios.Where(u => u.Issuer == "local-development" &&
             u.Identificador.ToLower() == identifier && (input.Role == null || u.Rol == input.Role) && u.Activo).ToArrayAsync(ct);
+#pragma warning restore CA1862
         var hasher = new PasswordHasher<UsuarioEntity>();
         var coincidencias = candidatos.Where(u => u.PasswordHashDesarrollo is not null &&
             hasher.VerifyHashedPassword(u, u.PasswordHashDesarrollo, input.Password) != PasswordVerificationResult.Failed).ToArray();

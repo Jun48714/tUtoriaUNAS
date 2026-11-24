@@ -224,7 +224,8 @@ public sealed class DespachadorRecordatorios(IServiceScopeFactory scopes, IOptio
                     {
                         var r = await servicio.Ejecutar(simular, null, null, stoppingToken);
                         _simulacionHoy = hoy;
-                        logger.LogInformation("Recordatorios ({Modo}): {Evaluados} cuentas evaluadas, {Con} con pendientes, {Correos} correos.", o.Modo, r.Evaluados, r.ConPendientes, r.Correos);
+                        if (logger.IsEnabled(LogLevel.Information))
+                            logger.LogInformation("Recordatorios ({Modo}): {Evaluados} cuentas evaluadas, {Con} con pendientes, {Correos} correos.", o.Modo, r.Evaluados, r.ConPendientes, r.Correos);
                     }
                 }
             }

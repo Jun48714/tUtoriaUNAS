@@ -382,7 +382,7 @@ function AttendanceEditor({
               <span>
                 Evidencia{' '}
                 <small className="attendance-editor__ayuda">
-                  Opcional · {sesion.tipo === 'grupal' ? 'foto o PDF' : 'PDF'} hasta 8 MB
+                  Opcional · {sesion.tipo === 'grupal' ? 'foto o PDF' : 'PDF'} hasta 5 MB
                 </small>
               </span>
               <input

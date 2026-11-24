@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TutoriaUNAS.Api.DTOs;
 
@@ -22,10 +23,10 @@ public sealed record ConsultarDisponibilidadDto(string Fecha, string[] Estudiant
 public sealed record BloqueOcupadoDto(string Fecha, string HoraInicio, string HoraFin, string Origen);
 public sealed record DisponibilidadTutoriaDto(string Lunes, int SinHorario, BloqueOcupadoDto[] Bloques);
 public sealed record EvidenciaAsistenciaDto(string Nombre, string Tipo, byte[] Contenido);
-public sealed record RegistrarAsistenciaDto(int Version, AsistenteDto[] Asistentes, string Mensaje = "", string TipoTutoria = "Académica", EvidenciaAsistenciaDto? Evidencia = null);
+public sealed record RegistrarAsistenciaDto([property: JsonRequired] int Version, AsistenteDto[] Asistentes, string Mensaje = "", string TipoTutoria = "Académica", EvidenciaAsistenciaDto? Evidencia = null);
 public sealed record CrearInstrumentoDto(string Formato, string? EstudianteId, string[]? Participantes = null);
-public sealed record GuardarInstrumentoDto(int Version, Dictionary<string, string> Respuestas, bool Enviar, int? VersionFormato = null);
-public sealed record RevisarInstrumentoDto(int Version, string Decision, string Comentario);
-public sealed record CambiarMomentoDto(int Version, string Momento);
+public sealed record GuardarInstrumentoDto([property: JsonRequired] int Version, Dictionary<string, string> Respuestas, [property: JsonRequired] bool Enviar, int? VersionFormato = null);
+public sealed record RevisarInstrumentoDto([property: JsonRequired] int Version, string Decision, string Comentario);
+public sealed record CambiarMomentoDto([property: JsonRequired] int Version, string Momento);
 public sealed record AsignarTutorDto(string EstudianteId, string TutorId, string? Grupo, string Referencia, int? Version = null, string? SolicitudId = null, int? SolicitudVersion = null);
 public sealed record LoginLocalDto(string Identifier, string Password, string? Role = null, bool IncluirEstado = false);

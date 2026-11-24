@@ -179,7 +179,7 @@ public sealed class AgendaService(TutoriaDbContext db, TutoriaContext context, C
 
     private async Task GuardarEvidencia(SesionEntity sesion, EvidenciaAsistenciaDto entrada, CancellationToken ct)
     {
-        TutoriaError.Exigir(entrada.Contenido is { Length: > 0 and <= 8 * 1024 * 1024 }, "La evidencia debe pesar hasta 8 MB.");
+        TutoriaError.Exigir(entrada.Contenido is { Length: > 0 and <= 5 * 1024 * 1024 }, "La evidencia debe pesar hasta 5 MB.");
         var pdf = entrada.Tipo == "application/pdf" && entrada.Contenido.AsSpan().StartsWith("%PDF-"u8);
         var foto = entrada.Tipo == "image/jpeg" && entrada.Contenido.AsSpan().StartsWith(new byte[] { 0xff, 0xd8, 0xff });
         TutoriaError.Exigir(pdf || (foto && sesion.Tipo == "grupal"), sesion.Tipo == "individual"

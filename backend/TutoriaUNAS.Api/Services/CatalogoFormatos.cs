@@ -8,8 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TutoriaUNAS.Api.Services;
 
-public sealed class CatalogoFormatos
+public sealed partial class CatalogoFormatos
 {
+    [GeneratedRegex("^([01][0-9]|2[0-3]):[0-5][0-9]$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex HoraValida();
+    [GeneratedRegex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex CorreoValido();
+
     private JsonElement datos;
     private Dictionary<string, JsonElement>? porCodigo;
     // El catálogo base embebido es inmutable: se analiza una sola vez por proceso y no en
@@ -112,8 +117,8 @@ public sealed class CatalogoFormatos
             if (type == "numero" && (!decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) || number < 0)) Error(key, "Ingresa un número válido, igual o mayor que cero.");
             if (key is "horasEstudio" or "promedioSecundaria" && decimal.TryParse(value, CultureInfo.InvariantCulture, out var max) && max > (key == "horasEstudio" ? 24 : 20)) Error(key, "Revisa el rango de esta respuesta.");
             if (type == "fecha" && !DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) Error(key, "Selecciona una fecha válida.");
-            if (type == "hora" && !Regex.IsMatch(value, "^([01][0-9]|2[0-3]):[0-5][0-9]$")) Error(key, "Selecciona una hora válida.");
-            if (key == "correo" && !Regex.IsMatch(value, @"^[^\s@]+@[^\s@]+\.[^\s@]+$")) Error(key, "Revisa el correo electrónico.");
+            if (type == "hora" && !HoraValida().IsMatch(value)) Error(key, "Selecciona una hora válida.");
+            if (key == "correo" && !CorreoValido().IsMatch(value)) Error(key, "Revisa el correo electrónico.");
             if (value.Length > (type == "texto-largo" ? 1000 : type is "tabla" or "multiple" ? 100000 : 200)) Error(key, "La respuesta supera la longitud permitida.");
             string[] options = key is "cursosDificiles" or "materiasFaciles" ? [.. cursos, "Ninguno", "Otro"] :
                 type == "booleano" ? ["Sí", "No"] : c.TryGetProperty("opciones", out var opts) ? opts.Deserialize<string[]>() ?? [] : [];

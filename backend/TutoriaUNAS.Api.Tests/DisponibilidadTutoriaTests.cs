@@ -12,6 +12,8 @@ namespace TutoriaUNAS.Api.Tests;
 
 public sealed class DisponibilidadTutoriaTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
+    private static readonly int[] DiasJueves = [4];
+
     [PostgresFact]
     public async Task PreviewAndSaveUseTheSameWeekAndConflictsForTheSchoolCoordinatorAsTutor()
     {
@@ -38,7 +40,7 @@ public sealed class DisponibilidadTutoriaTests(PostgresFixture fixture) : IClass
             db.CalendarioDocente.Add(new CalendarioDocenteEntity
             {
                 Id = "CURSO-DISPONIBILIDAD", EscuelaId = usuario.EscuelaId, TutorId = tutorId, SemestreId = semestre,
-                DatosJson = JsonDatos.Serializar(new { kind = "curso", days = new[] { 4 }, dateFrom = Fecha(3), dateTo = Fecha(3), startTime = "02:00", endTime = "02:20" })
+                DatosJson = JsonDatos.Serializar(new { kind = "curso", days = DiasJueves, dateFrom = Fecha(3), dateTo = Fecha(3), startTime = "02:00", endTime = "02:20" })
             });
             db.Sesiones.Add(new SesionEntity
             {

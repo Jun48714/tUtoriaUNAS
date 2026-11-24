@@ -46,8 +46,10 @@ public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHash
         string? rolAlias = null; string? personaAlias = null;
         if (options.Value.AliasPrueba)
         {
+#pragma warning disable CA1862 // EF Core traduce ToLower() a SQL; string.Equals con StringComparison no se traduce.
             var alias = await db.Usuarios.AsNoTracking().Where(u => u.Issuer == "local-development" && u.Identificador.ToLower() == identifier &&
                 (input.Role == null || u.Rol == input.Role)).OrderBy(u => u.Id).Select(u => new { u.PersonaId, u.Rol }).Take(2).ToArrayAsync(ct);
+#pragma warning restore CA1862
             if (alias.Length == 1) { rolAlias = alias[0].Rol; personaAlias = alias[0].PersonaId; }
         }
         var rolFiltro = input.Role ?? rolAlias;
@@ -63,8 +65,12 @@ public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHash
             (rolFiltro == null || c.Rol == rolFiltro)).ToArrayAsync(ct);
         var ahora = clock.GetUtcNow();
         // Una credencial bloqueada nunca coincide: responde igual que una contraseña incorrecta y no sirve
-        // para comprobar claves. El hash se calcula siempre (& sin cortocircuito) para no delatar el bloqueo por tiempo.
-        var coincidencias = credenciales.Where(c => PasswordValida(c, input.Password) & !(c.BloqueadaHasta > ahora)).ToArray();
+        // para comprobar claves. El hash se calcula siempre, antes de mirar el bloqueo, para no delatarlo por tiempo.
+        var coincidencias = credenciales.Where(c =>
+        {
+            var passwordValida = PasswordValida(c, input.Password);
+            return passwordValida && !(c.BloqueadaHasta > ahora);
+        }).ToArray();
         TutoriaError.Exigir(coincidencias.Length <= 1,
             "Esta contraseña coincide con más de un perfil. Recupera la clave de uno de ellos y elige una diferente.", 409);
         if (coincidencias.Length == 0)

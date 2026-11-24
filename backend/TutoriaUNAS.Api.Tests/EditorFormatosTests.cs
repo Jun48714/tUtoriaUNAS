@@ -21,7 +21,7 @@ public sealed class ValidacionEditorFormatosTests
     public void AdmiteLosDoceAnexosOriginales(string codigo)
     {
         var definicion = new CatalogoFormatos().Definicion(codigo);
-        ValidacionDefinicionFormato.Validar(definicion, definicion, definicion);
+        Assert.Null(Record.Exception(() => ValidacionDefinicionFormato.Validar(definicion, definicion, definicion)));
     }
 
     [Theory]

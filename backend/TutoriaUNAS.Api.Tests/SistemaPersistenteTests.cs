@@ -12,6 +12,8 @@ namespace TutoriaUNAS.Api.Tests;
 
 public sealed class SistemaPersistenteTests(PostgresFixture fixture) : IClassFixture<PostgresFixture>
 {
+    private static readonly string[] EscuelasCampana = ["E-IIS"];
+
     private static async Task<EstadoTutoriaDto> Estado(HttpClient c) => (await c.GetFromJsonAsync<EstadoTutoriaDto>("/api/tutoria/estado"))!;
     private static async Task<T> Ok<T>(HttpResponseMessage response)
     {
@@ -193,7 +195,7 @@ public sealed class SistemaPersistenteTests(PostgresFixture fixture) : IClassFix
         await using (var scope = fixture.App.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
-            db.Fuentes.Add(new RegistroFuenteEntity { Tipo = "campanasSalud", Id = id, EscuelaId = "E-IIS", Fuente = "Prueba ficticia aislada", FechaCorte = DateTimeOffset.UtcNow, DatosJson = JsonDatos.Serializar(new { id, tema = "Actividad ficticia QA", fecha = Fecha(15), hora = "10:00", canal = "presencial", lugar = "Sala ficticia", escuelas = new[] { "E-IIS" }, cupos = 1, inscritos = 0 }) }); await db.SaveChangesAsync();
+            db.Fuentes.Add(new RegistroFuenteEntity { Tipo = "campanasSalud", Id = id, EscuelaId = "E-IIS", Fuente = "Prueba ficticia aislada", FechaCorte = DateTimeOffset.UtcNow, DatosJson = JsonDatos.Serializar(new { id, tema = "Actividad ficticia QA", fecha = Fecha(15), hora = "10:00", canal = "presencial", lugar = "Sala ficticia", escuelas = EscuelasCampana, cupos = 1, inscritos = 0 }) }); await db.SaveChangesAsync();
         }
         using var one = await fixture.Login("2023010456", "estudiante"); using var two = await fixture.Login("2023010457", "estudiante");
         var path = $"/api/sistema/campanas/{id}/inscripcion";

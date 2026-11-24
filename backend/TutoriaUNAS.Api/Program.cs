@@ -141,10 +141,10 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         options.Audience = identity.Value.Audience;
     }
 });
-builder.Services.AddAuthorization(options => options.AddPolicy(RoleNames.TutoringAccessPolicy, policy => {
+builder.Services.AddAuthorizationBuilder().AddPolicy(RoleNames.TutoringAccessPolicy, policy => {
     if (cuentas.Enabled) { policy.AddAuthenticationSchemes(SeguridadCuenta.Scheme); if (localAuth) policy.AddAuthenticationSchemes("LocalDevelopment"); if (builder.Configuration.GetValue<bool>("Authentication:Enabled")) policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme); }
     policy.RequireAuthenticatedUser().RequireRole(RoleNames.Student, RoleNames.Tutor, RoleNames.Coordination);
-}));
+});
 
 var app = builder.Build();
 if (args.Contains("--protect-smtp", StringComparer.Ordinal))
@@ -256,6 +256,4 @@ app.UseRateLimiter();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false }).AllowAnonymous();
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") }).AllowAnonymous();
 app.MapControllers();
-app.Run();
-
-public partial class Program;
+await app.RunAsync();

@@ -27,8 +27,11 @@ public sealed class CorreoPrueba : ICorreoCuentaSender
         Mensajes.Enqueue((para, asunto, contenido)); return Task.CompletedTask;
     }
 }
-public sealed class CuentasFixture : IAsyncLifetime
+public sealed partial class CuentasFixture : IAsyncLifetime
 {
+    [GeneratedRegex(@"\b\d{6}\b")]
+    private static partial Regex CodigoSeisDigitos();
+
     public PostgresFixture Db { get; } = new();
     public WebApplicationFactory<Program> App { get; private set; } = null!;
     public CorreoPrueba Correo { get; } = new();
@@ -76,7 +79,7 @@ public sealed class CuentasFixture : IAsyncLifetime
     {
         await Drenar();
         var mail = Correo.Mensajes.Last(m => m.Para == email && (m.Asunto.StartsWith("Verifica", StringComparison.Ordinal) || m.Asunto.StartsWith("Recupera", StringComparison.Ordinal)));
-        return Regex.Match(mail.Contenido, @"\b\d{6}\b").Value;
+        return CodigoSeisDigitos().Match(mail.Contenido).Value;
     }
     public async Task Modificar(Func<TutoriaDbContext, Task> fn)
     { await using var scope = App.Services.CreateAsyncScope(); await fn(scope.ServiceProvider.GetRequiredService<TutoriaDbContext>()); }

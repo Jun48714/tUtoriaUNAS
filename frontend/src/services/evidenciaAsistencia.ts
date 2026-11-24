@@ -1,7 +1,7 @@
 import type { Sesion } from '../types/domain';
 import { apiJson } from './apiClient';
 
-const maximo = 8 * 1024 * 1024;
+const maximo = 5 * 1024 * 1024;
 
 export interface EvidenciaAsistencia {
   nombre: string;
@@ -41,7 +41,7 @@ export async function prepararEvidencia(archivo: File, sesion: Sesion['tipo']) {
     throw new Error(sesion === 'individual' ? 'Adjunta un PDF.' : 'Adjunta una foto o un PDF.');
   if (!pdf && archivo.size > 25 * 1024 * 1024) throw new Error('La foto supera los 25 MB.');
   const blob = pdf ? archivo : await comprimirFoto(archivo);
-  if (!blob.size || blob.size > maximo) throw new Error('La evidencia debe pesar hasta 8 MB.');
+  if (!blob.size || blob.size > maximo) throw new Error('La evidencia debe pesar hasta 5 MB.');
   const contenido = await new Promise<string>((resolve, reject) => {
     const lector = new FileReader();
     lector.onerror = () => reject(new Error('No se pudo leer la evidencia.'));
