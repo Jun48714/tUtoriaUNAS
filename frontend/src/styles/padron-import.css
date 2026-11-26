@@ -1,0 +1,409 @@
+/* Importación del padrón: subir el Excel, revisar el resumen y confirmar. */
+.padron-import {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.padron-import h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+.padron-import p {
+  margin: 0;
+}
+
+/* — Zona para soltar el archivo — */
+.padron-import__drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 20px 28px;
+  border: 2px dashed var(--green-300);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--green-50), #fff);
+  color: var(--ink-700);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+.padron-import__drop:hover,
+.padron-import__drop.is-over {
+  border-color: var(--green);
+  background: var(--green-soft);
+  box-shadow: 0 6px 22px rgb(43 125 60 / 12%);
+}
+.padron-import__drop:focus-within {
+  outline: 3px solid var(--green-300);
+  outline-offset: 2px;
+}
+.padron-import__drop strong {
+  color: var(--ink-900);
+  font-size: 1.05rem;
+}
+.padron-import__drop small {
+  color: var(--ink-500);
+}
+.padron-import__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.padron-import__cloud {
+  width: 68px;
+  height: 68px;
+  margin-bottom: 4px;
+  color: var(--green);
+}
+.padron-import__pick {
+  margin-top: 8px;
+  pointer-events: none;
+}
+
+/* — Qué contiene cada hoja — */
+.padron-import__sheets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.padron-import__sheets article {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  background: #fff;
+}
+.padron-import__sheets p {
+  margin-top: 4px;
+  color: var(--ink-500);
+  font-size: var(--text-ui-small);
+  line-height: 1.5;
+}
+.padron-import__sheet-icon,
+.padron-import__file-icon {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--green-soft);
+  color: var(--green);
+}
+.padron-import__safe {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink-500);
+  font-size: var(--text-ui-small);
+  line-height: 1.5;
+}
+.padron-import__safe svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--green);
+}
+
+/* — Leyendo / guardando — */
+.padron-import__busy {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 44px 16px;
+  text-align: center;
+  color: var(--ink-500);
+}
+.padron-import__busy strong {
+  color: var(--ink-900);
+  font-size: 1.05rem;
+}
+.padron-import__spin {
+  width: 38px;
+  height: 38px;
+  color: var(--green);
+  animation: padron-import-spin 0.9s linear infinite;
+}
+.padron-import__bar {
+  position: relative;
+  width: min(320px, 80%);
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--green-100);
+}
+.padron-import__bar::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--green);
+  content: '';
+  animation: padron-import-bar 1.3s ease-in-out infinite;
+}
+@keyframes padron-import-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes padron-import-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .padron-import__spin,
+  .padron-import__bar::after {
+    animation: none;
+  }
+}
+
+/* — Vista previa — */
+.padron-import__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  background: var(--ink-50);
+}
+.padron-import__file > div {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.padron-import__file strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.padron-import__file small {
+  color: var(--ink-500);
+}
+.padron-import__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.padron-import__tile {
+  display: grid;
+  gap: 2px;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  background: #fff;
+}
+.padron-import__tile-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 0.85rem;
+}
+.padron-import__tile-value {
+  color: var(--ink-900);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.padron-import__tile-label {
+  font-weight: 600;
+}
+.padron-import__tile-note {
+  color: var(--ink-500);
+  font-size: var(--text-ui-small);
+  line-height: 1.4;
+}
+.padron-import__checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+.padron-import__checks section {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--green-300);
+  border-left-width: 1px;
+  border-radius: 14px;
+  background: var(--green-50);
+  line-height: 1.5;
+}
+.padron-import__checks section.is-warn {
+  border-color: #f0d48a;
+  background: #fff8e6;
+}
+.padron-import__checks h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.padron-import__checks section.is-ok h3 svg {
+  color: var(--green);
+}
+.padron-import__checks section.is-warn h3 svg {
+  color: var(--gold-600);
+}
+.padron-import__checks small {
+  color: var(--ink-500);
+}
+.padron-import__schools ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.padron-import__schools li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: 99px;
+  background: #fff;
+  font-size: var(--text-ui-small);
+}
+.padron-import__schools b {
+  color: var(--green-800);
+  font-variant-numeric: tabular-nums;
+}
+
+/* — Filas que no se importan — */
+.padron-import__excluded {
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  background: #fff;
+}
+.padron-import__excluded > summary {
+  padding: 12px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.padron-import__excluded > summary b {
+  margin-left: 6px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: #fff3cd;
+  color: var(--gold-700);
+  font-size: var(--text-ui-small);
+}
+.padron-import__excluded-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px 10px;
+}
+.padron-import__excluded-bar label {
+  display: grid;
+  gap: 4px;
+  font-size: var(--text-ui-small);
+}
+.padron-import__table {
+  max-height: 260px;
+  overflow: auto;
+  border-top: 1px solid var(--ink-200);
+}
+.padron-import__table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-ui-small);
+}
+.padron-import__table th,
+.padron-import__table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--ink-100);
+  text-align: left;
+  vertical-align: top;
+}
+.padron-import__table th {
+  position: sticky;
+  top: 0;
+  background: var(--ink-50);
+  font-weight: 600;
+}
+.padron-import__excluded > small {
+  display: block;
+  padding: 8px 14px 12px;
+}
+.padron-import__total {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--green-soft);
+  color: var(--green-900);
+}
+
+/* — Resultado — */
+.padron-import__done {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 26px 8px 8px;
+  text-align: center;
+}
+.padron-import__done-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 1.6rem;
+  box-shadow: 0 0 0 10px var(--green-100);
+}
+.padron-import__done h3 {
+  margin-top: 10px;
+  font-size: 1.25rem;
+}
+.padron-import__done p {
+  color: var(--ink-500);
+}
+.padron-import__done ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.padron-import__done li {
+  padding: 12px;
+  border: 1px solid var(--green-100);
+  border-radius: 12px;
+  background: var(--green-50);
+}
+.padron-import__done li b {
+  display: block;
+  color: var(--green-900);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botón principal del encabezado del padrón */
+.padron-page__import {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

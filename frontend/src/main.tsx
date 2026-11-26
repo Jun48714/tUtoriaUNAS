@@ -2,9 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles/fonts.css';
-import './assets/vendor/falcon-theme.css';
-import '@fontsource/jetbrains-mono/latin-400.css';
-import '@fontsource/jetbrains-mono/latin-600.css';
 import './styles/global.css';
 import { recargarPorActualizacion } from './utils/navigation';
 

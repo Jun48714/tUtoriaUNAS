@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
@@ -179,7 +181,7 @@ public sealed class SeguridadCuentasTests(CuentasFixture fixture) : IClassFixtur
         await CrearPerfil(email, "estudiante", password);
         using var c = fixture.App.CreateClient();
         Task<HttpResponseMessage> Entrar(string clave, string? rol = "estudiante") => c.PostAsJsonAsync("/api/auth/login", new LoginLocalDto(email, clave, rol));
-        for (var intento = 0; intento < 5; intento++) Assert.Equal(HttpStatusCode.Unauthorized, (await Entrar("clave incorrecta " + intento)).StatusCode);
+        for (var intento = 0; intento < 10; intento++) Assert.Equal(HttpStatusCode.Unauthorized, (await Entrar("clave incorrecta " + intento)).StatusCode);
         DateTimeOffset? bloqueadaHasta = null;
         await fixture.Modificar(async db =>
         {
@@ -216,6 +218,24 @@ public sealed class SeguridadCuentasTests(CuentasFixture fixture) : IClassFixtur
     }
 
     [PostgresFact]
+    public async Task ElLimitePorRedSoloCuentaLosIntentosFallidos()
+    {
+        // Cientos de alumnos entran desde la misma IP del campus: los aciertos no deben agotar el cupo de la red.
+        const string password = "Frase segura para la prueba de red 2026!";
+        var email = "red-" + Guid.NewGuid().ToString("N") + "@unas.edu.pe";
+        await CrearPerfil(email, "estudiante", password);
+        using var app = fixture.App.WithWebHostBuilder(b => b.ConfigureAppConfiguration((_, c) =>
+            c.AddInMemoryCollection(new Dictionary<string, string?> { ["Cuentas:IpLoginsPorMinuto"] = "3" })));
+        using var c = app.CreateClient();
+        Task<HttpResponseMessage> Entrar(string clave) => c.PostAsJsonAsync("/api/auth/login", new LoginLocalDto(email, clave, "estudiante"));
+        for (var i = 0; i < 6; i++) Assert.Equal(HttpStatusCode.OK, (await Entrar(password)).StatusCode);
+        for (var i = 0; i < 3; i++) Assert.Equal(HttpStatusCode.Unauthorized, (await Entrar("clave incorrecta " + i)).StatusCode);
+        using var frenada = await Entrar(password);
+        Assert.Equal(HttpStatusCode.TooManyRequests, frenada.StatusCode);
+        Assert.Contains("Demasiados intentos fallidos", await frenada.Content.ReadAsStringAsync());
+    }
+
+    [PostgresFact]
     public async Task LockedProfilesDoNotRevealAPasswordCollisionOrPreventAnUnlockedProfileFromEntering()
     {
         const string password = "Frase compartida para perfiles de prueba 2026!";
@@ -224,7 +244,7 @@ public sealed class SeguridadCuentasTests(CuentasFixture fixture) : IClassFixtur
         await CrearPerfil(email, "tutor", password);
         using var c = fixture.App.CreateClient();
         Task<HttpResponseMessage> Entrar(string clave, string? rol = null) => c.PostAsJsonAsync("/api/auth/login", new LoginLocalDto(email, clave, rol, IncluirEstado: true));
-        for (var intento = 0; intento < 5; intento++) Assert.Equal(HttpStatusCode.Unauthorized, (await Entrar("clave incorrecta " + intento)).StatusCode);
+        for (var intento = 0; intento < 10; intento++) Assert.Equal(HttpStatusCode.Unauthorized, (await Entrar("clave incorrecta " + intento)).StatusCode);
         // La comprobación de claves duplicadas también debe excluir los perfiles bloqueados.
         foreach (var rol in new string?[] { null, "estudiante", "tutor" })
         {

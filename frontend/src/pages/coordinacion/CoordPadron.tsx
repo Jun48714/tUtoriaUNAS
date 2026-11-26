@@ -1,7 +1,7 @@
 import { DirectoryDisclosure, DirectoryPage } from '../../components/ui/DirectoryPage';
 import { DirectorySearch } from '../../components/ui/DirectoryToolbar';
 import { useDeferredValue, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeading } from '../../components/ui/PageHeading';
 import { Card, CardBody, CardHead } from '../../components/ui/Card';
@@ -14,6 +14,9 @@ import { apiJson } from '../../services/apiClient';
 import { API_MODE } from '../../services/apiConfig';
 import type { Docente, Escuela, Estudiante } from '../../types/domain';
 import { FichaEstudiante } from '../../components/panels/FichaEstudiante';
+import { ImportarPadron } from '../../components/panels/ImportarPadron';
+import { FileSpreadsheet } from '../../components/ui/icons';
+import { useAuth } from '../../hooks/useAuth';
 import { useDetallePadron } from '../../hooks/useDetallePadron';
 import '../../styles/padron.css';
 
@@ -49,6 +52,11 @@ export function CoordPadron() {
   const [escuela, setEscuela] = useState('');
   const [pagina, setPagina] = useState(1);
   const [id, setId] = useState<string | null>(null);
+  const [importando, setImportando] = useState(false);
+  const { user } = useAuth();
+  const clientes = useQueryClient();
+  // Importar cambia datos de toda la institución: solo la administración institucional.
+  const puedeImportar = API_MODE && user?.adminInstitucional === true;
   const consulta = useDeferredValue(buscar);
   const padron = useQuery({
     queryKey: ['padron', tipo, consulta, escuela, pagina],
@@ -120,7 +128,21 @@ export function CoordPadron() {
   ];
   return (
     <DirectoryPage className="padron-page">
-      <PageHeading eyebrow="Coordinación · Datos institucionales" title="Padrón importado" />
+      <PageHeading
+        eyebrow="Coordinación · Datos institucionales"
+        title="Padrón importado"
+        actions={
+          puedeImportar ? (
+            <button
+              type="button"
+              className="btn btn-primary padron-page__import"
+              onClick={() => setImportando(true)}
+            >
+              <FileSpreadsheet aria-hidden="true" /> Importar datos
+            </button>
+          ) : undefined
+        }
+      />
       {!API_MODE ? (
         <EmptyState
           title="Disponible con la base de datos"
@@ -128,6 +150,11 @@ export function CoordPadron() {
         />
       ) : (
         <>
+          {puedeImportar && datos && !reporte && datos.total === 0 && !consulta && (
+            <Alert tone="info" title="Todavía no hay un padrón importado">
+              Usa «Importar datos» para cargar el Excel con las hojas de alumnos y docentes.
+            </Alert>
+          )}
           {reporte && (
             <DirectoryDisclosure title="Resumen de la importación">
               <div className="stack">
@@ -258,6 +285,15 @@ export function CoordPadron() {
             )
           )}
         </>
+      )}
+      {importando && (
+        <ImportarPadron
+          onClose={() => setImportando(false)}
+          onImportado={() => {
+            setPagina(1);
+            void clientes.invalidateQueries({ queryKey: ['padron'] });
+          }}
+        />
       )}
       {id && (
         <Sheet

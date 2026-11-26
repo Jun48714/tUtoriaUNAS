@@ -1,6 +1,5 @@
-import { useCallback, useState } from 'react';
+import { Suspense, lazy, useCallback, useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
-import { AuthModals } from '../auth/AuthModals';
 import { ArrowLeft } from '../ui/iconosAcceso';
 import type { AuthModalId } from '../auth/modalContent';
 import crest from '../../assets/unas-logo-mark-120.png';
@@ -8,6 +7,10 @@ import forest from '../../assets/selva.jpg';
 import forest1000 from '../../assets/selva-1000.avif';
 import forest1400 from '../../assets/selva-1400.avif';
 import '../../styles/auth.css';
+
+const AuthModals = lazy(() =>
+  import('../auth/AuthModals').then((m) => ({ default: m.AuthModals })),
+);
 
 /** Acceso UNAS: proporciones Falcon, fotografía local y formulario compartido. */
 export function AuthLayout() {
@@ -91,7 +94,11 @@ export function AuthLayout() {
         </section>
       </div>
 
-      <AuthModals variant={variant} active={modal} onClose={closeModal} />
+      {modal && (
+        <Suspense fallback={null}>
+          <AuthModals variant={variant} active={modal} onClose={closeModal} />
+        </Suspense>
+      )}
     </main>
   );
 }

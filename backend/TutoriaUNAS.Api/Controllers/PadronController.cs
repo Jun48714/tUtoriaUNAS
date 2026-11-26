@@ -45,8 +45,13 @@ public sealed class PadronController(TutoriaDbContext db, TutoriaContext context
         var totalFilas = await db.Personas.AsNoTracking().Where(p => p.Tipo == tipo && p.Id.StartsWith(prefijo) &&
                 (escuelaId == "" || p.EscuelaId == escuelaId)).GroupBy(_ => 1)
             .Select(g => $"{g.Count()}:{g.Max(x => x.Id)}:{g.Sum(x => x.DatosJson.Length)}").SingleOrDefaultAsync(ct);
-        var sello = $"{db.Database.GetDbConnection().Database}|{tipo}|{escuelaId}|{prefijo}|{totalFilas ?? "vacio"}";
+        var consulta = $"{db.Database.GetDbConnection().Database}|{tipo}|{escuelaId}|{prefijo}|";
+        var sello = consulta + (totalFilas ?? "vacio");
         var ordenadas = CachePadron.GetOrAdd(sello, _ => CargarPadron(db, tipo, escuelaId, prefijo));
+        // Solo se conserva la versión vigente de cada consulta: sin esto, cada cambio del padrón dejaba en memoria
+        // una copia completa más que nunca se liberaba.
+        foreach (var clave in CachePadron.Keys)
+            if (clave != sello && clave.StartsWith(consulta, StringComparison.Ordinal)) CachePadron.TryRemove(clave, out _);
         var texto = buscar.Trim();
         var coincidencias = ordenadas.Where(p => texto.Length == 0 ||
             CultureInfo.GetCultureInfo("es-PE").CompareInfo.IndexOf(string.Join(" ", CamposBusqueda

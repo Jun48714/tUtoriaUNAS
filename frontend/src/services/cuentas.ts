@@ -1,15 +1,32 @@
-import * as v from 'valibot';
 import type { Role } from '../types/auth';
 import { apiJson } from './apiClient';
+import { esCorreo, esNumeroFinito, esObjeto, esRol } from '../utils/validacion';
 
-const activacionSchema = v.object({
-  tokenActivacion: v.pipe(v.string(), v.length(64)),
-  correo: v.pipe(v.string(), v.email()),
-  role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
-  expira: v.number(),
-});
 const ACTIVACION_KEY = 'unas:activacion:v1';
-export type ActivacionPendiente = v.InferOutput<typeof activacionSchema>;
+export interface ActivacionPendiente {
+  tokenActivacion: string;
+  correo: string;
+  role: Role;
+  expira: number;
+}
+function validarActivacion(valor: unknown): ActivacionPendiente | null {
+  if (
+    !esObjeto(valor) ||
+    typeof valor.tokenActivacion !== 'string' ||
+    valor.tokenActivacion.length !== 64 ||
+    typeof valor.correo !== 'string' ||
+    !esCorreo(valor.correo) ||
+    !esRol(valor.role) ||
+    !esNumeroFinito(valor.expira)
+  )
+    return null;
+  return {
+    tokenActivacion: valor.tokenActivacion,
+    correo: valor.correo,
+    role: valor.role,
+    expira: valor.expira,
+  };
+}
 let activacionMemoria: ActivacionPendiente | null = null;
 export class ActivacionRequerida extends Error {
   constructor() {
@@ -34,12 +51,9 @@ export function guardarActivacion(
 }
 export function leerActivacion(): ActivacionPendiente | null {
   try {
-    const data = v.safeParse(
-      activacionSchema,
-      JSON.parse(sessionStorage.getItem(ACTIVACION_KEY) ?? 'null'),
-    );
-    return data.success && data.output.expira > Date.now()
-      ? data.output
+    const data = validarActivacion(JSON.parse(sessionStorage.getItem(ACTIVACION_KEY) ?? 'null'));
+    return data && data.expira > Date.now()
+      ? data
       : activacionMemoria && activacionMemoria.expira > Date.now()
         ? activacionMemoria
         : null;

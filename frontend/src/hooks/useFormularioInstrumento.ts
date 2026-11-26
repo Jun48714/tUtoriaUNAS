@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { valibotResolver } from '@hookform/resolvers/valibot';
 import type { DefinicionFormato, Instrumento } from '../types/domain';
 import type { Portal } from './usePortal';
 import { contextualizarDefinicion, precargarInstrumentoConOrigen } from '../utils/instrumentos';
 import {
-  crearEsquemaFormulario,
+  crearResolverFormulario,
   deserializarFormulario,
   serializarFormulario,
 } from '../utils/validacionInstrumentos';
@@ -26,11 +25,11 @@ export function useFormularioInstrumento(
     () => precargarInstrumentoConOrigen(instrumento, portal.sesiones, portal.instrumentos),
     [instrumento, portal.sesiones, portal.instrumentos],
   );
-  const esquema = useMemo(() => crearEsquemaFormulario(contexto), [contexto]);
+  const resolver = useMemo(() => crearResolverFormulario(contexto), [contexto]);
   const defaults = deserializarFormulario(contexto, precarga.valores);
   const formulario = useForm<ValoresFormularioInstrumento>({
     defaultValues: defaults,
-    resolver: valibotResolver(esquema),
+    resolver,
     shouldUnregister: false,
     shouldFocusError: false,
   });

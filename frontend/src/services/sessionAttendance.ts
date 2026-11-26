@@ -1,35 +1,92 @@
-import * as v from 'valibot';
 import { API_MODE } from './apiConfig';
 import type { Sesion } from '../types/domain';
 import type { Role } from '../types/auth';
 import { sesionFinalizo } from '../utils/evaluacionesSesion';
+import { esHora24, esObjeto, leerMapaSeguro } from '../utils/validacion';
 
 export const ATTENDANCE_KEY = 'unas:session-attendance:v1';
 export const ATTENDANCE_EVENT = 'unas:session-attendance-updated';
-const asistenteSchema = v.object({
-  estudianteId: v.string(),
-  estado: v.picklist(['asistio', 'tarde', 'falto', 'justificado']),
-  horaRegistro: v.nullable(v.pipe(v.string(), v.regex(/^([01]\d|2[0-3]):[0-5]\d$/))),
-  observacion: v.nullable(v.string()),
-});
-const acuerdoSchema = v.object({
-  id: v.string(),
-  descripcion: v.string(),
-  responsable: v.picklist(['tutor', 'tutorado', 'ambos']),
-  fechaCompromiso: v.nullable(v.string()),
-  estado: v.picklist(['pendiente', 'cumplido', 'vencido']),
-});
-const registroSchema = v.object({
-  tutorId: v.string(),
-  asistentes: v.array(asistenteSchema),
-  acuerdos: v.array(acuerdoSchema),
-});
-const registrosSchema = v.record(v.string(), registroSchema);
-export type RegistrosAsistencia = v.InferOutput<typeof registrosSchema>;
+
+type AsistenteGuardado = Sesion['asistentes'][number];
+type AcuerdoGuardado = Sesion['acuerdos'][number];
+
+export interface RegistroAsistencia {
+  tutorId: string;
+  asistentes: AsistenteGuardado[];
+  acuerdos: AcuerdoGuardado[];
+}
+export type RegistrosAsistencia = Record<string, RegistroAsistencia>;
+
+function validarAsistente(valor: unknown): AsistenteGuardado | null {
+  if (!esObjeto(valor) || typeof valor.estudianteId !== 'string') return null;
+  if (
+    valor.estado !== 'asistio' &&
+    valor.estado !== 'tarde' &&
+    valor.estado !== 'falto' &&
+    valor.estado !== 'justificado'
+  )
+    return null;
+  if (
+    valor.horaRegistro !== null &&
+    (typeof valor.horaRegistro !== 'string' || !esHora24(valor.horaRegistro))
+  )
+    return null;
+  if (valor.observacion !== null && typeof valor.observacion !== 'string') return null;
+  return {
+    estudianteId: valor.estudianteId,
+    estado: valor.estado,
+    horaRegistro: valor.horaRegistro,
+    observacion: valor.observacion,
+  };
+}
+
+function validarAcuerdo(valor: unknown): AcuerdoGuardado | null {
+  if (!esObjeto(valor) || typeof valor.id !== 'string' || typeof valor.descripcion !== 'string')
+    return null;
+  if (
+    valor.responsable !== 'tutor' &&
+    valor.responsable !== 'tutorado' &&
+    valor.responsable !== 'ambos'
+  )
+    return null;
+  if (valor.fechaCompromiso !== null && typeof valor.fechaCompromiso !== 'string') return null;
+  if (valor.estado !== 'pendiente' && valor.estado !== 'cumplido' && valor.estado !== 'vencido')
+    return null;
+  return {
+    id: valor.id,
+    descripcion: valor.descripcion,
+    responsable: valor.responsable,
+    fechaCompromiso: valor.fechaCompromiso,
+    estado: valor.estado,
+  };
+}
+
+function validarRegistro(valor: unknown): RegistroAsistencia | null {
+  if (
+    !esObjeto(valor) ||
+    typeof valor.tutorId !== 'string' ||
+    !Array.isArray(valor.asistentes) ||
+    !Array.isArray(valor.acuerdos)
+  )
+    return null;
+  const asistentes: AsistenteGuardado[] = [];
+  for (const item of valor.asistentes) {
+    const asistente = validarAsistente(item);
+    if (!asistente) return null;
+    asistentes.push(asistente);
+  }
+  const acuerdos: AcuerdoGuardado[] = [];
+  for (const item of valor.acuerdos) {
+    const acuerdo = validarAcuerdo(item);
+    if (!acuerdo) return null;
+    acuerdos.push(acuerdo);
+  }
+  return { tutorId: valor.tutorId, asistentes, acuerdos };
+}
 
 export function leerRegistros(raw: string | null): RegistrosAsistencia {
   try {
-    return v.parse(registrosSchema, JSON.parse(raw ?? '{}'));
+    return leerMapaSeguro(JSON.parse(raw ?? '{}'), validarRegistro) ?? {};
   } catch {
     return {};
   }
@@ -78,7 +135,7 @@ export function guardarAsistencia(
   const actual = aplicarRegistro(sesion, registros);
   const texto = mensaje.trim();
   if (texto.length > 2000) throw new Error('El acuerdo admite hasta 2000 caracteres.');
-  const registro = v.parse(registroSchema, {
+  const registro = validarRegistro({
     tutorId: sesion.tutorId,
     asistentes,
     acuerdos: texto
@@ -94,6 +151,7 @@ export function guardarAsistencia(
         ]
       : actual.acuerdos,
   });
+  if (!registro) throw new Error('Revisa los datos de asistencia antes de guardar.');
   const ids = new Set(sesion.asistentes.map((a) => a.estudianteId));
   if (
     registro.asistentes.length !== ids.size ||

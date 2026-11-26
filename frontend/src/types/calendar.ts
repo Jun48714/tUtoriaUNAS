@@ -1,71 +1,80 @@
-import * as v from 'valibot';
 import type { DemoUser } from './auth';
+import {
+  esEnteroEnRango,
+  esFechaIsoReal,
+  esHora24,
+  esModalidad,
+  esObjeto,
+} from '../utils/validacion';
 
-const date = v.pipe(
-  v.string(),
-  v.regex(/^\d{4}-\d{2}-\d{2}$/, 'Selecciona una fecha válida.'),
-  v.check((value) => {
-    const parsed = new Date(`${value}T12:00:00Z`);
-    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-  }, 'Selecciona una fecha válida.'),
-);
-const time = v.pipe(
-  v.string(),
-  v.regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Selecciona una hora válida.'),
-);
+export interface CalendarInput {
+  kind: 'curso' | 'tutoria';
+  title: string;
+  semesterId: string;
+  days: number[];
+  dateFrom: string;
+  dateTo: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  modality: 'presencial' | 'virtual' | 'mixta';
+  capacity?: number;
+}
 
-export const calendarInputSchema = v.pipe(
-  v.object({
-    kind: v.picklist(['curso', 'tutoria']),
-    title: v.pipe(
-      v.string(),
-      v.trim(),
-      v.minLength(3, 'Escribe el nombre del curso.'),
-      v.maxLength(100),
-    ),
-    semesterId: v.pipe(v.string(), v.regex(/^\d{4}-(I|II)$/)),
-    days: v.pipe(
-      v.array(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(7))),
-      v.minLength(1, 'Selecciona al menos un día.'),
-      v.maxLength(7),
-    ),
-    dateFrom: date,
-    dateTo: date,
-    startTime: time,
-    endTime: time,
-    location: v.pipe(
-      v.string(),
-      v.trim(),
-      v.minLength(2, 'Indica el aula o enlace.'),
-      v.maxLength(180),
-    ),
-    modality: v.picklist(['presencial', 'virtual', 'mixta']),
-    capacity: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(200))),
-  }),
-  v.forward(
-    v.check(
-      (input) => input.startTime < input.endTime,
-      'La hora final debe ser posterior a la inicial.',
-    ),
-    ['endTime'],
-  ),
-  v.forward(
-    v.check(
-      (input) => input.dateFrom <= input.dateTo,
-      'La fecha final debe ser posterior a la inicial.',
-    ),
-    ['dateTo'],
-  ),
-  v.forward(
-    v.check(
-      (input) => Date.parse(input.dateTo) - Date.parse(input.dateFrom) <= 366 * 86400000,
-      'El horario no puede abarcar más de un año.',
-    ),
-    ['dateTo'],
-  ),
-);
+export function parseCalendarInput(valor: unknown): CalendarInput {
+  if (!esObjeto(valor)) throw new Error('Revisa los datos del horario.');
+  if (valor.kind !== 'curso' && valor.kind !== 'tutoria')
+    throw new Error('Selecciona el tipo de horario.');
+  if (typeof valor.title !== 'string') throw new Error('Escribe el nombre del curso.');
+  const title = valor.title.trim();
+  if (title.length < 3) throw new Error('Escribe el nombre del curso.');
+  if (title.length > 100) throw new Error('Usa como máximo 100 caracteres para el curso.');
+  if (typeof valor.semesterId !== 'string' || !/^\d{4}-(I|II)$/.test(valor.semesterId))
+    throw new Error('Selecciona un semestre válido.');
+  if (
+    !Array.isArray(valor.days) ||
+    valor.days.length < 1 ||
+    valor.days.length > 7 ||
+    valor.days.some((d) => !esEnteroEnRango(d, 1, 7))
+  )
+    throw new Error('Selecciona al menos un día.');
+  if (typeof valor.dateFrom !== 'string' || !esFechaIsoReal(valor.dateFrom))
+    throw new Error('Selecciona una fecha válida.');
+  if (typeof valor.dateTo !== 'string' || !esFechaIsoReal(valor.dateTo))
+    throw new Error('Selecciona una fecha válida.');
+  if (typeof valor.startTime !== 'string' || !esHora24(valor.startTime))
+    throw new Error('Selecciona una hora válida.');
+  if (typeof valor.endTime !== 'string' || !esHora24(valor.endTime))
+    throw new Error('Selecciona una hora válida.');
+  if (typeof valor.location !== 'string') throw new Error('Indica el aula o enlace.');
+  const location = valor.location.trim();
+  if (location.length < 2) throw new Error('Indica el aula o enlace.');
+  if (location.length > 180)
+    throw new Error('Usa como máximo 180 caracteres para el aula o enlace.');
+  if (!esModalidad(valor.modality)) throw new Error('Selecciona una modalidad válida.');
+  if (valor.capacity !== undefined && !esEnteroEnRango(valor.capacity, 1, 200))
+    throw new Error('Indica entre 1 y 200 cupos.');
+  if (valor.startTime >= valor.endTime)
+    throw new Error('La hora final debe ser posterior a la inicial.');
+  if (valor.dateFrom > valor.dateTo)
+    throw new Error('La fecha final debe ser posterior a la inicial.');
+  if (Date.parse(valor.dateTo) - Date.parse(valor.dateFrom) > 366 * 86400000)
+    throw new Error('El horario no puede abarcar más de un año.');
+  return {
+    kind: valor.kind,
+    title,
+    semesterId: valor.semesterId,
+    days: [...valor.days],
+    dateFrom: valor.dateFrom,
+    dateTo: valor.dateTo,
+    startTime: valor.startTime,
+    endTime: valor.endTime,
+    location,
+    modality: valor.modality,
+    ...(valor.capacity !== undefined ? { capacity: valor.capacity } : {}),
+  };
+}
 
-export type CalendarInput = v.InferOutput<typeof calendarInputSchema>;
 export interface TeacherCalendarBlock extends CalendarInput {
   id: string;
   tutorId: string;

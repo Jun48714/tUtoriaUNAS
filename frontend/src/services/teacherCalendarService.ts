@@ -1,5 +1,4 @@
-import * as v from 'valibot';
-import { calendarBlocksOverlap, calendarInputSchema, occurrenceDates } from '../types/calendar';
+import { calendarBlocksOverlap, occurrenceDates, parseCalendarInput } from '../types/calendar';
 import type {
   CalendarActor,
   CalendarInput,
@@ -8,17 +7,42 @@ import type {
 } from '../types/calendar';
 import { asignacionDe, bloquesTutoria, sesiones } from '../data/tutoria';
 import { semestreVigente, semestres } from '../data/catalogos';
+import { esObjeto } from '../utils/validacion';
 
 export const TEACHER_CALENDAR_KEY = 'unas:teacher-calendar:v1';
-const persistedSchema = v.object({
-  blocks: v.array(
-    v.intersect([
-      v.object({ id: v.string(), tutorId: v.string(), createdAt: v.string() }),
-      calendarInputSchema,
-    ]),
-  ),
-  deletedIds: v.array(v.string()),
-});
+
+function leerPersistido(valor: unknown): {
+  blocks: TeacherCalendarBlock[];
+  deletedIds: string[];
+} {
+  if (
+    !esObjeto(valor) ||
+    !Array.isArray(valor.blocks) ||
+    !Array.isArray(valor.deletedIds) ||
+    valor.deletedIds.some((id) => typeof id !== 'string')
+  )
+    throw new Error('No se pudieron leer los horarios guardados.');
+  const blocks = valor.blocks.map((item) => {
+    if (
+      !esObjeto(item) ||
+      typeof item.id !== 'string' ||
+      typeof item.tutorId !== 'string' ||
+      typeof item.createdAt !== 'string'
+    )
+      throw new Error('No se pudieron leer los horarios guardados.');
+    try {
+      return {
+        ...parseCalendarInput(item),
+        id: item.id,
+        tutorId: item.tutorId,
+        createdAt: item.createdAt,
+      };
+    } catch {
+      throw new Error('No se pudieron leer los horarios guardados.');
+    }
+  });
+  return { blocks, deletedIds: [...valor.deletedIds] };
+}
 
 const institutional: TeacherCalendarBlock[] = bloquesTutoria.map((block) => ({
   id: block.id,
@@ -44,9 +68,7 @@ export class BrowserTeacherCalendarService implements TeacherCalendarService {
   private read() {
     const raw = this.storage().getItem(TEACHER_CALENDAR_KEY);
     if (!raw) return { blocks: [] as TeacherCalendarBlock[], deletedIds: [] as string[] };
-    const result = v.safeParse(persistedSchema, JSON.parse(raw));
-    if (!result.success) throw new Error('No se pudieron leer los horarios guardados.');
-    return result.output;
+    return leerPersistido(JSON.parse(raw));
   }
   private all(): TeacherCalendarBlock[] {
     const stored = this.read();
@@ -71,7 +93,7 @@ export class BrowserTeacherCalendarService implements TeacherCalendarService {
     id?: string,
   ): Promise<TeacherCalendarBlock> {
     if (actor.role !== 'tutor') throw new Error('Sólo el docente puede registrar su horario.');
-    const parsed = v.parse(calendarInputSchema, input);
+    const parsed = parseCalendarInput(input);
     const all = this.all();
     const existing = id ? all.find((block) => block.id === id) : undefined;
     if (id && (!existing || existing.tutorId !== actor.id))

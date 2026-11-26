@@ -55,7 +55,10 @@ describe('acceso institucional del cliente', () => {
     respuesta({ accessToken: 'token-de-prueba', expiresIn: 3600 });
     api.refrescar.mockResolvedValue({ usuario });
     await expect(apiAuthService.login(credentials, false)).resolves.toEqual(usuario);
-    const cuerpo = JSON.parse(String(vi.mocked(fetch).mock.calls[0]![1]!.body)) as Record<string, unknown>;
+    const cuerpo = JSON.parse(String(vi.mocked(fetch).mock.calls[0]![1]!.body)) as Record<
+      string,
+      unknown
+    >;
     expect(cuerpo.incluirEstado).toBe(false);
     expect(api.refrescar).toHaveBeenCalledWith(true);
     expect(api.aplicar).not.toHaveBeenCalled();

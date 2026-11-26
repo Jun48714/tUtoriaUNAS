@@ -18,6 +18,12 @@
 .account-access .form-select {
   min-height: 44px;
   width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink-800);
+  font-size: 0.86rem;
 }
 .account-access .d01__link-btn:disabled {
   opacity: 0.65;

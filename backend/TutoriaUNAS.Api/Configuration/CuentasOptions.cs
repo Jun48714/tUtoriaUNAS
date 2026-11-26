@@ -6,6 +6,8 @@ public sealed class CuentasOptions
     public bool DisableDispatcher { get; init; }
     public int IpCodigosPorMinuto { get; init; } = 5;
     public int IpVerificacionesPorMinuto { get; init; } = 20;
+    /// <summary>Inicios de sesión fallidos por IP y minuto; los correctos no cuentan (además del bloqueo de la cuenta tras 10 fallos).</summary>
+    public int IpLoginsPorMinuto { get; init; } = 30;
     public string[] Dominios { get; init; } = ["unas.edu.pe"];
     /// <summary>Modo prueba: permite entrar con el código de la semilla (DOC-0421, 2023010456, coordinacion.tutoria).
     /// Solo resuelve el alias a la cuenta del portal; la contraseña se sigue verificando.</summary>
@@ -15,11 +17,17 @@ public sealed class CuentasOptions
     public bool RevelarExistencia { get; init; }
     public string CodigoKey { get; init; } = "";
     public string KeyRingPath { get; init; } = "";
-    public string UrlAcceso { get; init; } = "http://127.0.0.1:5173/login";
+    private readonly string urlAcceso = "http://127.0.0.1:5173/login";
+    /// <summary>Enlace de acceso que se escribe en los correos. Se omite el puerto por defecto (https://dominio:443/login → https://dominio/login).</summary>
+    public string UrlAcceso
+    {
+        get => urlAcceso;
+        init => urlAcceso = Uri.TryCreate(value, UriKind.Absolute, out var url) ? url.GetLeftPart(UriPartial.Path) : value;
+    }
     public bool Valida()
     {
         if (!Enabled) return true;
-        try { return Convert.FromBase64String(CodigoKey).Length >= 32 && Dominios.Length > 0 && IpCodigosPorMinuto is >= 1 and <= 100 && IpVerificacionesPorMinuto is >= 1 and <= 200 &&
+        try { return Convert.FromBase64String(CodigoKey).Length >= 32 && Dominios.Length > 0 && IpCodigosPorMinuto is >= 1 and <= 100 && IpVerificacionesPorMinuto is >= 1 and <= 200 && IpLoginsPorMinuto is >= 1 and <= 200 &&
             Uri.TryCreate(UrlAcceso, UriKind.Absolute, out var url) && (url.Scheme == "https" || (url.Scheme == "http" && url.IsLoopback)); }
         catch (FormatException) { return false; }
     }

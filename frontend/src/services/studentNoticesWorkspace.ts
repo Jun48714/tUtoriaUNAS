@@ -1,4 +1,4 @@
-import * as v from 'valibot';
+import { esObjeto, leerMapaSeguro } from '../utils/validacion';
 
 export const STUDENT_NOTICES_EVENT = 'unas:student-notices-updated';
 export const preferenciasAvisos = [
@@ -34,20 +34,47 @@ export const preferenciasAvisos = [
   },
 ] as const;
 
-const preferenciasSchema = v.object({
-  sesiones: v.optional(v.boolean(), true),
-  formularios: v.optional(v.boolean(), true),
-  apoyo: v.optional(v.boolean(), true),
-  bienestar: v.optional(v.boolean(), false),
-  resumen: v.optional(v.boolean(), false),
-});
-const estadoSchema = v.object({
-  leidas: v.optional(v.record(v.string(), v.boolean()), {}),
-  // El valor por defecto también pasa por el esquema, de modo que completa cada preferencia.
-  preferencias: v.optional(preferenciasSchema, {}),
-});
-export type EstadoAvisosEstudiante = v.InferOutput<typeof estadoSchema>;
 export type PreferenciaAviso = (typeof preferenciasAvisos)[number]['id'];
+export interface EstadoAvisosEstudiante {
+  leidas: Record<string, boolean>;
+  preferencias: Record<PreferenciaAviso, boolean>;
+}
+
+const PREFERENCIAS_DEFECTO: Record<PreferenciaAviso, boolean> = {
+  sesiones: true,
+  formularios: true,
+  apoyo: true,
+  bienestar: false,
+  resumen: false,
+};
+
+function estadoPorDefecto(): EstadoAvisosEstudiante {
+  return { leidas: {}, preferencias: { ...PREFERENCIAS_DEFECTO } };
+}
+
+function validarPreferencias(valor: unknown): Record<PreferenciaAviso, boolean> | null {
+  if (valor === undefined) return { ...PREFERENCIAS_DEFECTO };
+  if (!esObjeto(valor)) return null;
+  const salida = { ...PREFERENCIAS_DEFECTO };
+  for (const { id } of preferenciasAvisos) {
+    const item = valor[id];
+    if (item === undefined) continue;
+    if (typeof item !== 'boolean') return null;
+    salida[id] = item;
+  }
+  return salida;
+}
+
+function validarEstadoAvisos(valor: unknown): EstadoAvisosEstudiante | null {
+  if (!esObjeto(valor)) return null;
+  const leidas =
+    valor.leidas === undefined
+      ? {}
+      : leerMapaSeguro(valor.leidas, (item) => (typeof item === 'boolean' ? item : null));
+  const preferencias = validarPreferencias(valor.preferencias);
+  if (!leidas || !preferencias) return null;
+  return { leidas, preferencias };
+}
 
 export function claveAvisosEstudiante(estudianteId: string) {
   return `unas:student-notices:v1:${estudianteId}`;
@@ -55,19 +82,18 @@ export function claveAvisosEstudiante(estudianteId: string) {
 
 export function leerEstadoAvisos(raw: string | null): EstadoAvisosEstudiante {
   try {
-    return v.parse(estadoSchema, JSON.parse(raw ?? '{}'));
+    return validarEstadoAvisos(JSON.parse(raw ?? '{}')) ?? estadoPorDefecto();
   } catch {
-    return v.parse(estadoSchema, {});
+    return estadoPorDefecto();
   }
 }
 
 /** Adaptador local de demostración, sustituible por el servicio institucional. */
 export function guardarEstadoAvisos(estudianteId: string, estado: EstadoAvisosEstudiante) {
+  const validado = validarEstadoAvisos(estado);
+  if (!validado) throw new Error('No se pudo guardar el cambio porque los datos no son válidos.');
   try {
-    localStorage.setItem(
-      claveAvisosEstudiante(estudianteId),
-      JSON.stringify(v.parse(estadoSchema, estado)),
-    );
+    localStorage.setItem(claveAvisosEstudiante(estudianteId), JSON.stringify(validado));
   } catch {
     throw new Error(
       'No se pudo guardar el cambio. Habilita el almacenamiento del navegador y vuelve a intentarlo.',

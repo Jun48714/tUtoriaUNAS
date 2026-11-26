@@ -1,5 +1,5 @@
 import type { DemoUser } from '../types/auth';
-import * as v from 'valibot';
+import { esNumeroFinito, esObjeto, esRol, esTextoNoVacio } from '../utils/validacion';
 
 export interface ApiSession {
   accessToken: string;
@@ -7,28 +7,45 @@ export interface ApiSession {
   user: DemoUser | null;
 }
 const SESSION_KEY = 'unas:api-session:v1';
-const sessionSchema = v.object({
-  accessToken: v.pipe(v.string(), v.minLength(1)),
-  expiresAt: v.pipe(v.number(), v.finite()),
-  user: v.object({
-    id: v.pipe(v.string(), v.minLength(1)),
-    role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
-    name: v.string(),
-    identifier: v.string(),
-    email: v.string(),
-    personaId: v.optional(v.string()),
-    adminInstitucional: v.optional(v.boolean()),
-    coordinadorEscuela: v.optional(v.boolean()),
-  }),
-});
+
+function leerSesionGuardada(valor: unknown): ApiSession | null {
+  if (
+    !esObjeto(valor) ||
+    !esTextoNoVacio(valor.accessToken) ||
+    !esNumeroFinito(valor.expiresAt) ||
+    !esObjeto(valor.user)
+  )
+    return null;
+  const u = valor.user;
+  if (
+    !esTextoNoVacio(u.id) ||
+    !esRol(u.role) ||
+    typeof u.name !== 'string' ||
+    typeof u.identifier !== 'string' ||
+    typeof u.email !== 'string'
+  )
+    return null;
+  if (u.personaId !== undefined && typeof u.personaId !== 'string') return null;
+  if (u.adminInstitucional !== undefined && typeof u.adminInstitucional !== 'boolean') return null;
+  if (u.coordinadorEscuela !== undefined && typeof u.coordinadorEscuela !== 'boolean') return null;
+  const user: DemoUser = {
+    id: u.id,
+    role: u.role,
+    name: u.name,
+    identifier: u.identifier,
+    email: u.email,
+    ...(u.personaId !== undefined ? { personaId: u.personaId } : {}),
+    ...(u.adminInstitucional !== undefined ? { adminInstitucional: u.adminInstitucional } : {}),
+    ...(u.coordinadorEscuela !== undefined ? { coordinadorEscuela: u.coordinadorEscuela } : {}),
+  };
+  return { accessToken: valor.accessToken, expiresAt: valor.expiresAt, user };
+}
+
 let session: ApiSession | null = null;
 let escuelaAdministrada: string | undefined;
 try {
   const raw = sessionStorage.getItem(SESSION_KEY);
-  if (raw) {
-    const parsed = v.safeParse(sessionSchema, JSON.parse(raw));
-    if (parsed.success) session = parsed.output;
-  }
+  if (raw) session = leerSesionGuardada(JSON.parse(raw));
 } catch {
   /* Requiere volver a iniciar sesión. */
 }
@@ -110,13 +127,16 @@ async function solicitar<T>(
   }
   const response = await fetch(url, {
     method,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    // FormData (carga de archivos) viaja tal cual: el navegador fija el Content-Type con su límite (boundary).
+    body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     credentials: 'omit',
     signal,
     cache: 'no-store',
     headers: {
       Accept: 'application/json',
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...(body === undefined || body instanceof FormData
+        ? {}
+        : { 'Content-Type': 'application/json' }),
       ...(current ? { Authorization: `Bearer ${current.accessToken}` } : {}),
       ...(etag ? { 'If-None-Match': etag } : {}),
     },
@@ -136,7 +156,8 @@ async function solicitar<T>(
     };
     comprobarCuenta();
     if (
-      (response.status === 401 || (response.status === 403 && path.split('?')[0] === '/api/tutoria/estado')) &&
+      (response.status === 401 ||
+        (response.status === 403 && path.split('?')[0] === '/api/tutoria/estado')) &&
       !path.endsWith('/login')
     ) {
       setApiSession(null);

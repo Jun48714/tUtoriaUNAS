@@ -14,6 +14,7 @@ public sealed record DecisionAcceso(UsuarioEntity? Usuario = null, ActivacionReq
 public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHasher<CredencialCuentaEntity> hasher,
     TimeProvider clock, IOptions<CuentasOptions> options, ColaCorreoCuenta cola)
 {
+    private const int MaxIntentosFallidos = 10;
     private static readonly Lazy<string> DummyHash = new(() => new PasswordHasher<CredencialCuentaEntity>(Options.Create(new PasswordHasherOptions { IterationCount = 210000 })).HashPassword(new(), SeguridadCuenta.Aleatorio()));
     public void ExigirDisponible() => TutoriaError.Exigir(options.Value.Enabled, "El servicio de cuentas institucionales no está habilitado.", 503);
     public async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> Bloquear(string correo, CancellationToken ct)
@@ -34,9 +35,21 @@ public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHash
         CambiarPassword(credencial, password); db.Usuarios.Add(usuario); db.CredencialesCuenta.Add(credencial);
         return usuario;
     }
+    // Verificar una contraseña cuesta ~0,1 s de CPU (PBKDF2, 210 000 iteraciones) y el inicio de sesión mantiene una
+    // transacción y una conexión abiertas mientras tanto. En un pico (cientos de alumnos entrando a la vez) se atienden
+    // unos pocos por turno: el resto espera sin ocupar hilos ni conexiones y el portal sigue respondiendo a quienes ya entraron.
+    private static readonly SemaphoreSlim TurnosLogin = new(Math.Max(1, Environment.ProcessorCount - 2));
+
     public async Task<DecisionAcceso?> IntentarLogin(LoginLocalDto input, OrigenAcceso origen, CancellationToken ct)
     {
         if (!options.Value.Enabled) return null;
+        await TurnosLogin.WaitAsync(ct);
+        try { return await Intentar(input, origen, ct); }
+        finally { TurnosLogin.Release(); }
+    }
+
+    private async Task<DecisionAcceso?> Intentar(LoginLocalDto input, OrigenAcceso origen, CancellationToken ct)
+    {
         TutoriaError.Exigir(input.Identifier.Length <= 254 && input.Password.Length <= 128 &&
             input.Role is null or "estudiante" or "tutor" or "coordinacion", "Datos de acceso incorrectos.", 401);
         var identifier = input.Identifier.Trim().ToLowerInvariant();
@@ -78,7 +91,7 @@ public sealed class CredencialesCuentaService(TutoriaDbContext db, IPasswordHash
             foreach (var candidata in credenciales.Where(c => c.BloqueadaHasta is null || c.BloqueadaHasta <= ahora))
             {
                 candidata.IntentosFallidos++;
-                if (candidata.IntentosFallidos < 5) continue;
+                if (candidata.IntentosFallidos < MaxIntentosFallidos) continue;
                 candidata.BloqueadaHasta = ahora.AddMinutes(15);
                 candidata.IntentosFallidos = 0;
             }

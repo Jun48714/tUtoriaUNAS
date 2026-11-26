@@ -156,7 +156,7 @@ minutos y un solo uso. Hay límites por correo/IP, bloqueo de intentos de login 
 versión. La cola PostgreSQL conserva el cuerpo cifrado, reintenta entregas y borra su contenido
 al enviarlo o cancelarlo. Los perfiles se determinan en el servidor.
 
-Tras cinco fallos, la credencial queda bloqueada durante quince minutos. Mientras dura el
+Tras diez fallos, la credencial queda bloqueada durante quince minutos. Mientras dura el
 bloqueo, una contraseña correcta y una incorrecta reciben el mismo HTTP 401 y mensaje;
 las credenciales bloqueadas tampoco intervienen en la detección de claves compartidas entre
 perfiles. Los intentos durante ese intervalo no prolongan su vencimiento.

@@ -1,64 +1,83 @@
-import { SuccessNotice } from '../ui/SuccessNotice';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { valibotResolver } from '@hookform/resolvers/valibot';
-import * as v from 'valibot';
+import { useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 import { useSistema } from '../../hooks/useSistema';
 import { guardarContactoApi } from '../../services/apiSistema';
+import { esCorreo, esEnteroEnRango } from '../../utils/validacion';
 import { Alert } from '../ui/Alert';
+import { SuccessNotice } from '../ui/SuccessNotice';
 
-const schema = v.object({
-  correo: v.pipe(
-    v.string('Revisa el correo de contacto.'),
-    v.email('Revisa el correo de contacto.'),
-    v.maxLength(254),
-  ),
-  telefono: v.pipe(v.string(), v.maxLength(40, 'Usa como máximo 40 caracteres.')),
-  version: v.pipe(v.number(), v.integer(), v.minValue(0)),
-});
-type Contacto = v.InferOutput<typeof schema>;
+interface Contacto {
+  correo: string;
+  telefono: string;
+  version: number;
+}
+interface ErroresContacto {
+  correo?: string;
+  telefono?: string;
+}
+
+function validarContacto(correo: string, telefono: string): ErroresContacto {
+  const errores: ErroresContacto = {};
+  if (!esCorreo(correo)) errores.correo = 'Revisa el correo de contacto.';
+  else if (correo.length > 254) errores.correo = 'Usa como máximo 254 caracteres.';
+  if (telefono.length > 40) errores.telefono = 'Usa como máximo 40 caracteres.';
+  return errores;
+}
+
 export function ContactoPersistente() {
   const sistema = useSistema();
   const data = sistema?.contacto;
+  const [guardado, setGuardado] = useState<Contacto | null>(null);
+  const [edicion, setEdicion] = useState<{ correo: string; telefono: string } | null>(null);
+  const [errores, setErrores] = useState<ErroresContacto>({});
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isDirty, isSubmitting },
-  } = useForm<Contacto>({
-    resolver: valibotResolver(schema),
-    defaultValues: {
-      correo: data?.correo ?? '',
-      telefono: data?.telefono ?? '',
-      version: data?.version ?? 0,
-    },
-  });
-  useEffect(() => {
-    if (data && !isDirty)
-      reset({ correo: data.correo, telefono: data.telefono, version: data.version });
-  }, [data, isDirty, reset]);
+  const intentado = useRef(false);
+
   if (!data) return <p role="status">Cargando contacto…</p>;
+  const base = guardado && guardado.version >= data.version ? guardado : data;
+  const correo = edicion?.correo ?? base.correo;
+  const telefono = edicion?.telefono ?? base.telefono;
+
+  function actualizar(campo: 'correo' | 'telefono', valor: string) {
+    const siguiente = { correo, telefono, [campo]: valor };
+    setEdicion(siguiente);
+    if (intentado.current) setErrores(validarContacto(siguiente.correo, siguiente.telefono));
+  }
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    intentado.current = true;
+    const validacion = validarContacto(correo, telefono);
+    setErrores(validacion);
+    if (validacion.correo || validacion.telefono) return;
+    if (!esEnteroEnRango(base.version, 0)) {
+      setError('La versión del contacto no es válida.');
+      return;
+    }
+    setError('');
+    setMensaje('');
+    setGuardando(true);
+    try {
+      const respuesta = await guardarContactoApi({
+        correo,
+        telefono,
+        version: base.version,
+      });
+      setGuardado(respuesta);
+      setEdicion(null);
+      intentado.current = false;
+      setMensaje('Contacto guardado.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar el contacto.');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   return (
-    <form
-      className="stack"
-      onSubmit={handleSubmit(async (values) => {
-        setError('');
-        setMensaje('');
-        try {
-          const guardado = await guardarContactoApi(values);
-          reset({
-            correo: guardado.correo,
-            telefono: guardado.telefono,
-            version: guardado.version,
-          });
-          setMensaje('Contacto guardado.');
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'No se pudo guardar el contacto.');
-        }
-      })}
-    >
+    <form className="stack" noValidate onSubmit={onSubmit}>
       {error && (
         <Alert tone="riesgo" title="No se guardó el contacto">
           {error}
@@ -68,33 +87,37 @@ export function ContactoPersistente() {
         <span>Correo de contacto</span>
         <input
           className="input"
+          name="correo"
           type="email"
           autoComplete="email"
-          disabled={isSubmitting}
-          aria-invalid={!!errors.correo}
-          {...register('correo')}
+          disabled={guardando}
+          aria-invalid={!!errores.correo}
+          value={correo}
+          onChange={(e) => actualizar('correo', e.target.value)}
         />
-        {errors.correo && <span role="alert">{errors.correo.message}</span>}
+        {errores.correo && <span role="alert">{errores.correo}</span>}
       </label>
       <label className="field">
         <span>Teléfono o anexo</span>
         <input
           className="input"
+          name="telefono"
           type="tel"
           autoComplete="tel"
-          disabled={isSubmitting}
-          aria-invalid={!!errors.telefono}
-          {...register('telefono')}
+          disabled={guardando}
+          aria-invalid={!!errores.telefono}
+          value={telefono}
+          onChange={(e) => actualizar('telefono', e.target.value)}
         />
-        {errors.telefono && <span role="alert">{errors.telefono.message}</span>}
+        {errores.telefono && <span role="alert">{errores.telefono}</span>}
       </label>
       <p className="small muted">
         Los datos académicos y el correo institucional los actualiza el área responsable.
       </p>
       <div className="ui-row ui-row--between ui-row--wrap">
         {mensaje && <SuccessNotice>{mensaje}</SuccessNotice>}
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
+        <button type="submit" className="btn btn-primary" disabled={guardando}>
+          {guardando ? 'Guardando…' : 'Guardar cambios'}
         </button>
       </div>
     </form>

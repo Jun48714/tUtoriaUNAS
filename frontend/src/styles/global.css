@@ -110,7 +110,7 @@
   --r-lg: 8px;
   --r-xl: 10px;
   --r-full: 999px;
-  --sh-1: var(--falcon-box-shadow);
+  --sh-1: var(--falcon-box-shadow, 0 7px 14px 0 rgb(65 69 88 / 10%), 0 3px 6px 0 rgb(0 0 0 / 7%));
   --sh-2: 0 7px 14px 0 rgb(44 73 58 / 7%);
   --sh-3: 0 12px 30px rgb(44 73 58 / 12%);
   --sh-pop: 0 12px 32px rgb(44 73 58 / 15%);

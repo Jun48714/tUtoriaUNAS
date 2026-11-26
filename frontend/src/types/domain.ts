@@ -557,7 +557,15 @@ export interface Notificacion {
   detalle: string;
   fecha: string;
   leida: boolean;
-  tipo: 'sesion' | 'instrumento' | 'derivacion' | 'academico' | 'sistema';
+  tipo:
+    | 'sesion'
+    | 'instrumento'
+    | 'derivacion'
+    | 'academico'
+    | 'sistema'
+    | 'aviso'
+    | 'formulario'
+    | 'solicitud';
   enlace: string | null;
 }
 

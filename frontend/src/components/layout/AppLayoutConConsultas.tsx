@@ -1,5 +1,9 @@
 // Antes que AppLayout: conserva el orden del CSS (tema del portal, luego los estilos propios).
+import '../../assets/vendor/falcon-theme.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
 import '../../assets/vendor/falcon-portal.css';
+import '../../styles/falcon-overrides.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../../services/clienteConsultas';
 import { AppLayout } from './AppLayout';

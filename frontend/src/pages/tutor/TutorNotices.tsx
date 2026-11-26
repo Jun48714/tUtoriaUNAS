@@ -83,6 +83,9 @@ const TONO_TIPO: Record<Notificacion['tipo'], TonoBadge> = {
   derivacion: 'violeta',
   academico: 'neutro',
   sistema: 'dorado',
+  aviso: 'dorado',
+  formulario: 'alerta',
+  solicitud: 'violeta',
 };
 
 const ETIQUETA_TIPO: Record<Notificacion['tipo'], string> = {
@@ -91,6 +94,9 @@ const ETIQUETA_TIPO: Record<Notificacion['tipo'], string> = {
   derivacion: 'Derivación',
   academico: 'Académico',
   sistema: 'Sistema',
+  aviso: 'Aviso',
+  formulario: 'Formulario',
+  solicitud: 'Solicitud',
 };
 
 export function TutorNotices() {

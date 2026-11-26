@@ -76,16 +76,33 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
         var matriculas = await db.Matriculas.AsNoTracking().Where(m => idsMatricula.Contains(m.EstudianteId)).ToArrayAsync(ct);
         foreach (var d in candidatas.Where(d => !institucional && d.SemestreId == periodo.SemestreId && ((actor.Rol == "tutor" && d.TutorId == actor.Id && d.Formato == "F02") || (actor.Rol == "coordinacion" && d.Formato == "F01"))))
             precargas[$"{d.TutorId}|{d.SemestreId}|{d.Formato}"] = await documentos.Canonizar(d, [], ct);
-        var horarios = await db.Horarios.AsNoTracking().Where(h => ids.Contains(h.EstudianteId)).ToArrayAsync(ct);
+        // La procedencia (archivo y filas del Excel) no se usa en el portal y pesaba más que el propio bloque horario.
+        var horarios = await db.Database.SqlQuery<string>($"""SELECT ("DatosJson" - 'origen')::text AS "Value" FROM "Horarios" WHERE "EstudianteId" = ANY({ids})""").ToArrayAsync(ct);
         var personasIds = personas.Select(p => p.Id).ToArray();
         var contactos = await db.Contactos.AsNoTracking().Where(c => personasIds.Contains(c.PersonaId)).ToDictionaryAsync(c => c.PersonaId, ct);
-        return new(actor.Dto, periodo.SemestreId, periodo.Momento, periodo.Version,
-            personas.Where(p => p.Tipo == "estudiante").Select(p => Persona(p, contactos.GetValueOrDefault(p.Id))).ToArray(),
-            personas.Where(p => p.Tipo == "tutor").Select(p => Persona(p, contactos.GetValueOrDefault(p.Id))).ToArray(),
-            asignaciones.Select(Asignacion).ToArray(), matriculas.Select(m => JsonDatos.Elemento(SinHorariosOriginales(m.DatosJson))).ToArray(),
-            horarios.Select(h => JsonDatos.Elemento(h.DatosJson)).ToArray(), registros.ToArray(),
+        var estudiantes = personas.Where(p => p.Tipo == "estudiante").Select(p => Persona(p, contactos.GetValueOrDefault(p.Id))).ToArray();
+        var docentes = personas.Where(p => p.Tipo == "tutor").Select(p => Persona(p, contactos.GetValueOrDefault(p.Id))).ToArray();
+        var matriculasDto = matriculas.Select(m => JsonDatos.Elemento(SinHorariosOriginales(m.DatosJson))).ToArray();
+        var horariosDto = horarios.Select(JsonDatos.Elemento).ToArray();
+        return new(actor.Dto, periodo.SemestreId, periodo.Momento, periodo.Version, estudiantes, docentes,
+            asignaciones.Select(Asignacion).ToArray(), matriculasDto, horariosDto, registros.ToArray(),
             actor.Puede("sesiones", "ver") ? sesiones.Select(s => JsonDatos.Dto(s, actor.Rol == "estudiante" ? actor.Id : null, actor.Rol == "tutor" && s.TutorId == actor.Id)).ToArray() : [], precargas,
-            await sistema.Obtener(actor, periodo, ct), historial.ToArray(), actor.EscuelaId, escuelasAdministrables, institucional);
+            await sistema.Obtener(actor, periodo, ct, CursosUsados(matriculasDto, horariosDto, docentes)), historial.ToArray(), actor.EscuelaId, escuelasAdministrables, institucional);
+    }
+
+    /// <summary>Cursos que el portal necesita nombrar: los de las matrículas, los horarios y los cursos asignados a docentes.</summary>
+    private static string[] CursosUsados(JsonElement[] matriculas, JsonElement[] horarios, JsonElement[] docentes)
+    {
+        static IEnumerable<string> Textos(JsonElement e, string campo) =>
+            e.TryGetProperty(campo, out var v) && v.ValueKind == JsonValueKind.Array ? v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!) : [];
+        static string? Texto(JsonElement e, string campo) => e.TryGetProperty(campo, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        var usados = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var m in matriculas)
+            if (m.TryGetProperty("cursos", out var cursos) && cursos.ValueKind == JsonValueKind.Array)
+                foreach (var c in cursos.EnumerateArray()) if (Texto(c, "cursoId") is { } id) usados.Add(id);
+        foreach (var h in horarios) if (Texto(h, "cursoId") is { } id) usados.Add(id);
+        foreach (var d in docentes) usados.UnionWith(Textos(d, "cursosAsignados"));
+        return [.. usados];
     }
 
     private static JsonElement Asignacion(AsignacionEntity asignacion)
@@ -106,6 +123,14 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
     internal static JsonElement Persona(PersonaEntity persona, ContactoEntity? contacto)
     {
         var datos = JsonDatos.Leer<Dictionary<string, object?>>(persona.DatosJson);
+        // De la procedencia del Excel el portal muestra archivo y hoja; el hash y las filas (miles de números con el
+        // padrón completo) solo los usa la ficha del padrón, que los pide aparte.
+        if (datos.GetValueOrDefault("origen") is JsonElement { ValueKind: JsonValueKind.Object } origen)
+            datos["origen"] = new
+            {
+                archivo = origen.TryGetProperty("archivo", out var archivo) ? archivo.GetString() : null,
+                hoja = origen.TryGetProperty("hoja", out var hoja) ? hoja.GetString() : null,
+            };
         if (persona.Tipo == "estudiante") datos["ciclo"] = persona.Ciclo;
         if (persona.Tipo == "tutor") datos["activo"] = persona.Activa;
         if (contacto is not null)
@@ -115,10 +140,14 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
         }
         return SistemaService.Elemento(datos);
     }
-    /// <summary>El detalle de aulas por curso solo lo consulta el padrón; el estado lleva el resumen del horario.</summary>
+    /// <summary>
+    /// El detalle de aulas por curso y la procedencia del Excel solo los consulta el padrón; el estado lleva el
+    /// resumen del horario (con cientos de alumnos por escuela, ese detalle multiplicaba el tamaño de la respuesta).
+    /// </summary>
     public static string SinHorariosOriginales(string json)
     {
         if (JsonNode.Parse(json) is not JsonObject matricula) return json;
+        matricula.Remove("origen");
         if (matricula["cursos"] is JsonArray cursos)
             foreach (var curso in cursos.OfType<JsonObject>()) curso.Remove("horariosOriginales");
         return matricula.ToJsonString();

@@ -44,6 +44,7 @@ builder.Services.Configure<PasswordHasherOptions>(o => o.IterationCount = 210000
 builder.Services.AddSingleton<IPasswordHasher<CredencialCuentaEntity>, PasswordHasher<CredencialCuentaEntity>>();
 builder.Services.AddScoped<SeguridadCuenta>();
 builder.Services.AddScoped<CredencialesCuentaService>();
+builder.Services.AddSingleton<LimiteLoginsFallidos>();
 builder.Services.AddScoped<VerificacionCuentaService>();
 builder.Services.AddScoped<CuentasAdminService>();
 builder.Services.AddScoped<ColaCorreoCuenta>();
@@ -77,9 +78,10 @@ builder.Services.AddScoped<ComunicacionService>();
 builder.Services.AddScoped<GestionSistemaService>();
 builder.Services.AddScoped<MonitoreoService>();
 builder.Services.AddScoped<CalendarioService>();
+builder.Services.AddSingleton<TutoriaUNAS.Api.Services.Padron.ImportacionesPendientes>();
+builder.Services.AddScoped<TutoriaUNAS.Api.Services.Padron.ImportadorPadronService>();
 builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = 429;
-    options.AddPolicy("local-login", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "local", _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("account-check", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "local", _ => new FixedWindowRateLimiterOptions { PermitLimit = 40, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("account-mail", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "local", _ => new FixedWindowRateLimiterOptions { PermitLimit = cuentas.IpCodigosPorMinuto, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("account-verify", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "local", _ => new FixedWindowRateLimiterOptions { PermitLimit = cuentas.IpVerificacionesPorMinuto, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -114,7 +116,9 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<GzipCompressionProvider>();
     options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/problem+json"]);
 });
-builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+// Brotli calidad 4 (Optimal): ~15 % menos que Fastest en el estado institucional por ~20 ms de CPU; las consultas
+// sin cambios responden 304 sin cuerpo y no se comprimen.
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Optimal);
 builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
 {

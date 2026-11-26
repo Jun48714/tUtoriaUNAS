@@ -1,9 +1,9 @@
-import type { AuthService } from '../types/auth';
+import type { AuthService, Role } from '../types/auth';
 import { apiJson, getApiSession, setApiSession } from './apiClient';
 import type * as ApiTutoria from './apiTutoria';
 import type { EstadoApi } from './apiTutoria';
 import { ActivacionRequerida, borrarActivacion, guardarActivacion } from './cuentas';
-import * as v from 'valibot';
+import { esCorreo, esNumeroFinito, esObjeto, esRol, esTextoNoVacio } from '../utils/validacion';
 
 // El almacén del expediente arrastra los catálogos y formatos (unos 70 KB): se descarga al iniciar
 // sesión, en paralelo con la petición, y no al abrir /login. Sin cargar, no hay estado que vaciar.
@@ -11,21 +11,52 @@ let tutoria: typeof ApiTutoria | undefined;
 const cargarTutoria = () => import('./apiTutoria').then((modulo) => (tutoria = modulo));
 const vaciar = () => tutoria?.vaciarApi();
 
-const respuestaLogin = v.union([
-  v.object({
-    accessToken: v.pipe(v.string(), v.minLength(1)),
-    expiresIn: v.pipe(v.number(), v.gtValue(0)),
-    estado: v.optional(v.custom<EstadoApi>(() => true)),
-  }),
-  v.object({
-    activacionRequerida: v.literal(true),
-    tokenActivacion: v.pipe(v.string(), v.length(64)),
-    correo: v.pipe(v.string(), v.email()),
-    expiraEn: v.pipe(v.number(), v.gtValue(0)),
-    role: v.picklist(['estudiante', 'tutor', 'coordinacion']),
-  }),
-  v.object({ pendienteVinculacion: v.literal(true) }),
-]);
+type RespuestaLogin =
+  | { accessToken: string; expiresIn: number; estado?: EstadoApi }
+  | {
+      activacionRequerida: true;
+      tokenActivacion: string;
+      correo: string;
+      expiraEn: number;
+      role: Role;
+    }
+  | { pendienteVinculacion: true };
+
+function validarRespuestaLogin(valor: unknown): RespuestaLogin {
+  if (esObjeto(valor)) {
+    if (
+      esTextoNoVacio(valor.accessToken) &&
+      esNumeroFinito(valor.expiresIn) &&
+      valor.expiresIn > 0
+    ) {
+      return {
+        accessToken: valor.accessToken,
+        expiresIn: valor.expiresIn,
+        ...(valor.estado !== undefined ? { estado: valor.estado as EstadoApi } : {}),
+      };
+    }
+    if (
+      valor.activacionRequerida === true &&
+      typeof valor.tokenActivacion === 'string' &&
+      valor.tokenActivacion.length === 64 &&
+      typeof valor.correo === 'string' &&
+      esCorreo(valor.correo) &&
+      esNumeroFinito(valor.expiraEn) &&
+      valor.expiraEn > 0 &&
+      esRol(valor.role)
+    ) {
+      return {
+        activacionRequerida: true,
+        tokenActivacion: valor.tokenActivacion,
+        correo: valor.correo,
+        expiraEn: valor.expiraEn,
+        role: valor.role,
+      };
+    }
+    if (valor.pendienteVinculacion === true) return { pendienteVinculacion: true };
+  }
+  throw new Error('La respuesta del servidor no tiene el formato esperado.');
+}
 
 export const apiAuthService: AuthService = {
   async login(credentials, remember) {
@@ -33,8 +64,7 @@ export const apiAuthService: AuthService = {
     vaciar();
     const cargando = cargarTutoria();
     cargando.catch(() => undefined); // El fallo se informa más abajo; aquí no debe quedar sin atender.
-    const result = v.parse(
-      respuestaLogin,
+    const result = validarRespuestaLogin(
       await apiJson<unknown>('/api/auth/login', 'POST', {
         identifier: credentials.identifier.trim(),
         password: credentials.password,

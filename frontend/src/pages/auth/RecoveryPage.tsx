@@ -1,25 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { valibotResolver } from '@hookform/resolvers/valibot';
-import * as v from 'valibot';
 import { FormField } from '../../components/forms/FormField';
 import { CircleCheck, MailSolid } from '../../components/ui/iconosAcceso';
 import { API_MODE } from '../../services/apiConfig';
+import { esCorreo } from '../../utils/validacion';
 import { AccountSetupPage } from './AccountSetupPage';
-
-const schema = v.object({
-  email: v.pipe(
-    v.string('Ingresa un correo válido.'),
-    v.email('Ingresa un correo válido.'),
-    v.maxLength(254, 'El correo es demasiado largo.'),
-  ),
-});
-type RecoveryFields = v.InferOutput<typeof schema>;
 
 const SEND_PAUSE = 800;
 const RESEND_PAUSE = 700;
 const RESEND_RESET = 3000;
+
+function validarCorreoRecuperacion(valor: string): string | undefined {
+  if (!esCorreo(valor)) return 'Ingresa un correo válido.';
+  if (valor.length > 254) return 'El correo es demasiado largo.';
+  return undefined;
+}
 
 export function RecoveryPage() {
   return API_MODE ? <AccountSetupPage modo="recuperacion" /> : <DemoRecoveryPage />;
@@ -27,7 +23,9 @@ export function RecoveryPage() {
 function DemoRecoveryPage() {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [resendLabel, setResendLabel] = useState('Reenviar enlace');
+  const intentado = useRef(false);
   const resendTimer = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -35,17 +33,27 @@ function DemoRecoveryPage() {
     },
     [],
   );
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RecoveryFields>({ resolver: valibotResolver(schema), defaultValues: { email: '' } });
 
-  function submit(values: RecoveryFields) {
+  function revalidar(event: ChangeEvent<HTMLInputElement>) {
+    if (!intentado.current) return;
+    setError(validarCorreoRecuperacion(event.currentTarget.value));
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const email = String(new FormData(form).get('email') ?? '');
+    intentado.current = true;
+    const mensaje = validarCorreoRecuperacion(email);
+    setError(mensaje);
+    if (mensaje) {
+      form.querySelector<HTMLInputElement>('#recovery-email')?.focus();
+      return;
+    }
     setSending(true);
     window.setTimeout(() => {
       setSending(false);
-      setSentTo(values.email.trim());
+      setSentTo(email.trim());
     }, SEND_PAUSE);
   }
 
@@ -76,10 +84,11 @@ function DemoRecoveryPage() {
           id="recovery-form"
           aria-busy={sending}
           noValidate
-          onSubmit={handleSubmit(submit)}
+          onSubmit={submit}
         >
           <FormField
             id="recovery-email"
+            name="email"
             label="Correo institucional"
             icon={MailSolid}
             type="email"
@@ -87,8 +96,8 @@ function DemoRecoveryPage() {
             autoComplete="email"
             maxLength={254}
             disabled={sending}
-            error={errors.email?.message}
-            {...register('email')}
+            error={error}
+            onChange={revalidar}
           />
 
           <button

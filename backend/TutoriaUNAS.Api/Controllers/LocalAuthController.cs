@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TutoriaUNAS.Api.Data;
@@ -18,8 +17,26 @@ namespace TutoriaUNAS.Api.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class LocalAuthController(IWebHostEnvironment environment, IConfiguration configuration) : ControllerBase
 {
-    [HttpPost("login"), EnableRateLimiting("local-login"), RequestSizeLimit(4096)]
-    public async Task<IActionResult> Login(LoginLocalDto input, CancellationToken ct)
+    [HttpPost("login"), RequestSizeLimit(4096)]
+    public async Task<IActionResult> Login(LoginLocalDto input, [FromServices] LimiteLoginsFallidos limite, CancellationToken ct)
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "local";
+        if (limite.Bloqueada(ip))
+            return Problem(statusCode: 429, title: "Demasiados intentos fallidos desde esta red. Espera un minuto e inténtalo de nuevo.");
+        try
+        {
+            var resultado = await Entrar(input, ct);
+            if (resultado is UnauthorizedObjectResult) limite.RegistrarFallo(ip);
+            return resultado;
+        }
+        catch (TutoriaUNAS.Api.Domain.TutoriaError error) when (error.Status == 401)
+        {
+            limite.RegistrarFallo(ip);
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> Entrar(LoginLocalDto input, CancellationToken ct)
     {
         var cuentasHabilitadas = configuration.GetValue<bool>("Cuentas:Enabled");
         var origen = OrigenAcceso.Leer(Request);

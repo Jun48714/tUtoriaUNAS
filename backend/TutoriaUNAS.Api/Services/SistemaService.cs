@@ -20,11 +20,18 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
         if (json is not null) foreach (var p in JsonDatos.Leer<Dictionary<string, bool>>(json)) if (valores.ContainsKey(p.Key)) valores[p.Key] = p.Value;
         return valores;
     }
-    public async Task<SistemaDto> Obtener(ActorTutoria actor, PeriodoEntity periodo, CancellationToken ct)
+    public async Task<SistemaDto> Obtener(ActorTutoria actor, PeriodoEntity periodo, CancellationToken ct, string[]? cursosUsados = null)
     {
         var institucional = actor.ConsultaInstitucional;
         var escuelasActivas = institucional ? await db.Periodos.AsNoTracking().Where(p => p.Activo).Select(p => p.EscuelaId).ToArrayAsync(ct) : [];
-        var cat = await db.Catalogos.AsNoTracking().Where(c => c.Tipo != "semilla").ToArrayAsync(ct);
+        // El padrón agrega cientos de cursos de todas las escuelas (~300 KB). Del padrón solo se envían los cursos que
+        // nombran las matrículas, horarios y docentes de esta respuesta; sin esa lista, los de la escuela del usuario.
+        var porReferencia = cursosUsados is not null;
+        var cat = await db.Catalogos.FromSqlInterpolated($"""
+            SELECT * FROM "Catalogos" WHERE "Tipo" <> 'semilla' AND ("Tipo" <> 'cursos' OR "Id" NOT LIKE 'PAD-CUR-%'
+                OR ({porReferencia} AND "Id" = ANY({cursosUsados ?? []}))
+                OR (NOT {porReferencia} AND ({institucional} OR "DatosJson"->>'escuelaId' = {actor.EscuelaId})))
+            """).AsNoTracking().ToArrayAsync(ct);
         var ids = await db.Asignaciones.AsNoTracking().Where(a => a.Activa && a.EscuelaId == actor.EscuelaId && (actor.Rol == "coordinacion" || (actor.Rol == "tutor" ? a.TutorId == actor.Id : a.EstudianteId == actor.Id))).Select(a => a.EstudianteId).ToArrayAsync(ct);
         if (actor.Rol == "estudiante") ids = [actor.Id];
         if (actor.Rol == "coordinacion") ids = await db.Personas.AsNoTracking().Where(p => p.Tipo == "estudiante" && (institucional ? escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId)).Select(p => p.Id).ToArrayAsync(ct);
@@ -99,7 +106,8 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
     private static JsonElement Fuente(RegistroFuenteEntity f, string rol)
     {
         var d = JsonDatos.Leer<Dictionary<string, object?>>(f.DatosJson); d["version"] = f.Version;
-        d["fuenteRegistro"] = f.Fuente; d["fechaImportacion"] = f.FechaCorte.ToString("O");
+        // Los resúmenes académicos ya traen su «fuente»; repetirla en miles de filas solo engordaba la respuesta.
+        if (f.Tipo != "resumenesAcademicos") { d["fuenteRegistro"] = f.Fuente; d["fechaImportacion"] = f.FechaCorte.ToString("O"); }
         if (f.Tipo == "atencionesSalud" && rol != "estudiante")
         {
             var permitidos = new[] { "id", "estudianteId", "servicio", "fecha", "hora", "tipo", "estado", "recomendacionAcademica", "vigenciaRecomendacion", "confidencial", "version", "fuenteRegistro", "fechaImportacion" };

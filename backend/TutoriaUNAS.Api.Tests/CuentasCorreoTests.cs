@@ -45,10 +45,11 @@ public sealed partial class CuentasFixture : IAsyncLifetime
             builder.UseSetting("Cuentas:CodigoKey", Convert.ToBase64String(Enumerable.Range(1, 32).Select(n => (byte)n).ToArray()));
             builder.UseSetting("Cuentas:IpCodigosPorMinuto", "100");
             builder.UseSetting("Cuentas:IpVerificacionesPorMinuto", "200");
+            builder.UseSetting("Cuentas:IpLoginsPorMinuto", "200");
             builder.ConfigureAppConfiguration((_, c) => c.AddInMemoryCollection(new Dictionary<string, string?> {
                 ["Cuentas:Enabled"] = "true", ["Cuentas:DisableDispatcher"] = "true",
                 ["Cuentas:CodigoKey"] = Convert.ToBase64String(Enumerable.Range(1, 32).Select(n => (byte)n).ToArray()),
-                ["Cuentas:IpCodigosPorMinuto"] = "100", ["Cuentas:IpVerificacionesPorMinuto"] = "200"
+                ["Cuentas:IpCodigosPorMinuto"] = "100", ["Cuentas:IpVerificacionesPorMinuto"] = "200", ["Cuentas:IpLoginsPorMinuto"] = "200"
             }));
             builder.ConfigureServices(s => { s.RemoveAll<ICorreoCuentaSender>(); s.AddSingleton<ICorreoCuentaSender>(Correo); });
         });

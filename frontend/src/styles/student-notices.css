@@ -49,21 +49,17 @@
   min-height: 106px;
   padding: 22px 28px;
   border: 0;
-  background: transparent;
   text-align: left;
 }
-.student-notices__message--unread::before {
-  position: absolute;
-  top: 24px;
-  bottom: 24px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--green);
-  content: '';
+/* Como en Gmail: lo leído se ve atenuado sobre fondo gris; lo nuevo, en blanco y en negrita. */
+.student-notices__message {
+  background: var(--ink-50);
+}
+.student-notices__message--unread {
+  background: #fff;
 }
 .student-notices__message:hover {
-  background: var(--ink-50);
+  background: var(--ink-100);
 }
 .student-notices__message:focus-visible {
   outline-offset: -4px;
@@ -90,8 +86,19 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+.student-notices__message-body > strong {
+  color: var(--ink-700);
+}
 .student-notices__message--unread .student-notices__message-body > strong {
-  font-weight: 650;
+  color: var(--ink-900);
+  font-weight: 700;
+}
+.student-notices__message:not(.student-notices__message--unread) .student-notices__message-icon {
+  color: var(--ink-500);
+}
+.student-notices__message--unread .student-notices__message-body > span {
+  color: var(--ink-700);
+  font-weight: 500;
 }
 .student-notices__message-body > span {
   color: var(--ink-500);

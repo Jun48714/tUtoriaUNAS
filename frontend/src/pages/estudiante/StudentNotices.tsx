@@ -23,7 +23,14 @@ const categorias = {
   derivacion: { titulo: 'Apoyo', icono: 'hand-holding-heart', accion: 'Ver mis solicitudes' },
   academico: { titulo: 'Mis estudios', icono: 'graduation-cap', accion: 'Ver mis estudios' },
   sistema: { titulo: 'Bienestar', icono: 'heart-pulse', accion: 'Ver salud y bienestar' },
+  aviso: { titulo: 'Avisos', icono: 'bell', accion: 'Ver detalle' },
+  formulario: { titulo: 'Formularios', icono: 'file-lines', accion: 'Ver mis formularios' },
+  solicitud: { titulo: 'Apoyo', icono: 'hand-holding-heart', accion: 'Ver mis solicitudes' },
 } as const;
+/** El servidor puede enviar un tipo nuevo: nunca debe romper la bandeja. */
+const categoriaDe = (tipo: string) =>
+  (categorias as Record<string, (typeof categorias)[keyof typeof categorias]>)[tipo] ??
+  categorias.aviso;
 type Filtro = 'todos' | 'sin-leer' | 'sistema' | 'correo';
 
 export function StudentNotices() {
@@ -43,7 +50,7 @@ export function StudentNotices() {
     (mensaje) =>
       (filtro === 'todos' || (filtro === 'sin-leer' ? !mensaje.leida : mensaje.canal === filtro)) &&
       (!termino ||
-        `${mensaje.titulo} ${mensaje.detalle} ${categorias[mensaje.tipo].titulo}`
+        `${mensaje.titulo} ${mensaje.detalle} ${categoriaDe(mensaje.tipo).titulo}`
           .toLocaleLowerCase('es-PE')
           .includes(termino)),
   );
@@ -132,7 +139,7 @@ export function StudentNotices() {
         {visibles.length ? (
           <ul className="student-notices__messages" aria-label="Avisos recibidos">
             {visibles.map((mensaje) => {
-              const categoria = categorias[mensaje.tipo];
+              const categoria = categoriaDe(mensaje.tipo);
               return (
                 <li key={mensaje.id}>
                   <button
@@ -273,7 +280,7 @@ export function StudentNotices() {
                 <Link className="btn btn-primary" to={abierto.enlace}>
                   {abierto.canal === 'correo'
                     ? 'Ver mis sesiones'
-                    : categorias[abierto.tipo].accion}{' '}
+                    : categoriaDe(abierto.tipo).accion}{' '}
                   <i className="fa-solid fa-arrow-right" aria-hidden="true" />
                 </Link>
               )}
@@ -290,7 +297,7 @@ export function StudentNotices() {
               <Badge>
                 {abierto.canal === 'correo'
                   ? 'Correo de demostración'
-                  : categorias[abierto.tipo].titulo}
+                  : categoriaDe(abierto.tipo).titulo}
               </Badge>
               <Badge tone="ok">{abierto.leida ? 'Leído' : 'Sin leer'}</Badge>
             </div>

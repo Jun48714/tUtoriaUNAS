@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import * as v from 'valibot';
 import { Sheet } from '../ui/Sheet';
-import { calendarInputSchema } from '../../types/calendar';
+import { parseCalendarInput } from '../../types/calendar';
 import type { CalendarInput, TeacherCalendarBlock } from '../../types/calendar';
 import { semestres } from '../../data/catalogos';
 import { DIAS_SEMANA, HOY_ISO } from '../../utils/fechas';
@@ -34,7 +33,7 @@ export function TeacherScheduleForm({
     const form = new FormData(event.currentTarget);
     setError('');
     try {
-      const input = v.parse(calendarInputSchema, {
+      const input = parseCalendarInput({
         kind,
         semesterId,
         title: kind === 'tutoria' ? 'Tutoría' : form.get('title'),
@@ -51,13 +50,7 @@ export function TeacherScheduleForm({
       await onSave(input, existing?.id);
       onClose();
     } catch (failure) {
-      setError(
-        v.isValiError(failure)
-          ? failure.issues[0].message
-          : failure instanceof Error
-            ? failure.message
-            : 'No se pudo guardar el horario.',
-      );
+      setError(failure instanceof Error ? failure.message : 'No se pudo guardar el horario.');
     } finally {
       setSaving(false);
     }
