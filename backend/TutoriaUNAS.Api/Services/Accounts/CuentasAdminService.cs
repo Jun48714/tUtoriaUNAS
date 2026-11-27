@@ -263,7 +263,9 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"InscripcionesCampana\" WHERE \"EstudianteId\" = {pid}", ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Fuentes\" WHERE \"EstudianteId\" = {pid}", ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Contactos\" WHERE \"PersonaId\" = {pid}", ct);
-        await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"RetosCorreo\" WHERE \"PersonaId\" = {pid} OR \"UsuarioId\" = {id}", ct);
+        // Los correos de verificación apuntan a sus retos: se quitan antes que ellos.
+        await db.Database.ExecuteSqlInterpolatedAsync($@"DELETE FROM ""CorreosCuenta"" WHERE ""UsuarioId"" = {id} OR ""RetoId"" IN (SELECT ""Id"" FROM ""RetosCorreo"" WHERE ""PersonaId"" = {pid} OR ""UsuarioId"" = {id} OR ""Correo"" = {emailActual})", ct);
+        await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"RetosCorreo\" WHERE \"PersonaId\" = {pid} OR \"UsuarioId\" = {id} OR \"Correo\" = {emailActual}", ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Destinatarios\" WHERE \"UsuarioId\" = {id}", ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Notificaciones\" WHERE \"UsuarioId\" = {id}", ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM \"Preferencias\" WHERE \"UsuarioId\" = {id}", ct);

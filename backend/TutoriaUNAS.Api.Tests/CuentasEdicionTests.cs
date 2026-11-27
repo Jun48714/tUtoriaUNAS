@@ -93,8 +93,12 @@ public sealed class CuentasEdicionTests(CuentasFixture fixture) : IClassFixture<
     public async Task EliminarUnEstudianteSinHistorialLimpiaSusDatosYUnoConFormulariosEnviadosSeConserva()
     {
         using var admin = await fixture.Admin();
-        var (id, persona) = await CrearEstudiante(admin, Email("borrar-"), ciclo: 1);
+        var correo = Email("borrar-");
+        var (id, persona) = await CrearEstudiante(admin, correo, ciclo: 1);
         await Asignar(admin, persona);
+        // Una cuenta que pidió un código de verificación tiene un reto y un correo que lo referencia.
+        await Ok<CodigoEnCaminoDto>(await fixture.App.CreateClient().PostAsJsonAsync("/api/auth/codigo", new SolicitarCodigoInput(correo, "registro", "estudiante")));
+        await fixture.Modificar(async db => Assert.True(await db.RetosCorreo.AnyAsync(r => r.Correo == correo)));
         Assert.Equal(["F03"], await Entrevistas(persona));
         var c = await Cuenta(admin, id);
         Assert.Equal(HttpStatusCode.Conflict, (await admin.DeleteAsync($"/api/cuentas/{id}?version={c.GetProperty("version").GetInt32() + 9}")).StatusCode);
@@ -106,6 +110,8 @@ public sealed class CuentasEdicionTests(CuentasFixture fixture) : IClassFixture<
             Assert.False(await db.CredencialesCuenta.AnyAsync(x => x.UsuarioId == id));
             Assert.False(await db.Asignaciones.AnyAsync(a => a.EstudianteId == persona));
             Assert.False(await db.Instrumentos.AnyAsync(i => i.EstudianteId == persona));
+            Assert.False(await db.RetosCorreo.AnyAsync(r => r.Correo == correo));
+            Assert.False(await db.CorreosCuenta.AnyAsync(m => m.UsuarioId == id));
         });
         Assert.DoesNotContain((await Ok<JsonElement>(await admin.GetAsync("/api/cuentas"))).EnumerateArray(), x => x.GetProperty("id").GetString() == id);
 
