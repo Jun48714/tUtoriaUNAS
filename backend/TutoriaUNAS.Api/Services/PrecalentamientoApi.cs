@@ -25,8 +25,15 @@ public sealed class PrecalentamientoApi(IServiceScopeFactory scopes, ILogger<Pre
         {
             await using (var scope = scopes.CreateAsyncScope())
                 _ = scope.ServiceProvider.GetRequiredService<IPasswordHasher<CredencialCuentaEntity>>().HashPassword(new(), "precalentamiento");
-            foreach (var rol in new[] { "tutor", "estudiante", "coordinacion" })
-                try { await RecorrerEstado(rol, ct); }
+            foreach (var (rol, institucional, monitoreo) in new[]
+            {
+                ("tutor", false, false),
+                ("tutor", false, true),
+                ("estudiante", false, false),
+                ("coordinacion", false, false),
+                ("coordinacion", true, false),
+            })
+                try { await RecorrerEstado(rol, institucional, monitoreo, ct); }
                 catch (Exception e) when (e is not OperationCanceledException) { logger.LogWarning(e, "No se pudo precalentar el estado de {Rol}.", rol); }
             logger.LogInformation("API precalentada en {Ms} ms.", reloj.ElapsedMilliseconds);
         }
@@ -36,13 +43,14 @@ public sealed class PrecalentamientoApi(IServiceScopeFactory scopes, ILogger<Pre
         }
     }
 
-    private async Task RecorrerEstado(string rol, CancellationToken ct)
+    private async Task RecorrerEstado(string rol, bool institucional, bool monitoreo, CancellationToken ct)
     {
         await using var scope = scopes.CreateAsyncScope();
         var sp = scope.ServiceProvider;
         var db = sp.GetRequiredService<TutoriaDbContext>();
         // Mismas condiciones que TutoriaContext.Actor: una cuenta sin verificar haría fallar el recorrido.
         var usuario = await db.Usuarios.AsNoTracking().Where(u => u.Activo && u.Rol == rol && u.EscuelaId != "" &&
+            (!institucional || u.AdminInstitucional) && (!monitoreo || u.CoordinadorEscuela) &&
             (u.Issuer != SeguridadCuenta.Issuer || db.CredencialesCuenta.Any(c => c.UsuarioId == u.Id && c.Verificada && !c.CambioObligatorio)))
             .OrderBy(u => u.Id).FirstOrDefaultAsync(ct);
         if (usuario is null) return;
@@ -50,7 +58,11 @@ public sealed class PrecalentamientoApi(IServiceScopeFactory scopes, ILogger<Pre
             new Claim("access_version", usuario.Version.ToString(CultureInfo.InvariantCulture)) }, "Precalentamiento", "sub", "role");
         var accessor = sp.GetRequiredService<IHttpContextAccessor>();
         accessor.HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identidad), RequestServices = sp };
-        try { _ = await sp.GetRequiredService<EstadoTutoriaService>().Obtener(ct); }
+        try
+        {
+            if (monitoreo) _ = await sp.GetRequiredService<MonitoreoService>().Escuela(ct);
+            else _ = await sp.GetRequiredService<EstadoTutoriaService>().Obtener(ct, inicioInstitucional: institucional);
+        }
         finally { accessor.HttpContext = null; }
     }
 }

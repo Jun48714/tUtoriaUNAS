@@ -15,7 +15,7 @@ const credentials = {
 function respuesta(body: unknown) {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 200 })),
+    vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(body)))),
   );
 }
 beforeEach(() => {
@@ -60,7 +60,11 @@ describe('acceso institucional del cliente', () => {
       unknown
     >;
     expect(cuerpo.incluirEstado).toBe(false);
-    expect(api.refrescar).toHaveBeenCalledWith(true);
+    // La consulta del estado sale con el token, sin esperar al módulo que la aplica.
+    const estado = vi.mocked(fetch).mock.calls[1]!;
+    expect(String(estado[0])).toContain('/api/tutoria/estado?inicio=true');
+    expect(new Headers(estado[1]!.headers).get('Authorization')).toBe('Bearer token-de-prueba');
+    expect(api.refrescar).toHaveBeenCalledWith(true, expect.any(Promise));
     expect(api.aplicar).not.toHaveBeenCalled();
     expect(getApiSession()?.user).toEqual(usuario);
   });

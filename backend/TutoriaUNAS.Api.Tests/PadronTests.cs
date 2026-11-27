@@ -46,14 +46,32 @@ public sealed class PadronTests(PostgresFixture fixture) : IClassFixture<Postgre
         Assert.Contains(estado.Estudiantes, e => e.GetProperty("id").GetString() == estudianteId);
     }
 
-    [Fact]
-    public void ElEstadoNoArrastraElDetalleDeAulasDeLaMatricula()
+    [PostgresFact]
+    public async Task ElEstadoNoArrastraElDetalleDeAulasNiOrigenDeLaMatricula()
     {
-        const string json = """{"semestreId":"2026-II","cursos":[{"cursoId":"X","docente":"D","horario":"Día 1 09-01 pm.","horariosOriginales":[{"aula":"A"}]}]}""";
-        var curso = JsonDocument.Parse(EstadoTutoriaService.SinHorariosOriginales(json)).RootElement.GetProperty("cursos")[0];
+        const string alumnoId = "PAD-ALU-VISTA-MAT";
+        await using (var scope = fixture.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
+            db.Personas.Add(new PersonaEntity
+            {
+                Id = alumnoId, Tipo = "estudiante", EscuelaId = "E-IIS",
+                DatosJson = JsonDatos.Serializar(new { id = alumnoId, codigo = "MAT-01", nombres = "Ana", apellidos = "Prueba", escuelaId = "E-IIS" })
+            });
+            db.Matriculas.Add(new()
+            {
+                Id = alumnoId + "|2026-II", EstudianteId = alumnoId, SemestreId = "2026-II",
+                DatosJson = """{"estudianteId":"PAD-ALU-VISTA-MAT","semestreId":"2026-II","origen":{"archivo":"padron.xlsx"},"cursos":[{"cursoId":"X","docente":"D","horario":"Día 1 09-01 pm.","horariosOriginales":[{"aula":"A"}]}]}"""
+            });
+            await db.SaveChangesAsync();
+        }
+        using var coordinacion = await fixture.Login("coordinacion.tutoria", "coordinacion");
+        var estado = (await coordinacion.GetFromJsonAsync<EstadoTutoriaDto>("/api/tutoria/estado"))!;
+        var matricula = Assert.Single(estado.Matriculas, m => m.GetProperty("estudianteId").GetString() == alumnoId);
+        Assert.False(matricula.TryGetProperty("origen", out _));
+        var curso = matricula.GetProperty("cursos")[0];
         Assert.False(curso.TryGetProperty("horariosOriginales", out _));
         Assert.Equal("Día 1 09-01 pm.", curso.GetProperty("horario").GetString());
-        Assert.Equal("{}", EstadoTutoriaService.SinHorariosOriginales("{}"));
     }
 
     [PostgresFact]

@@ -1,4 +1,6 @@
-@charset "UTF-8";:root,
+@charset "UTF-8";
+@layer vendor {
+:root,
 [data-bs-theme=light]{
   --falcon-blue: #2c7be5;
   --falcon-indigo: #727cf5;
@@ -1470,4 +1472,5 @@ samp{
   to {
     stroke-dashoffset: calc(340px - 267px * var(--falcon-circle-progress-bar) / 100);
   }
+}
 }

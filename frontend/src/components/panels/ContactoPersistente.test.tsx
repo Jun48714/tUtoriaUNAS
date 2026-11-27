@@ -43,8 +43,8 @@ describe('contacto persistente sin react-hook-form', () => {
     ]);
     expect(mockGuardarContactoApi).not.toHaveBeenCalled();
 
-    fireEvent.change(correoInput, { target: { value: 'nuevo@unas.edu.pe' } });
-    fireEvent.change(telInput, { target: { value: '202' } });
+    fireEvent.change(correoInput, { target: { value: '  nuevo@unas.edu.pe  ' } });
+    fireEvent.change(telInput, { target: { value: '  202  ' } });
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
 
     // Una actualización externa de data no pisa lo que el usuario está editando.
@@ -53,6 +53,7 @@ describe('contacto persistente sin react-hook-form', () => {
     });
     rerender(<ContactoPersistente />);
     expect(correoInput).toHaveValue('nuevo@unas.edu.pe');
+    expect(telInput).toHaveValue('  202  ');
 
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
     await waitFor(() =>

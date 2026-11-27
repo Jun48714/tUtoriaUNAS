@@ -150,6 +150,50 @@ public sealed class RendimientoTests(PostgresFixture fixture, ITestOutputHelper 
         Assert.True(comprimido * 3 < original, $"La compresión no redujo lo esperado: {original} → {comprimido} bytes.");
     }
 
+    [PostgresFact]
+    public async Task VistasSqlMantienenPresupuestoEnEstadoInstitucionalYMonitoreo()
+    {
+        await using (var scope = fixture.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TutoriaDbContext>();
+            var docente = await db.Usuarios.SingleAsync(u => u.Identificador == "DOC-0421" && u.Rol == "tutor");
+            docente.CoordinadorEscuela = true;
+            docente.Version++;
+            await db.SaveChangesAsync();
+        }
+
+        var contador = new ContadorConsultas();
+        await using var app = fixture.App.WithWebHostBuilder(b => b.ConfigureTestServices(s =>
+            s.ConfigureDbContext<TutoriaDbContext>(o => o.AddInterceptors(contador))));
+        async Task<HttpClient> Login(string identifier, string role)
+        {
+            var client = app.CreateClient();
+            var response = await client.PostAsJsonAsync("/api/auth/login", new { identifier, role, password = "tutoria2026" });
+            response.EnsureSuccessStatusCode();
+            client.DefaultRequestHeaders.Authorization = new("Bearer", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString());
+            return client;
+        }
+
+        using var coordEscuela = await Login("DOC-0421", "tutor");
+        using var admin = await Login("coordinacion.tutoria", "coordinacion");
+
+        (await admin.GetAsync("/api/tutoria/estado?ambitoInstitucional=true")).EnsureSuccessStatusCode();
+        var antesInstitucional = contador.Total;
+        var estadoInstitucional = await admin.GetAsync("/api/tutoria/estado?ambitoInstitucional=true");
+        estadoInstitucional.EnsureSuccessStatusCode();
+        var consultasInstitucional = contador.Total - antesInstitucional;
+        output.WriteLine($"estado institucional (todas las escuelas): {consultasInstitucional} consultas SQL");
+        Assert.True(consultasInstitucional <= 32, $"El estado institucional ejecutó demasiadas consultas ({consultasInstitucional}).");
+
+        (await coordEscuela.GetAsync("/api/monitoreo/escuela")).EnsureSuccessStatusCode();
+        var antesMonitoreo = contador.Total;
+        var monitoreo = await coordEscuela.GetAsync("/api/monitoreo/escuela");
+        monitoreo.EnsureSuccessStatusCode();
+        var consultasMonitoreo = contador.Total - antesMonitoreo;
+        output.WriteLine($"monitoreo coordinador de escuela: {consultasMonitoreo} consultas SQL");
+        Assert.True(consultasMonitoreo <= 14, $"El monitoreo de escuela ejecutó demasiadas consultas ({consultasMonitoreo}).");
+    }
+
     /// <summary>Interceptor de EF que cuenta cada comando SQL ejecutado por la aplicación de la prueba.</summary>
     private sealed class ContadorConsultas : DbCommandInterceptor
     {

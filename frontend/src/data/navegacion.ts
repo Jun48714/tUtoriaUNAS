@@ -238,9 +238,18 @@ export const iconos = {
 };
 
 /** Módulo extra del docente designado coordinador de escuela: monitoreo de solo lectura de su escuela. */
-export const navegacionCoordinadorEscuela: NavigationGroup[] = [
+const navegacionCoordinadorEscuela: NavigationGroup[] = [
   {
     title: 'Mi escuela',
     items: [{ path: 'monitoreo', label: 'Monitoreo de escuela', icon: ChartNoAxesCombined }],
   },
 ];
+
+export function gruposNavegacion(
+  usuario: { role: Role; coordinadorEscuela?: boolean } | null | undefined,
+): NavigationGroup[] {
+  if (!usuario) return [];
+  return usuario.role === 'tutor' && usuario.coordinadorEscuela
+    ? [...navigation.tutor, ...navegacionCoordinadorEscuela]
+    : navigation[usuario.role];
+}

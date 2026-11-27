@@ -47,12 +47,14 @@ public sealed class DocumentosService(TutoriaDbContext db, TutoriaContext contex
     // por solicitud en lugar de una consulta SQL por formulario o por sesión.
     private Dictionary<string, object?>? lectura;
     private HashSet<(string Estudiante, string Semestre)>? asignadosTutor;
-    public async Task PrepararLecturaMasiva(ActorTutoria actor, IEnumerable<SesionEntity> sesiones, CancellationToken ct)
+    public async Task PrepararLecturaMasiva(ActorTutoria actor, IEnumerable<SesionEntity> sesiones, CancellationToken ct, IEnumerable<AsignacionEntity>? asignacionesActivas = null)
     {
         lectura = sesiones.ToDictionary(s => "ses|" + s.Id, s => (object?)s);
         if (actor.Rol == "tutor")
-            asignadosTutor = (await db.Asignaciones.AsNoTracking().Where(a => a.TutorId == actor.Id && a.Activa)
-                .Select(a => new { a.EstudianteId, a.SemestreId }).ToArrayAsync(ct)).Select(a => (a.EstudianteId, a.SemestreId)).ToHashSet();
+            asignadosTutor = asignacionesActivas is not null
+                ? asignacionesActivas.Where(a => a.TutorId == actor.Id && a.Activa).Select(a => (a.EstudianteId, a.SemestreId)).ToHashSet()
+                : (await db.Asignaciones.AsNoTracking().Where(a => a.TutorId == actor.Id && a.Activa)
+                    .Select(a => new { a.EstudianteId, a.SemestreId }).ToArrayAsync(ct)).Select(a => (a.EstudianteId, a.SemestreId)).ToHashSet();
     }
     private async Task<T> Memo<T>(string clave, Func<Task<T>> cargar)
     {

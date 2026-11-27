@@ -85,13 +85,19 @@ public sealed class PadronController(TutoriaDbContext db, TutoriaContext context
         var persona = await db.Personas.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id &&
             (actor.AdminInstitucional || p.EscuelaId == actor.EscuelaId) &&
             (importado || (actor.AdminInstitucional && p.Tipo == "estudiante")), ct) ?? throw new TutoriaError(404, "Registro de padrón no disponible.");
-        var datosPersona = importado ? JsonDatos.Elemento(persona.DatosJson) : EstadoTutoriaService.Persona(persona,
-            await db.Contactos.AsNoTracking().SingleOrDefaultAsync(c => c.PersonaId == id, ct));
+        var datosPersona = importado
+            ? JsonDatos.Elemento(persona.DatosJson)
+            : JsonDatos.Elemento(await db.VistaPersonasEstado.AsNoTracking().Where(p => p.Id == id).Select(p => p.DatosEstado).SingleAsync(ct));
         var matriculas = await db.Matriculas.AsNoTracking().Where(m => m.EstudianteId == id).OrderBy(m => m.SemestreId).Select(m => m.DatosJson).ToArrayAsync(ct);
-        var cursos = await db.Catalogos.AsNoTracking().Where(c => c.Tipo == "cursos").Select(c => c.DatosJson).ToArrayAsync(ct);
+        var matriculasLeidas = matriculas.Select(JsonDatos.Leer<Dictionary<string, JsonElement>>).ToArray();
+        var cursoIds = matriculasLeidas
+            .SelectMany(datos => datos["cursos"].EnumerateArray().Select(c => c.GetProperty("cursoId").GetString()!))
+            .Distinct().ToArray();
+        var cursos = cursoIds.Length == 0
+            ? []
+            : await db.Catalogos.AsNoTracking().Where(c => c.Tipo == "cursos" && cursoIds.Contains(c.Id)).Select(c => c.DatosJson).ToArrayAsync(ct);
         var mapa = cursos.Select(JsonDatos.Elemento).ToDictionary(c => c.GetProperty("id").GetString()!);
-        return new { persona = datosPersona, matriculas = matriculas.Select(m => {
-            var datos = JsonDatos.Leer<Dictionary<string, JsonElement>>(m);
+        return new { persona = datosPersona, matriculas = matriculasLeidas.Select(datos => {
             var inscritos = datos["cursos"].EnumerateArray().Select(c => {
                 var curso = c.Deserialize<Dictionary<string, object?>>(JsonDatos.Options)!;
                 if (mapa.TryGetValue(c.GetProperty("cursoId").GetString()!, out var catalogo)) { curso["codigo"] = catalogo.GetProperty("codigo"); curso["nombre"] = catalogo.GetProperty("nombre"); }

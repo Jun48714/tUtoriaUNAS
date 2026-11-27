@@ -31,10 +31,15 @@ import {
   TutorInstruments,
   TutorReports,
   TutorNotices,
+  MonitoreoAvance,
+  MonitoreoSesiones,
+  MonitoreoFormatos,
+  MonitoreoDerivaciones,
   CoordDashboard,
   CoordAssignments,
   CoordTutors,
   CoordTutees,
+  CoordPadron,
   CoordPlan,
   CoordReviews,
   CoordReports,
@@ -68,24 +73,6 @@ const UnauthorizedPage = lazy(() =>
 );
 const NotFoundPage = lazy(() =>
   import('../pages/not-found/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
-);
-const CoordPadron = lazy(() =>
-  import('../pages/coordinacion/CoordPadron').then((m) => ({ default: m.CoordPadron })),
-);
-
-const MonitoreoAvance = lazy(() =>
-  import('../pages/monitoreo/MonitoreoAvance').then((m) => ({ default: m.MonitoreoAvance })),
-);
-const MonitoreoFormatos = lazy(() =>
-  import('../pages/monitoreo/MonitoreoFormatos').then((m) => ({ default: m.MonitoreoFormatos })),
-);
-const MonitoreoSesiones = lazy(() =>
-  import('../pages/monitoreo/MonitoreoSesiones').then((m) => ({ default: m.MonitoreoSesiones })),
-);
-const MonitoreoDerivaciones = lazy(() =>
-  import('../pages/monitoreo/MonitoreoDerivaciones').then((m) => ({
-    default: m.MonitoreoDerivaciones,
-  })),
 );
 /** El monitoreo de escuela solo se abre al docente designado coordinador de escuela. */
 function SoloCoordinadorEscuela({ children }: { children: ReactNode }) {

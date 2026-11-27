@@ -20,10 +20,12 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
         if (json is not null) foreach (var p in JsonDatos.Leer<Dictionary<string, bool>>(json)) if (valores.ContainsKey(p.Key)) valores[p.Key] = p.Value;
         return valores;
     }
-    public async Task<SistemaDto> Obtener(ActorTutoria actor, PeriodoEntity periodo, CancellationToken ct, string[]? cursosUsados = null)
+    public async Task<SistemaDto> Obtener(ActorTutoria actor, PeriodoEntity periodo, CancellationToken ct, string[]? cursosUsados = null, string[]? idsAsignados = null, string[]? escuelasActivasPrecargadas = null)
     {
         var institucional = actor.ConsultaInstitucional;
-        var escuelasActivas = institucional ? await db.Periodos.AsNoTracking().Where(p => p.Activo).Select(p => p.EscuelaId).ToArrayAsync(ct) : [];
+        var escuelasActivas = institucional
+            ? escuelasActivasPrecargadas is { Length: > 0 } ? escuelasActivasPrecargadas : await db.Periodos.AsNoTracking().Where(p => p.Activo).Select(p => p.EscuelaId).ToArrayAsync(ct)
+            : [];
         // El padrón agrega cientos de cursos de todas las escuelas (~300 KB). Del padrón solo se envían los cursos que
         // nombran las matrículas, horarios y docentes de esta respuesta; sin esa lista, los de la escuela del usuario.
         var porReferencia = cursosUsados is not null;
@@ -32,37 +34,67 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
                 OR ({porReferencia} AND "Id" = ANY({cursosUsados ?? []}))
                 OR (NOT {porReferencia} AND ({institucional} OR "DatosJson"->>'escuelaId' = {actor.EscuelaId})))
             """).AsNoTracking().ToArrayAsync(ct);
-        var ids = await db.Asignaciones.AsNoTracking().Where(a => a.Activa && a.EscuelaId == actor.EscuelaId && (actor.Rol == "coordinacion" || (actor.Rol == "tutor" ? a.TutorId == actor.Id : a.EstudianteId == actor.Id))).Select(a => a.EstudianteId).ToArrayAsync(ct);
-        if (actor.Rol == "estudiante") ids = [actor.Id];
-        if (actor.Rol == "coordinacion") ids = await db.Personas.AsNoTracking().Where(p => p.Tipo == "estudiante" && (institucional ? escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId)).Select(p => p.Id).ToArrayAsync(ct);
-        var fuentes = await db.Fuentes.AsNoTracking().Where(f =>
-            (f.EstudianteId != null ? ids.Contains(f.EstudianteId) : f.EscuelaId == null || (institucional ? escuelasActivas.Contains(f.EscuelaId) : f.EscuelaId == actor.EscuelaId)) &&
-            (f.Tipo != "insumos" || actor.Rol == "coordinacion") && (f.Tipo != "importacionesPadron" || actor.Rol == "coordinacion") &&
-            (f.TutorId == null || actor.Rol == "coordinacion" || f.TutorId == actor.Id || db.Asignaciones.Any(a => a.EstudianteId == actor.Id && a.TutorId == f.TutorId && a.Activa))).ToArrayAsync(ct);
+        string[] ids = actor.Rol switch
+        {
+            "estudiante" => [actor.Id],
+            "tutor" => idsAsignados is not null
+                ? idsAsignados.Where(id => id != actor.Id).ToArray()
+                : await db.Asignaciones.AsNoTracking().Where(a => a.Activa && a.EscuelaId == actor.EscuelaId && a.TutorId == actor.Id).Select(a => a.EstudianteId).ToArrayAsync(ct),
+            _ => [],
+        };
+        // Los resúmenes académicos solo los muestran las fichas del tutor y del estudiante. En la vista de todas las
+        // escuelas eran un tercio del estado (~1 MB por 3 700 alumnos) sin que ninguna pantalla de coordinación los leyera.
+        var fuentes = actor.Rol == "coordinacion"
+            ? await db.Fuentes.AsNoTracking().Where(f => f.Tipo != "resumenesAcademicos" &&
+                (f.EstudianteId != null
+                    ? db.Personas.Any(p => p.Id == f.EstudianteId && p.Tipo == "estudiante" && (institucional ? escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId))
+                    : f.EscuelaId == null || (institucional ? escuelasActivas.Contains(f.EscuelaId) : f.EscuelaId == actor.EscuelaId)))
+                .ToArrayAsync(ct)
+            : await db.Fuentes.AsNoTracking().Where(f =>
+                (f.EstudianteId != null ? ids.Contains(f.EstudianteId) : f.EscuelaId == null || f.EscuelaId == actor.EscuelaId) &&
+                f.Tipo != "insumos" && f.Tipo != "importacionesPadron" &&
+                (f.TutorId == null || f.TutorId == actor.Id || db.Asignaciones.Any(a => a.EstudianteId == actor.Id && a.TutorId == f.TutorId && a.Activa)))
+                .ToArrayAsync(ct);
         var data = fuentes.GroupBy(f => f.Tipo).ToDictionary(g => g.Key, g => g.Select(f => Fuente(f, actor.Rol)).ToArray());
-        var fichas = actor.Puede("seguimiento", "ver") ? await db.Instrumentos.AsNoTracking().Where(d => d.Formato == "F12" && (institucional ? escuelasActivas.Contains(d.EscuelaId) : d.EscuelaId == actor.EscuelaId) && (d.Estado == "enviado" || d.Estado == "aprobado") &&
-            (actor.Rol == "coordinacion" || (actor.Rol == "estudiante" ? d.EstudianteId == actor.Id : d.TutorId == actor.Id && ids.Contains(d.EstudianteId!)))).ToArrayAsync(ct) : [];
-        // InstrumentoId es único (IX_Seguimientos_InstrumentoId): índice en memoria en lugar de recorrer la lista por ficha.
-        var seguimientos = (await db.Seguimientos.AsNoTracking().Where(s => institucional ? escuelasActivas.Contains(s.EscuelaId) : s.EscuelaId == actor.EscuelaId).ToArrayAsync(ct))
-            .Where(s => s.InstrumentoId is not null).ToDictionary(s => s.InstrumentoId!, StringComparer.Ordinal);
-        var areas = new Dictionary<string, string> { ["Psicología"] = "psicologia", ["Psicopedagogía"] = "psicopedagogia", ["Medicina y Salud"] = "medicina", ["Bienestar y Servicio Social"] = "bienestar-social" };
-        data["derivaciones"] = fichas.Select(d => {
-            var r = JsonDatos.Leer<Dictionary<string, string>>(d.RespuestasJson); var s = seguimientos.GetValueOrDefault(d.Id);
-            return Elemento(new { id = "DER-" + d.Id, instrumentoId = d.Id, codigo = "F12-" + d.Id, formato = "F12", d.EstudianteId, d.TutorId, d.SemestreId,
-                area = areas.GetValueOrDefault(r.GetValueOrDefault("area", ""), "tutoria-academica"), motivo = r.GetValueOrDefault("motivo") == "Otro" ? r.GetValueOrDefault("motivo__otro", "Apoyo especializado") : r.GetValueOrDefault("motivo", "Apoyo especializado"),
-                detalle = r.GetValueOrDefault("detalle", ""), prioridad = s?.Prioridad ?? "media", fechaDerivacion = r.GetValueOrDefault("fecha", JsonDatos.Fecha(d.Actualizado)), fechaRecepcion = (string?)null, fechaCita = s?.FechaCita, fechaAtencion = (string?)null,
-                estado = s?.Estado ?? "registrada", responsableArea = s?.ResponsableArea ?? "Pendiente de recepción por el área", siguienteAccion = s?.SiguienteAccion ?? "El área debe comunicar la recepción de la solicitud.", actualizado = (s?.Actualizado ?? d.Actualizado).ToString("O"),
-                recomendacionComunicable = s?.RecomendacionComunicable, vigenciaRecomendacion = s?.VigenciaRecomendacion, historial = s is null ? Elemento(new[] { new { fecha = JsonDatos.Fecha(d.Actualizado), estado = "registrada", nota = "Ficha 12 registrada por el tutor.", responsable = r.GetValueOrDefault("nombreTutor", "Tutor") } }) : JsonDatos.Elemento(s.HistorialJson), version = s?.Version ?? 0 });
-        }).ToArray();
+        var derivacionesVista = actor.Puede("seguimiento", "ver")
+            ? await db.VistaDerivacionesSeguimiento.AsNoTracking().Where(d =>
+                (institucional ? escuelasActivas.Contains(d.EscuelaId) : d.EscuelaId == actor.EscuelaId) &&
+                (actor.Rol == "coordinacion" || (actor.Rol == "estudiante" ? d.EstudianteId == actor.Id : d.TutorId == actor.Id && d.EstudianteId != null && ids.Contains(d.EstudianteId))))
+                .ToArrayAsync(ct)
+            : [];
+        data["derivaciones"] = derivacionesVista.Select(d => Elemento(new
+        {
+            id = "DER-" + d.InstrumentoId, instrumentoId = d.InstrumentoId, codigo = "F12-" + d.InstrumentoId, formato = "F12",
+            estudianteId = d.EstudianteId, tutorId = d.TutorId, semestreId = d.SemestreId,
+            area = d.AreaCodigo, motivo = d.MotivoSistema, detalle = d.Detalle,
+            prioridad = d.Prioridad ?? "media",
+            fechaDerivacion = d.FechaRespuesta ?? JsonDatos.Fecha(d.InstrumentoActualizado),
+            fechaRecepcion = (string?)null, fechaCita = d.FechaCita, fechaAtencion = (string?)null,
+            estado = d.Estado ?? "registrada",
+            responsableArea = d.ResponsableArea ?? "Pendiente de recepción por el área",
+            siguienteAccion = d.SiguienteAccion ?? "El área debe comunicar la recepción de la solicitud.",
+            actualizado = d.Actualizado.ToString("O"),
+            recomendacionComunicable = d.RecomendacionComunicable, vigenciaRecomendacion = d.VigenciaRecomendacion,
+            historial = d.TieneSeguimiento && d.Historial is not null
+                ? JsonDatos.Elemento(d.Historial)
+                : Elemento(new[] { new { fecha = JsonDatos.Fecha(d.InstrumentoActualizado), estado = "registrada", nota = "Ficha 12 registrada por el tutor.", responsable = d.NombreTutor } }),
+            version = d.Version
+        })).ToArray();
         var contacto = await db.Contactos.AsNoTracking().SingleOrDefaultAsync(c => c.PersonaId == actor.Id, ct);
         var pref = await db.Preferencias.AsNoTracking().SingleOrDefaultAsync(p => p.UsuarioId == actor.Usuario.Id, ct);
         var mensajes = actor.Puede("comunicacion", "ver") ? await db.Mensajes.AsNoTracking().Include(m => m.Destinatarios)
             .Where(m => (institucional || m.EscuelaId == actor.EscuelaId) && (m.EmisorId == actor.Usuario.Id || (m.Estado == "publicado" && m.Destinatarios.Any(d => d.UsuarioId == actor.Usuario.Id)))).OrderByDescending(m => m.Creado).Take(500).ToArrayAsync(ct) : [];
-        // Diccionarios de nombres con tope defensivo: la vista institucional puede
-        // alcanzar escuelas con miles de personas; sin límite el snapshot crece sin control.
-        var personas = await db.Personas.AsNoTracking().Where(p => institucional ? p.EscuelaId == "" || escuelasActivas.Contains(p.EscuelaId) : p.EscuelaId == actor.EscuelaId).OrderBy(p => p.Id).Take(2000).ToDictionaryAsync(p => p.Id, ct);
-        var usuarios = await db.Usuarios.AsNoTracking().Where(u => institucional ? u.EscuelaId == "" || escuelasActivas.Contains(u.EscuelaId) : u.EscuelaId == actor.EscuelaId).OrderBy(u => u.Id).Take(2000).ToDictionaryAsync(u => u.Id, ct);
-        var contactos = await db.Contactos.AsNoTracking().Where(c => personas.Keys.Contains(c.PersonaId)).ToDictionaryAsync(c => c.PersonaId, ct);
+        var destinatariosMensajesIds = mensajes
+            .SelectMany(m => m.EmisorId == actor.Usuario.Id || actor.Rol == "coordinacion" ? m.Destinatarios : m.Destinatarios.Where(d => d.UsuarioId == actor.Usuario.Id))
+            .Select(d => d.UsuarioId).Distinct().ToArray();
+        // Consulta la vista vw_directorio_usuarios (solo escalares, sin truncamiento en 2 000 ni documentos JSON completos).
+        var usuarios = actor.Rol == "coordinacion"
+            ? await db.VistaDirectorioUsuarios.AsNoTracking()
+                .Where(u => institucional ? u.EscuelaId == "" || escuelasActivas.Contains(u.EscuelaId) : u.EscuelaId == actor.EscuelaId)
+                .OrderBy(u => u.Id).ToDictionaryAsync(u => u.Id, ct)
+            : await db.VistaDirectorioUsuarios.AsNoTracking()
+                .Where(u => u.EscuelaId == actor.EscuelaId && (u.Rol == "coordinacion" || (u.Rol == "estudiante" && ids.Contains(u.PersonaId)) || destinatariosMensajesIds.Contains(u.Id)))
+                .OrderBy(u => u.Id).ToDictionaryAsync(u => u.Id, ct);
         JsonElement Mensaje(MensajeEntity m)
         {
             // Solo el emisor y coordinación conocen la lista completa; cada destinatario recibe su propia entrada y el total.
@@ -70,12 +102,16 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
             return Elemento(new { m.Id, m.Asunto, m.Cuerpo, m.Canal, m.EscuelaId, emisorId = m.EmisorId,
                 destinatarioIds = visibles.Select(d => d.UsuarioId).ToArray(), totalDestinatarios = m.Destinatarios.Count, m.ProgramadoPara,
                 estado = m.Estado == "publicado" ? "enviado" : m.Estado, enviado = (m.Publicado ?? m.ProgramadoPara ?? m.Creado).ToString("O"),
-                destinatarios = visibles.Select(d => usuarios.TryGetValue(d.UsuarioId, out var u) && personas.TryGetValue(u.PersonaId, out var p) ? contactos.GetValueOrDefault(p.Id)?.Correo ?? JsonDatos.Texto(p.DatosJson, "correo") : "").ToArray(),
+                destinatarios = visibles.Select(d => usuarios.TryGetValue(d.UsuarioId, out var u) ? u.Correo : "").ToArray(),
                 m.Plantilla, m.RelacionadoCon, m.Version, editable = m.EmisorId == actor.Usuario.Id && m.Estado != "publicado" });
         }
         var notificaciones = actor.Puede("comunicacion", "ver") ? await db.Notificaciones.AsNoTracking().Where(n => n.UsuarioId == actor.Usuario.Id).OrderByDescending(n => n.Fecha).Take(500).ToArrayAsync(ct) : [];
         var solicitudes = actor.Puede("solicitudes", "ver") ? await db.SolicitudesCambio.AsNoTracking().Where(s => (institucional ? escuelasActivas.Contains(s.EscuelaId) : s.EscuelaId == actor.EscuelaId) && (actor.Rol == "coordinacion" || s.EstudianteId == actor.Id)).OrderByDescending(s => s.Creado).Take(500).ToArrayAsync(ct) : [];
         var actividades = actor.Puede("planes", "ver") ? await db.ActividadesPlan.AsNoTracking().Where(a => institucional ? escuelasActivas.Contains(a.EscuelaId) : a.EscuelaId == actor.EscuelaId).OrderBy(a => a.Id).Take(500).ToArrayAsync(ct) : [];
+        var idsResponsables = actividades.Select(a => a.ResponsableId).Distinct().ToArray();
+        var responsables = idsResponsables.Length == 0
+            ? []
+            : await db.VistaPersonasResumen.AsNoTracking().Where(p => idsResponsables.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.NombreCompleto, ct);
         var permisos = await db.Permisos.AsNoTracking().Where(p => actor.Rol == "coordinacion" || p.Rol == actor.Rol).ToArrayAsync(ct);
         var config = institucional ? null : await db.ConfiguracionPeriodos.AsNoTracking().SingleOrDefaultAsync(c => c.PeriodoId == periodo.Id, ct);
         var periodosEscuela = institucional ? await (from p in db.Periodos.AsNoTracking()
@@ -88,20 +124,34 @@ public sealed class SistemaService(TutoriaDbContext db, TutoriaContext context, 
         if (config is not null && catalogos.TryGetValue("semestres", out var periodos))
             catalogos["semestres"] = periodos.Select(s => { var d = s.Deserialize<Dictionary<string, object?>>(JsonDatos.Options)!; if (s.GetProperty("id").GetString() == periodo.SemestreId) { d["inicio"] = config.Inicio; d["fin"] = config.Fin; d["estado"] = config.Cerrado ? "cerrado" : "en-curso"; } return Elemento(d); }).ToArray();
         var actividad = await db.Auditoria.AsNoTracking().Where(a => a.UsuarioId == actor.Usuario.Id).OrderByDescending(a => a.Id).Take(15).ToArrayAsync(ct);
-        var campanas = await db.Inscripciones.AsNoTracking().Where(i => i.EstudianteId == actor.Id).Select(i => i.CampanaId).ToArrayAsync(ct);
-        var totalesCampanas = await db.Inscripciones.AsNoTracking().GroupBy(i => i.CampanaId).Select(g => new { Id = g.Key, Total = g.Count() }).ToDictionaryAsync(g => g.Id, g => g.Total, ct);
-        if (data.TryGetValue("campanasSalud", out var eventos)) data["campanasSalud"] = eventos.Where(e => institucional || e.GetProperty("escuelas").EnumerateArray().Any(s => s.GetString() == actor.EscuelaId)).Select(e => { var d = e.Deserialize<Dictionary<string, object?>>(JsonDatos.Options)!; var id = e.GetProperty("id").GetString()!; d["inscrito"] = campanas.Contains(id); d["inscritos"] = e.GetProperty("inscritos").GetInt32() + totalesCampanas.GetValueOrDefault(id); return Elemento(d); }).ToArray();
+        if (data.TryGetValue("campanasSalud", out var eventos))
+        {
+            var resumenCampanas = await db.Inscripciones.AsNoTracking()
+                .GroupBy(i => i.CampanaId)
+                .Select(g => new { Id = g.Key, Total = g.Count(), Inscrito = g.Any(x => x.EstudianteId == actor.Id) })
+                .ToDictionaryAsync(g => g.Id, ct);
+            data["campanasSalud"] = eventos.Where(e => institucional || e.GetProperty("escuelas").EnumerateArray().Any(s => s.GetString() == actor.EscuelaId))
+                .Select(e =>
+                {
+                    var d = e.Deserialize<Dictionary<string, object?>>(JsonDatos.Options)!;
+                    var id = e.GetProperty("id").GetString()!;
+                    var info = resumenCampanas.GetValueOrDefault(id);
+                    d["inscrito"] = info?.Inscrito ?? false;
+                    d["inscritos"] = e.GetProperty("inscritos").GetInt32() + (info?.Total ?? 0);
+                    return Elemento(d);
+                }).ToArray();
+        }
         return new(catalogos, data,
             new(contacto?.Correo ?? JsonDatos.Texto(actor.Persona.DatosJson, "correo"), contacto?.Telefono ?? JsonDatos.Texto(actor.Persona.DatosJson, "telefono"), contacto?.Version ?? 0),
             new(pref is null ? AvisosPredeterminados() : JsonDatos.Leer<Dictionary<string, bool>>(pref.AvisosJson), LeerPantalla(pref?.PantallaJson), pref?.Version ?? 0),
             mensajes.Select(Mensaje).ToArray(), notificaciones.Select(n => Elemento(new { n.Id, n.Titulo, n.Detalle, fecha = n.Fecha.ToString("O"), leida = n.Leida != null, n.Tipo, n.Enlace,
                 canal = n.MensajeId is null ? "sistema" : mensajes.FirstOrDefault(m => m.Id == n.MensajeId)?.Canal ?? "sistema", aviso = n.MensajeId is null ? (JsonElement?)null : mensajes.Where(m => m.Id == n.MensajeId).Select(Mensaje).Cast<JsonElement?>().FirstOrDefault() })).ToArray(),
             solicitudes.Select(s => Elemento(s)).ToArray(), actividades.Select(a => Elemento(new { a.Id, a.SemestreId, a.EscuelaId, a.Problematica, a.Objetivo, a.Actividad, a.Meta, a.FechaInicio, a.FechaFin,
-                a.ResponsableId, responsable = personas.TryGetValue(a.ResponsableId, out var p) ? DocumentosService.Nombre(p) : "Por confirmar", a.Evidencia, a.Avance, a.Estado, a.Aprobacion, a.Version })).ToArray(),
-            actor.Puede("cuentas", "ver") ? usuarios.Values.Where(u => u.Rol != "coordinacion").Select(u => Elemento(new { u.Id, u.PersonaId, rol = u.Rol, identifier = u.Identificador, nombre = personas.TryGetValue(u.PersonaId, out var p) ? DocumentosService.Nombre(p) : u.Identificador, u.Activo, u.Version })).ToArray() : [],
+                a.ResponsableId, responsable = responsables.TryGetValue(a.ResponsableId, out var nombreResp) && nombreResp.Length > 0 ? nombreResp : "Por confirmar", a.Evidencia, a.Avance, a.Estado, a.Aprobacion, a.Version })).ToArray(),
+            actor.Puede("cuentas", "ver") ? usuarios.Values.Where(u => u.Rol != "coordinacion").Select(u => Elemento(new { u.Id, u.PersonaId, rol = u.Rol, identifier = u.Identificador, nombre = u.Nombre, u.Activo, u.Version })).ToArray() : [],
             permisos.Select(p => Elemento(new { id = p.Rol + "|" + p.Recurso, rol = p.Rol, recurso = p.Nombre, codigoRecurso = p.Recurso, acciones = JsonDatos.Leer<string[]>(p.AccionesJson) })).ToArray(), config is null ? null : Elemento(config),
             actividad.Select(a => Elemento(new { titulo = a.Accion, descripcion = a.RecursoId, fecha = a.Fecha.ToString("O") })).ToArray(), actor.Usuario.Issuer == "local-development",
-            actor.Puede("comunicacion", "crear") ? usuarios.Values.Where(u => u.Activo && (actor.Rol == "coordinacion" || u.Rol == "coordinacion" || (u.Rol == "estudiante" && ids.Contains(u.PersonaId)))).Select(u => Elemento(new { u.Id, u.PersonaId, u.EscuelaId, rol = u.Rol, nombre = personas.TryGetValue(u.PersonaId, out var p) ? DocumentosService.Nombre(p) : u.Identificador })).ToArray() : [], periodosEscuela);
+            actor.Puede("comunicacion", "crear") ? usuarios.Values.Where(u => u.Activo && (actor.Rol == "coordinacion" || u.Rol == "coordinacion" || (u.Rol == "estudiante" && ids.Contains(u.PersonaId)))).Select(u => Elemento(new { u.Id, u.PersonaId, u.EscuelaId, rol = u.Rol, nombre = u.Nombre })).ToArray() : [], periodosEscuela);
     }
     private static JsonElement Fuente(RegistroFuenteEntity f, string rol)
     {

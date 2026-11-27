@@ -3,9 +3,9 @@ import type { Role } from '../types/auth';
 const CLAVES_PROHIBIDAS = new Set(['__proto__', 'prototype', 'constructor']);
 
 // Conserva la expresión de Valibot 1.5; <input type="email"> acepta direcciones sin TLD (a@b).
-export const EMAIL_REGEX = /^[\w+-]+(?:\.[\w+-]+)*@[\da-zA-Z]+(?:[.-][\da-zA-Z]+)*\.[a-zA-Z]{2,}$/u;
-export const ISO_DATE_REGEX = /^\d{4}-(?:0[1-9]|1[0-2])-(?:[12]\d|0[1-9]|3[01])$/u;
-export const HORA_24_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+const EMAIL_REGEX = /^[\w+-]+(?:\.[\w+-]+)*@[\da-zA-Z]+(?:[.-][\da-zA-Z]+)*\.[a-zA-Z]{2,}$/u;
+const ISO_DATE_REGEX = /^\d{4}-(?:0[1-9]|1[0-2])-(?:[12]\d|0[1-9]|3[01])$/u;
+const HORA_24_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);

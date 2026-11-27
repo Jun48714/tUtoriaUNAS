@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, LogOut, Menu, X } from '../ui/icons';
 import escudo from '../../assets/unas-logo-mark-120.png';
-import { navegacionCoordinadorEscuela, navigation } from '../../data/navegacion';
+import { gruposNavegacion } from '../../data/navegacion';
 import type { NavigationItem } from '../../data/navegacion';
 import { useAuth } from '../../hooks/useAuth';
 import { usePortal } from '../../hooks/usePortal';
@@ -47,12 +47,7 @@ export function Sidebar({ onNavigate, mini = false, onToggleMini, onCerrar }: Si
   const portal = usePortal();
   const { pathname, search } = useLocation();
   const ubicacion = `${pathname}${search}`;
-  const grupos = user
-    ? [
-        ...navigation[user.role],
-        ...(user.role === 'tutor' && user.coordinadorEscuela ? navegacionCoordinadorEscuela : []),
-      ]
-    : [];
+  const grupos = gruposNavegacion(user);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [rutaVisible, setRutaVisible] = useState(ubicacion);
   const hintId = useId();

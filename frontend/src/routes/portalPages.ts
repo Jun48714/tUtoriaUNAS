@@ -89,6 +89,22 @@ export const TutorNotices = precargable(() =>
   import('../pages/tutor/TutorNotices').then((m) => ({ default: m.TutorNotices })),
 );
 
+// Monitoreo de escuela (docente designado coordinador de escuela)
+export const MonitoreoAvance = precargable(() =>
+  import('../pages/monitoreo/MonitoreoAvance').then((m) => ({ default: m.MonitoreoAvance })),
+);
+export const MonitoreoSesiones = precargable(() =>
+  import('../pages/monitoreo/MonitoreoSesiones').then((m) => ({ default: m.MonitoreoSesiones })),
+);
+export const MonitoreoFormatos = precargable(() =>
+  import('../pages/monitoreo/MonitoreoFormatos').then((m) => ({ default: m.MonitoreoFormatos })),
+);
+export const MonitoreoDerivaciones = precargable(() =>
+  import('../pages/monitoreo/MonitoreoDerivaciones').then((m) => ({
+    default: m.MonitoreoDerivaciones,
+  })),
+);
+
 // Coordinación de tutoría y gestión institucional
 export const CoordDashboard = precargable(() =>
   import('../pages/coordinacion/CoordDashboard').then((m) => ({ default: m.CoordDashboard })),
@@ -138,10 +154,18 @@ export const CoordSemesters = precargable(() =>
 export const CoordAudit = precargable(() =>
   import('../pages/coordinacion/CoordAudit').then((m) => ({ default: m.CoordAudit })),
 );
+export const CoordPadron = precargable(() =>
+  import('../pages/coordinacion/CoordPadron').then((m) => ({ default: m.CoordPadron })),
+);
 
 const shared = {
   perfil: ProfilePage,
   preferencias: PreferencesPage,
+};
+const monitoreoSubvistas: Record<string, { preload(): Promise<unknown> }> = {
+  sesiones: MonitoreoSesiones,
+  formatos: MonitoreoFormatos,
+  derivaciones: MonitoreoDerivaciones,
 };
 const pages: Record<string, Record<string, { preload(): Promise<unknown> }>> = {
   estudiante: {
@@ -169,6 +193,7 @@ const pages: Record<string, Record<string, { preload(): Promise<unknown> }>> = {
     horario: TutorSessions,
     reportes: TutorReports,
     avisos: TutorNotices,
+    monitoreo: MonitoreoAvance,
   },
   coordinacion: {
     ...shared,
@@ -176,6 +201,7 @@ const pages: Record<string, Record<string, { preload(): Promise<unknown> }>> = {
     asignaciones: CoordAssignments,
     tutores: CoordTutors,
     tutorados: CoordTutees,
+    padron: CoordPadron,
     plan: CoordPlan,
     revisiones: CoordReviews,
     reportes: CoordReports,
@@ -199,9 +225,11 @@ export function preloadPortalRoute(path: string) {
   const page =
     role === 'tutor' && module === 'tutorados' && detail
       ? TuteeRecord
-      : role === 'estudiante' && module === 'instrumentos' && detail
-        ? StudentInstrumentFill
-        : pages[role]?.[module];
+      : role === 'tutor' && module === 'monitoreo' && detail
+        ? (monitoreoSubvistas[detail] ?? MonitoreoAvance)
+        : role === 'estudiante' && module === 'instrumentos' && detail
+          ? StudentInstrumentFill
+          : pages[role]?.[module];
   // Una precarga fallida no interrumpe la página actual. El clic puede reintentar.
   void page?.preload().catch(() => undefined);
 }

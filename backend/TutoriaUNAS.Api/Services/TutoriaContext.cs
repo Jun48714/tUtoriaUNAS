@@ -35,9 +35,9 @@ public static class JsonDatos
     public static string Texto(string json, string field) => Elemento(json).TryGetProperty(field, out var v) ? v.GetString() ?? "" : "";
     private static readonly TimeZoneInfo Lima = TimeZoneInfo.FindSystemTimeZoneById("America/Lima");
     public static string Fecha(DateTimeOffset value) => TimeZoneInfo.ConvertTime(value, Lima).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-    public static InstrumentoDto Dto(InstrumentoEntity d) => new(d.Id, d.Formato, d.SemestreId, d.TutorId, d.EstudianteId, d.SesionId,
+    public static InstrumentoDto Dto(InstrumentoEntity d, bool incluirRespuestas = true) => new(d.Id, d.Formato, d.SemestreId, d.TutorId, d.EstudianteId, d.SesionId,
         d.Estado, d.Avance, d.Version, Fecha(d.Creado), Fecha(d.Actualizado), d.Enviado is { } fecha ? Fecha(fecha) : null,
-        d.RevisadoPor, Elemento(d.ObservacionesJson), false, Leer<Dictionary<string, string>>(d.RespuestasJson), d.EscuelaId,
+        d.RevisadoPor, Elemento(d.ObservacionesJson), false, incluirRespuestas ? Leer<Dictionary<string, string>>(d.RespuestasJson) : [], d.EscuelaId,
         d.DefinicionJson is null ? null : Elemento(d.DefinicionJson));
     public static SesionDto Dto(SesionEntity s, string? soloEstudiante = null, bool incluirEvidencia = false) => new(s.Id, "TUT-" + s.Id, s.Tipo, s.TutorId, s.SemestreId,
         s.Fecha, s.HoraInicio, s.HoraFin, s.Modalidad, s.Lugar, s.Tema, s.Objetivo, s.Estado,

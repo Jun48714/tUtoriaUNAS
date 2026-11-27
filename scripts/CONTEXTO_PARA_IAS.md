@@ -619,3 +619,44 @@ barra lateral verde sólida y tarjetas rellenas.
     Las E2E `api-persistencia` y `session-evaluations` marcan ahora el radio «Asistió».
   - Panel del estudiante: la tarjeta «Próxima sesión» (repetía el bloque) pasa a «Sesiones
     programadas».
+
+## 24. Demora del login al panel de administración (27 de noviembre de 2026)
+
+Pedido del usuario: el paso del login al panel (sobre todo coordinación/administración institucional)
+tardaba mucho, aun con las vistas de PostgreSQL. Medido con una copia de la base de producción en
+contenedores aparte (ya eliminados) y Playwright con red simulada Perú → VPS (150 ms, CPU 4×).
+
+- **Producción no tenía las vistas:** `/opt/tutoria-unas` estaba en `f7686c0` con cambios locales; su
+  base tenía migraciones hasta la 018 y 0 vistas. La 019 y `PrecalentamientoApi` solo existían en el
+  repo de trabajo (se desplegaron después; ver abajo).
+- El servidor no era el cuello de botella: estado institucional ~180 ms (vista `vw_personas_estado`
+  ~55 ms), sin consultas > 1 s en el log de producción. El problema era el **tamaño** del estado del
+  administrador en «Todas las escuelas»: 3,7 MB de JSON (307 KB brotli), con 2,0 MB de estudiantes de
+  las 15 escuelas y 1,07 MB de `resumenesAcademicos`.
+- Cambios:
+  - `SistemaService.Obtener`: coordinación ya no recibe `resumenesAcademicos` (solo lo usan las fichas
+    de tutor y estudiante: `resumenDe` en `StudentRecord`, `TuteeRecord`, `TutorTutees`).
+  - `019-vistas-rendimiento.sql` (`vw_personas_estado`): quita `origen`, `apellidoPaterno` y
+    `apellidoMaterno` (el portal usa `apellidos`). Se editó la 019 porque no estaba aplicada en
+    ninguna base; una vez desplegada, cualquier cambio va en una migración nueva.
+  - Frontend: `apiAuthService.login` lanza `GET RUTA_ESTADO_INICIAL` en cuanto recibe el token y lo
+    pasa a `refrescarApi(true, pedido)`; antes esperaba a que bajara el módulo `apiTutoria` y sus
+    dependencias (compiten con ECharts por el ancho de banda). La constante vive en `apiClient`
+    porque `apiTutoria` se carga en diferido.
+- Resultado: estado institucional 307 → 228 KB brotli, 3,69 → 2,02 MB JSON; coordinación de una
+  escuela 70 → 55 KB. Login → panel del admin: 1,73 → 1,17 s (5 Mbps) y 3,24 → 2,54 s (2 Mbps).
+- Verificado: backend 157/157 (PostgreSQL 17), frontend 325/325, `tsc -b`, ESLint y Prettier de
+  `src`; 10 pantallas de coordinación sin errores de consola; tutor y estudiante entran igual.
+- **Desplegado el 27/11/2026 17:25 (autorizado por el usuario).** Respaldos previos en
+  `/home/opc/respaldos-tutoria/2026-11-27-predespliegue/` (`tutoria_unas.dump`, `opt-codigo.tgz`) e
+  imágenes `tutoria-unas-api|web:rollback-2026-11-27`. Se sincronizaron con `rsync --delete` solo
+  `backend/` y `frontend/` del repo de trabajo a `/opt/tutoria-unas` (sin tocar `.env`,
+  `docker-compose.yml` ni `deploy/Caddyfile`, que tiene el bloque del facturador y el puerto 80), luego
+  `docker compose build api web` y `up -d migrate api web`. Producción: migración 019 aplicada, 6 vistas,
+  «API precalentada en 1781 ms», salud 200, login HTML sin errores. El git de `/opt` sigue en `f7686c0`
+  con el árbol modificado: su código coincide con el repo de trabajo, no con su HEAD.
+  Rollback: `docker tag tutoria-unas-api:rollback-2026-11-27 tutoria-unas-api:latest` (ídem web) y
+  `docker compose up -d --no-build api web`; la 019 solo agrega índices y vistas.
+- Pendiente sugerido: con 2 Mbps aún domina la descarga de los 3 700 estudiantes (≈ 190 KB). Bajarla
+  exige pedir la lista por pantalla/escuela en lugar de dentro del estado. Brotli calidad 6 en lugar
+  de 4 ahorraría ~13 % más a cambio de ~15 ms de CPU por respuesta 200.

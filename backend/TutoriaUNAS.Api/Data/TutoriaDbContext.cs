@@ -36,6 +36,12 @@ public sealed class TutoriaDbContext(DbContextOptions<TutoriaDbContext> options)
     public DbSet<SeguimientoDerivacionEntity> Seguimientos => Set<SeguimientoDerivacionEntity>();
     public DbSet<InscripcionCampanaEntity> Inscripciones => Set<InscripcionCampanaEntity>();
     public DbSet<ConfiguracionPeriodoEntity> ConfiguracionPeriodos => Set<ConfiguracionPeriodoEntity>();
+    public DbSet<VistaPersonaResumenEntity> VistaPersonasResumen => Set<VistaPersonaResumenEntity>();
+    public DbSet<VistaPersonaEstadoEntity> VistaPersonasEstado => Set<VistaPersonaEstadoEntity>();
+    public DbSet<VistaMatriculaEstadoEntity> VistaMatriculasEstado => Set<VistaMatriculaEstadoEntity>();
+    public DbSet<VistaDirectorioUsuarioEntity> VistaDirectorioUsuarios => Set<VistaDirectorioUsuarioEntity>();
+    public DbSet<VistaDerivacionSeguimientoEntity> VistaDerivacionesSeguimiento => Set<VistaDerivacionSeguimientoEntity>();
+    public DbSet<VistaMonitoreoEstudianteEntity> VistaMonitoreoEstudiantes => Set<VistaMonitoreoEstudianteEntity>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -115,8 +121,15 @@ public sealed class TutoriaDbContext(DbContextOptions<TutoriaDbContext> options)
         model.Entity<InscripcionCampanaEntity>().HasOne<PersonaEntity>().WithMany().HasForeignKey(e => e.EstudianteId).OnDelete(DeleteBehavior.Restrict);
         model.Entity<ConfiguracionPeriodoEntity>().ToTable("ConfiguracionPeriodos").HasKey(e => e.PeriodoId);
         model.Entity<ConfiguracionPeriodoEntity>().HasOne<PeriodoEntity>().WithMany().HasForeignKey(e => e.PeriodoId).OnDelete(DeleteBehavior.Restrict);
+        model.Entity<VistaPersonaResumenEntity>().HasNoKey().ToView("vw_personas_resumen");
+        model.Entity<VistaPersonaEstadoEntity>().HasNoKey().ToView("vw_personas_estado");
+        model.Entity<VistaMatriculaEstadoEntity>().HasNoKey().ToView("vw_matriculas_estado");
+        model.Entity<VistaDirectorioUsuarioEntity>().HasNoKey().ToView("vw_directorio_usuarios");
+        model.Entity<VistaDerivacionSeguimientoEntity>().HasNoKey().ToView("vw_derivaciones_seguimiento");
+        model.Entity<VistaMonitoreoEstudianteEntity>().HasNoKey().ToView("vw_monitoreo_estudiantes");
         foreach (var entity in model.Model.GetEntityTypes())
         {
+            if (entity.FindPrimaryKey() is null) continue;
             foreach (var property in entity.GetProperties())
             {
                 if (property.ClrType == typeof(string) && property.Name.EndsWith("Json", StringComparison.Ordinal)) property.SetColumnType("jsonb");

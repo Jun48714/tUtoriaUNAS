@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronRight, LogOut, Menu, Search, Settings2, UserRound, X } from '../ui/icons';
 import { useAuth } from '../../hooks/useAuth';
 import { usePortal } from '../../hooks/usePortal';
-import { navigation } from '../../data/navegacion';
+import { gruposNavegacion } from '../../data/navegacion';
 import { estudiantePorId, estudiantes, iniciales } from '../../data/personas';
 import { roleDetails } from '../../utils/roles';
 import { formatFechaHora } from '../../utils/fechas';
@@ -70,10 +70,12 @@ export function Topbar({ menuOpen, menuExpanded, onToggleMenu, scopeHostRef }: T
     return () => document.removeEventListener('keydown', alPulsar);
   }, [panel, busquedaVisible]);
 
+  const grupos = useMemo(() => gruposNavegacion(user), [user]);
+
   const titulo = (() => {
     if (!user) return { grupo: '', label: '' };
     const segmento = pathname.split('/')[2] ?? 'dashboard';
-    const entradas = navigation[user.role].flatMap((grupo) =>
+    const entradas = grupos.flatMap((grupo) =>
       grupo.items.flatMap((entrada) =>
         (entrada.children ?? [entrada]).map((item) => ({ grupo: grupo.title, item })),
       ),
@@ -88,7 +90,7 @@ export function Topbar({ menuOpen, menuExpanded, onToggleMenu, scopeHostRef }: T
   const resultados = useMemo<Resultado[]>(() => {
     if (!user || busqueda.trim().length < 2) return [];
     const termino = busqueda.trim().toLocaleLowerCase('es-PE');
-    const modulos = navigation[user.role]
+    const modulos = grupos
       .flatMap((grupo) => grupo.items.flatMap((item) => item.children ?? [item]))
       .filter((item) => item.label.toLocaleLowerCase('es-PE').includes(termino))
       .map((item) => ({
@@ -139,7 +141,7 @@ export function Topbar({ menuOpen, menuExpanded, onToggleMenu, scopeHostRef }: T
             : `/coordinacion/tutorados?buscar=${encodeURIComponent(estudiante!.codigo)}`,
       }));
     return [...modulos, ...personas].slice(0, 7);
-  }, [busqueda, portal.docente, portal.tutor, portal.tutorados, user]);
+  }, [busqueda, grupos, portal.docente, portal.tutor, portal.tutorados, user]);
 
   if (!user) return null;
   const sinLeer = portal.avisosSinLeer;

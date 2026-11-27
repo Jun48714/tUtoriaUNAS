@@ -65,6 +65,8 @@ export function setApiSession(value: ApiSession | null, remember = true) {
 export function seleccionarEscuelaApi(escuelaId: string | undefined) {
   escuelaAdministrada = escuelaId;
 }
+/** Primera carga del estado tras el login; administración abre en la vista de todas las escuelas. */
+export const RUTA_ESTADO_INICIAL = '/api/tutoria/estado?inicio=true';
 export function rutaEscuela(path: string, escuela: string) {
   return `${path}${path.includes('?') ? '&' : '?'}${new URLSearchParams({ ambitoEscuela: escuela })}`;
 }

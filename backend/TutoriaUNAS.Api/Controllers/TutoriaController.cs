@@ -65,11 +65,9 @@ public sealed class TutoriaController(EstadoTutoriaService estado, AgendaService
         var registros = await db.Auditoria.AsNoTracking().Where(a => actor.ConsultaInstitucional || a.EscuelaId == actor.EscuelaId)
             .OrderByDescending(a => a.Id).Take(200).ToArrayAsync(ct);
         var ids = registros.Select(a => a.UsuarioId).Distinct().ToArray();
-        var cuentas = await (from usuario in db.Usuarios.AsNoTracking()
-            join persona in db.Personas.AsNoTracking() on usuario.PersonaId equals persona.Id
-            where ids.Contains(usuario.Id) && (actor.ConsultaInstitucional || usuario.AdminInstitucional ||
-                (usuario.EscuelaId == actor.EscuelaId && persona.EscuelaId == actor.EscuelaId))
-            select new { usuario.Id, usuario.Identificador, usuario.Rol, persona.DatosJson })
+        var cuentas = await db.VistaDirectorioUsuarios.AsNoTracking()
+            .Where(u => ids.Contains(u.Id) && (actor.ConsultaInstitucional || u.AdminInstitucional ||
+                (u.EscuelaId == actor.EscuelaId && u.PersonaEscuelaId == actor.EscuelaId)))
             .ToDictionaryAsync(u => u.Id, ct);
         return Ok(registros.Select(registro =>
         {
@@ -80,7 +78,7 @@ public sealed class TutoriaController(EstadoTutoriaService estado, AgendaService
                 registro.Accion, registro.RecursoId, registro.Version, registro.Dispositivo,
                 identificador = cuenta?.Identificador,
                 rol = cuenta?.Rol,
-                nombre = cuenta is null ? null : $"{JsonDatos.Texto(cuenta.DatosJson, "nombres")} {JsonDatos.Texto(cuenta.DatosJson, "apellidos")}".Trim(),
+                nombre = cuenta?.NombreCompleto,
             };
         }));
     }

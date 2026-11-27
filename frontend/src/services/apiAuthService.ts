@@ -1,5 +1,11 @@
 import type { AuthService, Role } from '../types/auth';
-import { apiJson, getApiSession, setApiSession } from './apiClient';
+import {
+  RUTA_ESTADO_INICIAL,
+  apiJson,
+  apiJsonSiCambio,
+  getApiSession,
+  setApiSession,
+} from './apiClient';
 import type * as ApiTutoria from './apiTutoria';
 import type { EstadoApi } from './apiTutoria';
 import { ActivacionRequerida, borrarActivacion, guardarActivacion } from './cuentas';
@@ -99,9 +105,15 @@ export const apiAuthService: AuthService = {
       },
       false,
     );
+    // El estado se pide en cuanto llega el token, sin esperar a que termine de descargarse el módulo que lo
+    // aplica: esas descargas compiten con las del panel y, con la latencia hasta el servidor, retrasaban la consulta.
+    const pedido = result.estado
+      ? undefined
+      : apiJsonSiCambio<EstadoApi>(RUTA_ESTADO_INICIAL, null);
+    pedido?.catch(() => undefined); // El fallo lo informa refrescarApi; aquí no debe quedar sin atender.
     try {
       const api = await cargando;
-      const data = result.estado ?? (await api.refrescarApi(true));
+      const data = result.estado ?? (await api.refrescarApi(true, pedido));
       if (!data) throw new Error('No se pudo validar la cuenta con el servidor.');
       if (result.estado) api.aplicarEstadoApi(data);
       setApiSession(

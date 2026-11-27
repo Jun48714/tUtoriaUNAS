@@ -28,15 +28,15 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         var users = await db.Usuarios.AsNoTracking().Where(u => (!u.AdminInstitucional || u.Id == actor.Usuario.Id) &&
             ((actor.ConsultaInstitucional && escuelasActivas.Contains(u.EscuelaId)) || u.EscuelaId == actor.EscuelaId || (u.EscuelaId == "" && u.Issuer == SeguridadCuenta.Issuer))).ToArrayAsync(ct);
         var ids = users.Select(u => u.Id).ToArray(); var pids = users.Select(u => u.PersonaId).ToArray();
-        var personas = await db.Personas.AsNoTracking().Where(p => pids.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
+        var personas = await db.VistaPersonasResumen.AsNoTracking().Where(p => pids.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
         var cred = await db.CredencialesCuenta.AsNoTracking().Where(c => ids.Contains(c.UsuarioId)).ToDictionaryAsync(c => c.UsuarioId, ct);
         var mails = (await db.CorreosCuenta.AsNoTracking().Where(m => ids.Contains(m.UsuarioId!)).OrderByDescending(m => m.Creado).ToArrayAsync(ct))
             .ToLookup(m => m.UsuarioId);
         return users.Select(u => {
-            var c = cred.GetValueOrDefault(u.Id); var mail = mails[u.Id].FirstOrDefault();
-            return (object)new { u.Id, u.PersonaId, u.EscuelaId, rol = u.Rol, identifier = u.Identificador, nombre = DocumentosService.Nombre(personas[u.PersonaId]), u.Activo, u.Version,
+            var p = personas[u.PersonaId]; var c = cred.GetValueOrDefault(u.Id); var mail = mails[u.Id].FirstOrDefault();
+            return (object)new { u.Id, u.PersonaId, u.EscuelaId, rol = u.Rol, identifier = u.Identificador, nombre = p.NombreCompleto, u.Activo, u.Version,
                 coordinadorEscuela = u.CoordinadorEscuela, verificada = c?.Verificada, cambioObligatorio = c?.CambioObligatorio ?? false, pendienteVinculacion = u.EscuelaId == "", propia = u.Id == actor.Usuario.Id,
-                correo = c?.CorreoNormalizado ?? JsonDatos.Texto(personas[u.PersonaId].DatosJson, "correo"),
+                correo = c?.CorreoNormalizado ?? p.Correo,
                 correoEstado = mail is null ? "sin-envio" : mail.Enviado is not null ? "enviado" : mail.Cancelado is not null ? "no-entregado" : "pendiente" };
         }).ToArray();
     }
@@ -47,10 +47,12 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         TutoriaError.Exigir(rol is "estudiante" or "tutor" && buscar.Length <= 150, "Filtros inválidos.");
         if (buscar.Trim().Length < 2) return [];
         var tipo = rol == "estudiante" ? "estudiante" : "tutor";
-        var personas = await db.Personas.AsNoTracking().Where(p => p.Activa && p.Tipo == tipo && (p.EscuelaId == actor.EscuelaId || (tipo == "tutor" && p.EscuelaId == ""))).ToArrayAsync(ct);
+        var personas = await db.VistaPersonasResumen.AsNoTracking().Where(p => p.Activa && p.Tipo == tipo && (p.EscuelaId == actor.EscuelaId || (tipo == "tutor" && p.EscuelaId == ""))).ToArrayAsync(ct);
         var existentes = await db.Usuarios.Where(u => u.Issuer == SeguridadCuenta.Issuer && u.Rol == rol).Select(u => u.PersonaId).ToArrayAsync(ct);
-        return personas.Where(p => !existentes.Contains(p.Id) && CultureInfo.GetCultureInfo("es-PE").CompareInfo.IndexOf(p.DatosJson, buscar.Trim(), CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0)
-            .Take(20).Select(p => (object)new { p.Id, nombre = DocumentosService.Nombre(p), nombres = JsonDatos.Texto(p.DatosJson, "nombres"), apellidos = JsonDatos.Texto(p.DatosJson, "apellidos"), correo = JsonDatos.Texto(p.DatosJson, "correo"), p.EscuelaId, p.Ciclo }).ToArray();
+        var texto = buscar.Trim();
+        var comparador = CultureInfo.GetCultureInfo("es-PE").CompareInfo;
+        return personas.Where(p => !existentes.Contains(p.Id) && comparador.IndexOf($"{p.Codigo} {p.Nombres} {p.Apellidos} {p.Correo}", texto, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0)
+            .Take(20).Select(p => (object)new { p.Id, nombre = p.NombreCompleto, nombres = p.Nombres, apellidos = p.Apellidos, correo = p.Correo, p.EscuelaId, p.Ciclo }).ToArray();
     }
     public async Task<CuentaCreadaDto> Crear(CrearCuentaInput input, CancellationToken ct)
     {

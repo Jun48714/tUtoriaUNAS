@@ -18,9 +18,11 @@ interface ErroresContacto {
 
 function validarContacto(correo: string, telefono: string): ErroresContacto {
   const errores: ErroresContacto = {};
-  if (!esCorreo(correo)) errores.correo = 'Revisa el correo de contacto.';
-  else if (correo.length > 254) errores.correo = 'Usa como máximo 254 caracteres.';
-  if (telefono.length > 40) errores.telefono = 'Usa como máximo 40 caracteres.';
+  const correoLimpio = correo.trim();
+  const telefonoLimpio = telefono.trim();
+  if (!esCorreo(correoLimpio)) errores.correo = 'Revisa el correo de contacto.';
+  else if (correoLimpio.length > 254) errores.correo = 'Usa como máximo 254 caracteres.';
+  if (telefonoLimpio.length > 40) errores.telefono = 'Usa como máximo 40 caracteres.';
   return errores;
 }
 
@@ -61,8 +63,8 @@ export function ContactoPersistente() {
     setGuardando(true);
     try {
       const respuesta = await guardarContactoApi({
-        correo,
-        telefono,
+        correo: correo.trim(),
+        telefono: telefono.trim(),
         version: base.version,
       });
       setGuardado(respuesta);

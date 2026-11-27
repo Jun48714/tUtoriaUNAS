@@ -13,7 +13,7 @@ import { estudiantes, docentes } from '../data/personas';
 import { asignaciones } from '../data/tutoria';
 import { matriculas, horariosAcademicos } from '../data/academico';
 import { semestreVigente } from '../data/catalogos';
-import { apiJson, apiJsonSiCambio, getApiSession } from './apiClient';
+import { RUTA_ESTADO_INICIAL, apiJson, apiJsonSiCambio, getApiSession } from './apiClient';
 import type { MomentoTutoria } from '../utils/instrumentos';
 import type { ProgramacionSesion } from './sessionWorkspace';
 import type { EvidenciaAsistencia } from './evidenciaAsistencia';
@@ -136,16 +136,21 @@ export function aplicarEstadoApi(datos: EstadoApi) {
   };
   publicar();
 }
-/** `inicio`: primera carga tras el login; administración abre en la vista de todas las escuelas. */
-export async function refrescarApi(inicio = false) {
+type RespuestaEstado = Awaited<ReturnType<typeof apiJsonSiCambio<EstadoApi>>>;
+/**
+ * `inicio`: primera carga tras el login (`RUTA_ESTADO_INICIAL`).
+ * `pedido`: esa misma consulta ya iniciada por el login mientras se descargaba este módulo.
+ */
+export async function refrescarApi(inicio = false, pedido?: Promise<RespuestaEstado>) {
   const token = getApiSession()?.accessToken;
   if (!token) return;
   const revision = ++revisionCarga;
   try {
-    const respuesta = await apiJsonSiCambio<EstadoApi>(
-      inicio ? '/api/tutoria/estado?inicio=true' : '/api/tutoria/estado',
-      estado.datos ? etagEstado : null,
-    );
+    const respuesta = await (pedido ??
+      apiJsonSiCambio<EstadoApi>(
+        inicio ? RUTA_ESTADO_INICIAL : '/api/tutoria/estado',
+        estado.datos ? etagEstado : null,
+      ));
     if (getApiSession()?.accessToken !== token || revision !== revisionCarga) return;
     if (!respuesta) {
       // 304: el servidor confirmó que la copia aplicada sigue vigente.
