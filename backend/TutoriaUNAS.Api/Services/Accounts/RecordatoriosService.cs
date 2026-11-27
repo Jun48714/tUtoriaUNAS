@@ -160,9 +160,8 @@ public sealed class RecordatoriosService(TutoriaDbContext db, ColaCorreoCuenta c
                 i.Vence < hoy ? $"Venció el {Corta(i.Vence)}" : i.Vence == hoy ? "Vence hoy" : $"Vence el {Corta(i.Vence)}",
                 i.Pendiente.Texto, Alerta: i.Vence <= hoy)).ToArray();
             cola.Agregar(para, "Tienes actividades pendientes · Tutoría UNAS", cuerpo, ahora.AddDays(1), destino is null ? u.Id : null, null,
-                new MensajeCorreo("pendientes", ColaCorreoCuenta.PrimerNombre(persona.DatosJson),
-                    $"Estas tareas esperan tu atención en Tutoría UNAS. El plazo es de {o.DiasPlazo} días desde el primer aviso.", renglones,
-                    Boton: "Completar ahora", Enlace: cuentas.Value.UrlAcceso, Nota: "Es un aviso automático. Dejará de llegar cuando completes estas tareas."));
+                new MensajeCorreo("pendientes", null, "Tienes tareas por completar en Tutoría UNAS.", renglones,
+                    Boton: "Completar ahora", Enlace: cuentas.Value.UrlAcceso));
             correos++;
             if (!registrar) continue;
             foreach (var i in aAvisar)

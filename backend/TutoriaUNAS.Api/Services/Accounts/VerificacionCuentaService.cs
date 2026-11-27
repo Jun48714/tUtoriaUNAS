@@ -78,10 +78,10 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
             var instruccion = recuperacion ? "Tu código para recuperar tu contraseña es" : "Tu código de verificación es";
             cola.Agregar(email, asunto,
                 $"{instruccion}: {codigo}\n\nVence en 10 minutos y solo puede utilizarse una vez. No lo compartas.\nSi no solicitaste esta operación, ignora este correo.\n\nTutoría UNAS", reto.Expira, reto.UsuarioId, reto.Id,
-                new MensajeCorreo(recuperacion ? "recuperacion" : "verificacion", await cola.NombreDe(reto.PersonaId, ct),
-                    recuperacion ? "Ingresa este código en la página de recuperación para elegir una contraseña nueva." : "Ingresa este código en Tutoría UNAS para verificar tu cuenta.",
-                    Codigo: codigo, Vigencia: "10 minutos · un solo uso", Boton: "Copiar código", Enlace: PlantillaCorreo.EnlaceCopiar(options.Value.UrlAcceso, codigo),
-                    Nota: recuperacion ? "Si no solicitaste esta operación, ignora este correo: tu contraseña actual sigue funcionando. No compartas este código con nadie." : "Si no solicitaste esta operación, ignora este correo. No compartas este código con nadie."));
+                new MensajeCorreo(recuperacion ? "recuperacion" : "verificacion", null,
+                    recuperacion ? "Ingresa este código para elegir una contraseña nueva." : "Ingresa este código en Tutoría UNAS para verificar tu cuenta.",
+                    Codigo: codigo, Vigencia: "10 minutos", Boton: "Copiar código", Enlace: PlantillaCorreo.EnlaceCopiar(options.Value.UrlAcceso, codigo),
+                    Nota: "Si no lo pediste, ignora este correo."));
         }
         else if (aviso is not null)
         {
@@ -140,19 +140,16 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         {
             "cuenta-existente" => ("Ya tienes una cuenta · Tutoría UNAS",
                 $"Recibimos una solicitud para crear una cuenta con este correo, pero ya existe una con el perfil de {perfil}.\n\nInicia sesión aquí: {login}\nSi olvidaste tu contraseña, usa «¿Olvidaste tu clave?» en esa misma página." + cierre,
-                new MensajeCorreo("cuenta-existente", null, $"Recibimos una solicitud para crear una cuenta con este correo, pero ya existe una con el perfil de {perfil}.",
-                    Boton: "Iniciar sesión", Enlace: login,
-                    Nota: "Si olvidaste tu contraseña, usa «¿Olvidaste tu clave?» en la página de acceso. Si no hiciste esta solicitud, ignora este correo: no se cambió nada en tu cuenta.")),
+                new MensajeCorreo("cuenta-existente", null, "Este correo ya tiene una cuenta. Inicia sesión o recupera tu contraseña.",
+                    Boton: "Iniciar sesión", Enlace: login, Nota: "Si no lo pediste, ignora este correo.")),
             "sin-cuenta" => ("Recuperación de contraseña · Tutoría UNAS",
                 $"Recibimos una solicitud para recuperar la contraseña de este correo, pero no hay una cuenta activa asociada a él.\n\n• Si aún no creaste tu cuenta, hazlo aquí: {crear}\n• Si tu cuenta está deshabilitada, comunícate con coordinación." + cierre,
-                new MensajeCorreo("sin-cuenta", null, "Recibimos una solicitud para recuperar la contraseña de este correo, pero no hay una cuenta activa asociada a él.",
-                    [new("Sin cuenta aún", "Créala desde la página de acceso"), new("Deshabilitada", "Comunícate con coordinación")],
-                    Boton: "Crear mi cuenta", Enlace: crear, Nota: "Si no hiciste esta solicitud, ignora este correo. No se cambió nada.")),
+                new MensajeCorreo("sin-cuenta", null, "No hay una cuenta activa con este correo. Créala o comunícate con coordinación.",
+                    Boton: "Crear mi cuenta", Enlace: crear, Nota: "Si no lo pediste, ignora este correo.")),
             _ => ("Solicitud de cuenta · Tutoría UNAS",
                 $"Recibimos una solicitud para crear una cuenta con este correo, pero no encontramos una ficha activa de {perfil} asociada a él en el padrón de la universidad.\n\nComunícate con la coordinación de tutoría de tu escuela profesional para que verifiquen tu registro. Cuando figures en el padrón podrás crear tu cuenta en {crear}." + cierre,
-                new MensajeCorreo("fuera-padron", null, $"Recibimos una solicitud para crear una cuenta con este correo, pero no hay una ficha activa de {perfil} asociada a él en el padrón de la universidad.",
-                    [new("Qué hacer", "Pide a la coordinación de tutoría de tu escuela que verifique tu registro"), new("Después", "Cuando figures en el padrón podrás crear tu cuenta")],
-                    Nota: "Si no hiciste esta solicitud, ignora este correo. No se cambió nada.")),
+                new MensajeCorreo("fuera-padron", null, "No figuras en el padrón. Pide a la coordinación de tu escuela que revise tu registro.",
+                    Nota: "Si no lo pediste, ignora este correo.")),
         };
     }
 
@@ -227,9 +224,7 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
         reto.Consumido = ahora; reto.TicketHash = null; reto.PruebaHash = null;
         db.Auditoria.Add(new() { Fecha = ahora, UsuarioId = user.Id, EscuelaId = user.EscuelaId, Accion = "completar-" + reto.Proposito, RecursoId = user.Id, Version = user.Version });
         cola.Agregar(reto.Correo, "Cuenta verificada · Tutoría UNAS", $"Tu cuenta institucional de Tutoría UNAS se verificó y su contraseña quedó establecida.\n\nAcceso: {options.Value.UrlAcceso}\nNo respondas este correo con tu contraseña. Si no realizaste la operación, comunícate con coordinación.", ahora.AddDays(1), user.Id, null,
-            new MensajeCorreo("verificada", await cola.NombreDe(user.PersonaId, ct), "Tu cuenta institucional de Tutoría UNAS se verificó y tu contraseña quedó establecida. Ya puedes ingresar.",
-                Boton: "Ingresar al portal", Enlace: options.Value.UrlAcceso,
-                Nota: "No respondas este correo con tu contraseña. Si no realizaste esta operación, comunícate con coordinación."));
+            new MensajeCorreo("verificada", null, "Tu cuenta está lista. Ya puedes ingresar.", Boton: "Ingresar", Enlace: options.Value.UrlAcceso));
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
         return new(user.Identificador, user.Rol, !user.Activo || user.EscuelaId.Length == 0);
     }

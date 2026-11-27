@@ -102,10 +102,9 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         return new(user.Id, user.Identificador, password, 172800, "pendiente");
     }
     private void EncolarInvitacion(UsuarioEntity user, string email, string password, DateTimeOffset ahora, string? nombre) =>
-        cola.Agregar(email, "Tu acceso temporal · Tutoría UNAS", $"Coordinación preparó tu acceso a Tutoría UNAS.\n\nPerfil: {user.Rol}\nUsuario: {email}\nContraseña temporal: {password}\nVence en 48 horas.\n\nIngresa en {options.Value.UrlAcceso}, pulsa Verificar cuenta, confirma el código recibido en este correo y establece tu contraseña personal. No compartas tus credenciales.", ahora.AddHours(48), user.Id, plantilla: new MensajeCorreo("acceso", nombre,
-            "Coordinación preparó tu acceso a Tutoría UNAS. Ingresa, pulsa «Verificar cuenta», confirma el código que llegará a este correo y elige tu contraseña personal.",
-            [new("Perfil", user.Rol == "estudiante" ? "Estudiante" : "Docente"), new("Usuario", email), new("Contraseña temporal", password, Mono: true), new("Vigencia", "48 horas")],
-            Boton: "Ir a Tutoría UNAS", Enlace: options.Value.UrlAcceso, Nota: "No compartas tus credenciales con nadie."));
+        cola.Agregar(email, "Tu acceso temporal · Tutoría UNAS", $"Coordinación preparó tu acceso a Tutoría UNAS.\n\nPerfil: {user.Rol}\nUsuario: {email}\nContraseña temporal: {password}\nVence en 48 horas.\n\nIngresa en {options.Value.UrlAcceso}, pulsa Verificar cuenta, confirma el código recibido en este correo y establece tu contraseña personal. No compartas tus credenciales.", ahora.AddHours(48), user.Id, plantilla: new MensajeCorreo("acceso", null, "Coordinación creó tu cuenta. Entra con esta contraseña temporal y luego elige la tuya.",
+            [new("Contraseña temporal", password, Mono: true)], Vigencia: "48 horas",
+            Boton: "Ir a Tutoría UNAS", Enlace: options.Value.UrlAcceso, Nota: "No la compartas con nadie."));
 
     public async Task<CuentaCreadaDto> RenovarTemporal(string id, int version, CancellationToken ct)
     {

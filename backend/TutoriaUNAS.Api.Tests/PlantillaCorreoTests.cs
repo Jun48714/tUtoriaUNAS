@@ -16,14 +16,15 @@ public sealed partial class PlantillaCorreoTests
     private static partial Regex Cid();
 
     [Fact]
-    public void CadaTipoTieneSuSelloSuTituloYSusMedidas()
+    public void CadaTipoTieneSuTituloYSinSelloNiAnimacion()
     {
         foreach (var tipo in PlantillaCorreo.Tipos.Keys)
         {
             var html = PlantillaCorreo.Renderizar(new MensajeCorreo(tipo, "Ana", "Texto ficticio"), "Asunto ficticio");
-            Assert.Equal(["escudo", "franja", "marca", "sello", "titulo"], html.Recursos.Select(r => r.Id).Order());
+            Assert.Equal(["escudo", "franja", "marca", "titulo"], html.Recursos.Select(r => r.Id).Order());
+            Assert.DoesNotContain(html.Recursos, r => r.TipoMime == "image/gif");
+            Assert.Contains("background:#ffffff", html.Html);
             Assert.All(html.Recursos, r => Assert.True(r.Datos.Length > 100, r.Nombre));
-            Assert.Equal("GIF89a", System.Text.Encoding.ASCII.GetString(html.Recursos.Single(r => r.Id == "sello").Datos, 0, 6));
             // Todo cid: del HTML tiene su imagen incrustada.
             Assert.All(Cid().Matches(html.Html).Select(m => m.Groups[1].Value).Distinct(), id => Assert.Contains(html.Recursos, r => r.Id == id));
             Assert.Contains($"alt=\"{System.Net.WebUtility.HtmlEncode(PlantillaCorreo.Tipos[tipo])}\"", html.Html);
@@ -39,17 +40,18 @@ public sealed partial class PlantillaCorreoTests
         Assert.Contains(">482915<", codigo);
         Assert.Contains("href=\"https://tutoria.example.invalid/copiar-codigo.html#482915\"", codigo);
         Assert.True(codigo.IndexOf("Copiar código", StringComparison.Ordinal) < codigo.IndexOf(">482915<", StringComparison.Ordinal), "el botón va antes del código");
-        Assert.Contains("Hola, Ana:", codigo);
+        Assert.DoesNotContain("Hola", codigo);
         var acceso = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "acceso").Mensaje, "Tu acceso").Html;
-        Assert.Contains("UNAS-7F3A9C21B4D8", acceso);
+        Assert.Contains("UNAS-7F3A9C21B4D8", acceso);   // la contraseña temporal sí: sin ella no se puede entrar
+        Assert.DoesNotContain("ana.perez", acceso);
+        Assert.DoesNotContain("Perfil", acceso);
         Assert.Contains("href=\"https://tutoria.example.invalid/login\"", acceso);
-        Assert.Contains("Hola:", PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "sin-cuenta").Mensaje, "Sin cuenta").Html);
     }
 
     [Fact]
     public void LosDatosSeEscapanYUnTipoDesconocidoSeRechaza()
     {
-        var html = PlantillaCorreo.Renderizar(new MensajeCorreo("habilitada", "<script>x</script>", "a & b", [new("<b>", "\"valor\"")],
+        var html = PlantillaCorreo.Renderizar(new MensajeCorreo("habilitada", null, "<script>x</script> a & b", [new("<b>", "\"valor\"")],
             Boton: "Entrar", Enlace: "https://x.invalid/?a=1&b=\"2\""), "<asunto>").Html;
         Assert.DoesNotContain("<script>x", html);
         Assert.Contains("&lt;script&gt;x&lt;/script&gt;", html);
@@ -106,8 +108,9 @@ public sealed class PlantillaCorreoColaTests(CuentasFixture fixture) : IClassFix
         });
         var acceso = Assert.Single(leidos, l => l.Asunto.StartsWith("Tu acceso temporal", StringComparison.Ordinal));
         Assert.Equal("acceso", acceso.Plantilla!.Tipo);
-        Assert.Equal("María", acceso.Plantilla.Nombre);
-        Assert.Contains(acceso.Plantilla.Renglones!, r => r.Etiqueta == "Usuario" && r.Valor == correo);
+        Assert.Null(acceso.Plantilla.Nombre);
+        Assert.DoesNotContain(acceso.Plantilla.Renglones!, r => r.Valor == correo);
+        Assert.Contains(acceso.Plantilla.Renglones!, r => r.Etiqueta == "Contraseña temporal" && r.Mono);
         var verificacion = leidos.SingleOrDefault(l => l.Asunto.StartsWith("Verifica tu cuenta", StringComparison.Ordinal));
         if (verificacion.Plantilla is not null)
         {

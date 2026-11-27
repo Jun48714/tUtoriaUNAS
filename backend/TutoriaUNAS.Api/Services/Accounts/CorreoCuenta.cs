@@ -98,10 +98,7 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
         if (await YaAvisado(usuario.Id, AsuntoBaja, ahora, ct)) return;
         Agregar(cred.CorreoNormalizado, AsuntoBaja,
             $"Coordinación deshabilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}).\n\nMientras la cuenta esté deshabilitada no podrás iniciar sesión ni recibirás avisos del sistema. Este es el único mensaje que recibirás por este motivo.\n\nSi crees que se trata de un error, comunícate con la coordinación de tu escuela.\n\nTutoría UNAS",
-            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo("baja", await NombreDe(usuario.PersonaId, ct),
-                $"Coordinación deshabilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}). Mientras esté deshabilitada no podrás iniciar sesión ni recibirás avisos del sistema.",
-                [new("Este aviso", "Es el único que recibirás por este motivo")],
-                Nota: "Si crees que se trata de un error, comunícate con la coordinación de tu escuela."));
+            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo("baja", null, "Coordinación deshabilitó tu acceso. Si crees que es un error, comunícate con tu escuela."));
     }
 
     /// <summary>
@@ -121,9 +118,9 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
             : $"Coordinación habilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}).";
         Agregar(cred.CorreoNormalizado, asunto,
             $"{intro}\n\nIngresa en {urlAcceso} con tu correo y tu contraseña de siempre. Si no la recuerdas, usa «¿Olvidaste tu clave?» en esa página.\n\nSi no esperabas este mensaje, comunícate con la coordinación de tu escuela. No compartas tu contraseña con nadie.\n\nTutoría UNAS",
-            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo(rehabilitada ? "rehabilitada" : "habilitada", await NombreDe(usuario.PersonaId, ct),
-                $"{intro} Ingresa con tu correo y tu contraseña de siempre.", Boton: "Ingresar al portal", Enlace: urlAcceso,
-                Nota: "Si no recuerdas tu contraseña, usa «¿Olvidaste tu clave?» en la página de acceso. Si no esperabas este mensaje, comunícate con la coordinación de tu escuela. No compartas tu contraseña con nadie."));
+            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo(rehabilitada ? "rehabilitada" : "habilitada", null,
+                (rehabilitada ? "Coordinación volvió a habilitar tu acceso." : "Coordinación habilitó tu acceso.") + " Ingresa con tu contraseña de siempre.",
+                Boton: "Ingresar", Enlace: urlAcceso));
     }
     public const string AsuntoCoordinador = "Fuiste designado coordinador de escuela · Tutoría UNAS";
     public const string AsuntoCoordinadorRetirado = "Ya no eres coordinador de escuela · Tutoría UNAS";
@@ -138,13 +135,9 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
         var cuerpo = designado
             ? $"La administración te designó coordinador de escuela en Tutoría UNAS. Además de tu panel de docente, ahora tienes el módulo «Monitoreo de escuela» (solo lectura): avance de estudiantes y docentes, formatos y derivaciones de tu escuela.\n\nVuelve a iniciar sesión para verlo: {urlAcceso}\n\nTutoría UNAS"
             : $"La administración retiró tu designación como coordinador de escuela. Sigues con tu panel de docente tutor.\n\nTutoría UNAS";
-        var nombre = await NombreDe(usuario.PersonaId, ct);
         var plantilla = designado
-            ? new MensajeCorreo("coordinador", nombre, "La administración te designó coordinador de escuela. Además de tu panel de docente, ahora tienes el módulo «Monitoreo de escuela», de solo lectura.",
-                [new("Podrás ver", "Avance de estudiantes y docentes"), new("También", "Formatos y derivaciones de tu escuela")],
-                Boton: "Ver el monitoreo", Enlace: urlAcceso, Nota: "Vuelve a iniciar sesión para que aparezca el módulo.")
-            : new MensajeCorreo("coordinador-retirado", nombre, "La administración retiró tu designación como coordinador de escuela. Sigues con tu panel de docente tutor.",
-                Nota: "Gracias por acompañar el monitoreo de tu escuela.");
+            ? new MensajeCorreo("coordinador", null, "Ahora puedes ver el monitoreo de tu escuela. Vuelve a iniciar sesión para verlo.", Boton: "Ver el monitoreo", Enlace: urlAcceso)
+            : new MensajeCorreo("coordinador-retirado", null, "Sigues con tu panel de docente tutor.");
         Agregar(cred.CorreoNormalizado, asunto, cuerpo, ahora.AddDays(1), usuario.Id, plantilla: plantilla);
     }
     public async Task CancelarRetos(string correo, string proposito, DateTimeOffset ahora, CancellationToken ct)
