@@ -44,7 +44,7 @@ public sealed partial class PlantillaCorreoTests
         var acceso = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "acceso").Mensaje, "Tu acceso").Html;
         Assert.Contains("UNAS-7F3A9C21B4D8E5A0C1B2D3F4", acceso);   // la contraseña temporal sí: sin ella no se puede entrar
         Assert.Contains("href=\"https://tutoria.example.invalid/copiar-codigo.html#clave=UNAS-7F3A9C21B4D8E5A0C1B2D3F4\"", acceso);
-        Assert.True(acceso.IndexOf("Copiar contraseña", StringComparison.Ordinal) < acceso.IndexOf(">UNAS-7F3A9C21B4D8E5A0C1B2D3F4<", StringComparison.Ordinal), "el botón va antes de la contraseña");
+        Assert.True(acceso.IndexOf("Copiar contraseña", StringComparison.Ordinal) > acceso.IndexOf(">UNAS-7F3A9C21B4D8E5A0C1B2D3F4<", StringComparison.Ordinal), "el botón va debajo de la contraseña");
         Assert.DoesNotContain("ana.perez", acceso);
         Assert.DoesNotContain("Perfil", acceso);
         Assert.Contains("href=\"https://tutoria.example.invalid/login\"", acceso);

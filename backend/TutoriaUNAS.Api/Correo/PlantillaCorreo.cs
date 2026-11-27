@@ -134,8 +134,8 @@ public static class PlantillaCorreo
         }
         foreach (var r in m.Renglones?.Where(r => r.Mono) ?? [])
         {
-            if (r.EnlaceCopiar is not null) h.Append(Boton("Copiar contraseña", r.EnlaceCopiar));
             h.Append(Recuadro(r.Etiqueta, r.Valor, 18, 1));
+            if (r.EnlaceCopiar is not null) h.Append(Boton("Copiar contraseña", r.EnlaceCopiar));
         }
         if (m.Vigencia is not null)
             h.Append($"""<p style="margin:10px 0 0;font-size:13px;font-weight:700;line-height:1.5;color:#7a5600;text-align:center">Vence en {E(m.Vigencia)}</p>""");
