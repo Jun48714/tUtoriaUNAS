@@ -214,7 +214,9 @@ if (args.Contains("--probar-correo", StringComparer.Ordinal))
     {
         // Un ejemplo ficticio de cada aviso con la plantilla Postal, para revisarlos en un buzón real.
         var url = app.Configuration["Cuentas:UrlAcceso"] ?? "";
-        foreach (var (asunto, mensaje) in TutoriaUNAS.Api.Correo.PlantillaCorreo.Ejemplos(url))
+        // CORREO_PRUEBA_TIPOS=verificacion,recuperacion envía solo esos avisos.
+        var tipos = Environment.GetEnvironmentVariable("CORREO_PRUEBA_TIPOS")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var (asunto, mensaje) in TutoriaUNAS.Api.Correo.PlantillaCorreo.Ejemplos(url).Where(e => tipos is not { Length: > 0 } || tipos.Contains(e.Mensaje.Tipo)))
             await sender.Enviar(destino, "[Ejemplo] " + asunto, mensaje.Texto, TutoriaUNAS.Api.Correo.PlantillaCorreo.Renderizar(mensaje, asunto), CancellationToken.None);
         Console.WriteLine($"Ejemplos de la plantilla enviados a {destino} con {sender.GetType().Name}.");
         return;

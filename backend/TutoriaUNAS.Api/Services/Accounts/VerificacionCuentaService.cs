@@ -80,7 +80,7 @@ public sealed class VerificacionCuentaService(TutoriaDbContext db, CredencialesC
                 $"{instruccion}: {codigo}\n\nVence en 10 minutos y solo puede utilizarse una vez. No lo compartas.\nSi no solicitaste esta operación, ignora este correo.\n\nTutoría UNAS", reto.Expira, reto.UsuarioId, reto.Id,
                 new MensajeCorreo(recuperacion ? "recuperacion" : "verificacion", await cola.NombreDe(reto.PersonaId, ct),
                     recuperacion ? "Ingresa este código en la página de recuperación para elegir una contraseña nueva." : "Ingresa este código en Tutoría UNAS para verificar tu cuenta.",
-                    Codigo: codigo, Vigencia: "10 minutos · un solo uso",
+                    Codigo: codigo, Vigencia: "10 minutos · un solo uso", Boton: "Copiar código", Enlace: PlantillaCorreo.EnlaceCopiar(options.Value.UrlAcceso, codigo),
                     Nota: recuperacion ? "Si no solicitaste esta operación, ignora este correo: tu contraseña actual sigue funcionando. No compartas este código con nadie." : "Si no solicitaste esta operación, ignora este correo. No compartas este código con nadie."));
         }
         else if (aviso is not null)

@@ -114,22 +114,33 @@ public static class PlantillaCorreo
               <p style="margin:0;font-size:15.5px;line-height:1.62;color:#2f4437">{E(m.Texto)}</p>
             """);
 
-        var renglones = new List<RenglonCorreo>();
+        string Boton(string texto, string enlace, string margen) => $"""
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:{margen}"><tr>
+              <td bgcolor="#e9a400" style="background:#e9a400;border:2px solid #0b2e19;border-radius:8px;box-shadow:3px 3px 0 #0b2e19">
+                <a href="{E(enlace)}" target="_blank" style="display:inline-block;padding:13px 26px;font-family:{Cuerpo};font-size:15px;font-weight:800;color:#1d1400;text-decoration:none">{E(texto)}</a>
+              </td></tr></table>
+            """;
         if (m.Codigo is not null)
         {
-            renglones.Add(new("Tu código", m.Codigo, true));
-            if (m.Vigencia is not null) renglones.Add(new("Vigencia", m.Vigencia));
+            // Botón «Copiar código» (abre una página nuestra que lo copia) y, debajo, el código grande. El código va sin
+            // espacios: si se selecciona a mano, se copia tal cual se escribe en el portal.
+            if (m.Boton is not null && m.Enlace is not null) h.Append(Boton(m.Boton, m.Enlace, "20px"));
+            h.Append($"""
+                <p style="margin:18px 0 6px;font-size:11.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#5b7363">Tu código</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td bgcolor="#eaf6ec" style="background:#eaf6ec;border:2px dashed #2b7d3c;border-radius:12px;padding:12px 12px 12px 20px">
+                    <span style="font-family:{Mono};font-size:36px;line-height:1;font-weight:700;letter-spacing:10px;color:#0e5a32">{E(m.Codigo)}</span>
+                  </td></tr></table>
+                """);
+            if (m.Vigencia is not null)
+                h.Append($"""<p style="margin:10px 0 0;font-size:13px;font-weight:700;line-height:1.5;color:#7a5600">Vence en {E(m.Vigencia)}</p>""");
         }
-        if (m.Renglones is not null) renglones.AddRange(m.Renglones);
-        if (renglones.Count > 0)
+        if (m.Renglones is { Count: > 0 })
         {
             h.Append("""<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;border-collapse:collapse">""");
-            foreach (var r in renglones)
+            foreach (var r in m.Renglones)
             {
-                var esCodigo = m.Codigo is not null && ReferenceEquals(r, renglones[0]);
-                var valor = esCodigo
-                    ? $"""<span style="font-family:{Mono};font-size:32px;font-weight:700;letter-spacing:6px;color:#0e5a32">{E(Agrupar(r.Valor))}</span>"""
-                    : $"""<span style="font-size:15px;font-weight:700;color:#11261a;{(r.Mono ? $"font-family:{Mono};font-size:14px;letter-spacing:.5px;" : "")}">{E(r.Valor)}</span>""";
+                var valor = $"""<span style="font-size:15px;font-weight:700;color:#11261a;{(r.Mono ? $"font-family:{Mono};font-size:14px;letter-spacing:.5px;" : "")}">{E(r.Valor)}</span>""";
                 h.Append($"""
                     <tr>
                       <td class="pc-etq" valign="top" width="132" style="width:132px;padding:10px 12px 8px 0;border-bottom:1.5px solid #c8d9cc;font-size:11.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:{(r.Alerta ? "#a3302b" : "#5b7363")}">{E(r.Etiqueta)}</td>
@@ -139,12 +150,8 @@ public static class PlantillaCorreo
             }
             h.Append("</table>");
         }
-        if (m.Boton is not null && m.Enlace is not null)
-            h.Append($"""
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px"><tr>
-                  <td bgcolor="#e9a400" style="background:#e9a400;border:2px solid #0b2e19;border-radius:8px;box-shadow:3px 3px 0 #0b2e19">
-                    <a href="{E(m.Enlace)}" target="_blank" style="display:inline-block;padding:13px 26px;font-family:{Cuerpo};font-size:15px;font-weight:800;color:#1d1400;text-decoration:none">{E(m.Boton)}</a>
-                  </td></tr></table>
+        if (m.Codigo is null && m.Boton is not null && m.Enlace is not null)
+            h.Append(Boton(m.Boton, m.Enlace, "24px") + $"""
                 <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#7a8c80">Si el botón no funciona, copia este enlace: <a href="{E(m.Enlace)}" style="color:#2b7d3c;word-break:break-all">{E(m.Enlace)}</a></p>
                 """);
         if (m.Nota is not null)
@@ -172,8 +179,8 @@ public static class PlantillaCorreo
     /// <summary>Un ejemplo ficticio de cada aviso, para revisar la plantilla en un buzón real (--probar-plantillas) y en las pruebas.</summary>
     public static IEnumerable<(string Asunto, MensajeCorreo Mensaje)> Ejemplos(string url) =>
     [
-        ("Verifica tu cuenta · Tutoría UNAS", new("verificacion", "Ana", "Ingresa este código en Tutoría UNAS para verificar tu cuenta.", Codigo: "482915", Vigencia: "10 minutos · un solo uso", Nota: "Si no solicitaste esta operación, ignora este correo. No compartas este código con nadie.")),
-        ("Recupera tu contraseña · Tutoría UNAS", new("recuperacion", "Ana", "Ingresa este código en la página de recuperación para elegir una contraseña nueva.", Codigo: "730264", Vigencia: "10 minutos · un solo uso", Nota: "Si no solicitaste esta operación, ignora este correo: tu contraseña actual sigue funcionando.")),
+        ("Verifica tu cuenta · Tutoría UNAS", new("verificacion", "Ana", "Ingresa este código en Tutoría UNAS para verificar tu cuenta.", Codigo: "482915", Vigencia: "10 minutos · un solo uso", Boton: "Copiar código", Enlace: EnlaceCopiar(url, "482915"), Nota: "Si no solicitaste esta operación, ignora este correo. No compartas este código con nadie.")),
+        ("Recupera tu contraseña · Tutoría UNAS", new("recuperacion", "Ana", "Ingresa este código en la página de recuperación para elegir una contraseña nueva.", Codigo: "730264", Vigencia: "10 minutos · un solo uso", Boton: "Copiar código", Enlace: EnlaceCopiar(url, "730264"), Nota: "Si no solicitaste esta operación, ignora este correo: tu contraseña actual sigue funcionando.")),
         ("Tu acceso temporal · Tutoría UNAS", new("acceso", "Ana", "Coordinación preparó tu acceso a Tutoría UNAS. Ingresa, pulsa «Verificar cuenta», confirma el código que llegará a este correo y elige tu contraseña personal.",
             [new("Perfil", "Estudiante"), new("Usuario", "ana.perez@unas.edu.pe"), new("Contraseña temporal", "UNAS-7F3A9C21B4D8", Mono: true), new("Vigencia", "48 horas")], Boton: "Ir a Tutoría UNAS", Enlace: url, Nota: "No compartas tus credenciales con nadie.")),
         ("Cuenta verificada · Tutoría UNAS", new("verificada", "Ana", "Tu cuenta institucional de Tutoría UNAS se verificó y tu contraseña quedó establecida. Ya puedes ingresar.", Boton: "Ingresar al portal", Enlace: url, Nota: "Si no realizaste esta operación, comunícate con coordinación.")),
@@ -189,8 +196,10 @@ public static class PlantillaCorreo
         ("Solicitud de cuenta · Tutoría UNAS", new("fuera-padron", null, "Recibimos una solicitud para crear una cuenta con este correo, pero no hay una ficha activa de estudiante asociada a él en el padrón de la universidad.", [new("Qué hacer", "Pide a la coordinación de tutoría de tu escuela que verifique tu registro"), new("Después", "Cuando figures en el padrón podrás crear tu cuenta")], Nota: "Si no hiciste esta solicitud, ignora este correo. No se cambió nada.")),
     ];
 
-    /// <summary>«482915» se lee mejor como «482 915».</summary>
-    private static string Agrupar(string codigo) => codigo.Length == 6 && codigo.All(char.IsAsciiDigit) ? codigo[..3] + " " + codigo[3..] : codigo;
+    /// <summary>Página del portal que copia el código al portapapeles. El código va después de «#»: no llega al servidor.</summary>
+    public static string? EnlaceCopiar(string urlAcceso, string codigo) =>
+        Uri.TryCreate(urlAcceso, UriKind.Absolute, out var u) && u.Scheme is "https" or "http"
+            ? u.GetLeftPart(UriPartial.Authority) + "/copiar-codigo.html#" + codigo : null;
 
     public static byte[] Recurso(string nombre) => Cache.GetOrAdd(nombre, n =>
     {

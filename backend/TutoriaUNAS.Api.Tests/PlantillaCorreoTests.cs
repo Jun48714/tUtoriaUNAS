@@ -36,7 +36,9 @@ public sealed partial class PlantillaCorreoTests
         var ejemplos = PlantillaCorreo.Ejemplos("https://tutoria.example.invalid/login").ToArray();
         Assert.Equal(PlantillaCorreo.Tipos.Keys.Where(t => t != "prueba").Order(), ejemplos.Select(e => e.Mensaje.Tipo).Order());
         var codigo = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "verificacion").Mensaje, "Verifica tu cuenta").Html;
-        Assert.Contains("482 915", codigo);
+        Assert.Contains(">482915<", codigo);
+        Assert.Contains("href=\"https://tutoria.example.invalid/copiar-codigo.html#482915\"", codigo);
+        Assert.True(codigo.IndexOf("Copiar código", StringComparison.Ordinal) < codigo.IndexOf(">482915<", StringComparison.Ordinal), "el botón va antes del código");
         Assert.Contains("Hola, Ana:", codigo);
         var acceso = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "acceso").Mensaje, "Tu acceso").Html;
         Assert.Contains("UNAS-7F3A9C21B4D8", acceso);
@@ -57,6 +59,13 @@ public sealed partial class PlantillaCorreoTests
         Assert.Contains("a=1&amp;b=&quot;2&quot;", html);
         Assert.Throws<KeyNotFoundException>(() => PlantillaCorreo.Renderizar(new MensajeCorreo("otro", null, "x"), "x"));
     }
+
+    [Theory]
+    [InlineData("https://tutoria.unas.edu.pe:8443/login", "https://tutoria.unas.edu.pe:8443/copiar-codigo.html#123456")]
+    [InlineData("https://tutoria.unas.edu.pe/login", "https://tutoria.unas.edu.pe/copiar-codigo.html#123456")]
+    [InlineData("no es una url", null)]
+    public void ElEnlaceDeCopiarUsaElOrigenDelPortal(string url, string? esperado) =>
+        Assert.Equal(esperado, PlantillaCorreo.EnlaceCopiar(url, "123456"));
 
     [Fact]
     public void LaColaGuardaTextoYPlantillaYSigueLeyendoMensajesAntiguos()
@@ -104,7 +113,9 @@ public sealed class PlantillaCorreoColaTests(CuentasFixture fixture) : IClassFix
         {
             Assert.Equal("verificacion", verificacion.Plantilla.Tipo);
             Assert.Contains(verificacion.Plantilla.Codigo!, verificacion.Texto);   // el texto alternativo lleva el mismo código
-            Assert.Contains(verificacion.Plantilla.Codigo![..3] + " ", PlantillaCorreo.Renderizar(verificacion.Plantilla, verificacion.Asunto).Html);
+            var html = PlantillaCorreo.Renderizar(verificacion.Plantilla, verificacion.Asunto).Html;
+            Assert.Contains(">" + verificacion.Plantilla.Codigo + "<", html);
+            Assert.Contains("/copiar-codigo.html#" + verificacion.Plantilla.Codigo, html);
         }
         // El despachador entrega el texto alternativo a un remitente sin soporte HTML (el de las pruebas).
         await fixture.Drenar();
