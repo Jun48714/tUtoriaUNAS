@@ -27,6 +27,23 @@
   --falcon-btn-active-border-color: var(--green-900);
   --falcon-btn-disabled-bg: var(--green);
   --falcon-btn-disabled-border-color: var(--green);
+  --falcon-btn-color: #fff;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-disabled-color: #fff;
+}
+/* El texto del botón verde nunca puede quedar del mismo verde que el fondo: la regla global
+   `a { color: var(--green) }` lo volvía invisible en los botones que son enlaces (p. ej. «Sesiones»). */
+.btn.btn-primary,
+a.btn.btn-primary,
+a.btn.btn-primary:visited,
+a.btn.btn-primary:hover,
+a.btn.btn-primary:focus,
+a.btn.btn-primary:focus-visible,
+a.btn.btn-primary:active {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  text-decoration: none;
 }
 .app-main {
   min-width: 0;
