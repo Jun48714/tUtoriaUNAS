@@ -90,8 +90,19 @@ export interface CuentaAdmin {
   propia: boolean;
   correo: string;
   correoEstado: string;
+  nombres: string;
+  apellidos: string;
+  codigo: string;
+  ciclo: number | null;
   /** Docente designado por la administración para monitorear su escuela. */
   coordinadorEscuela?: boolean;
+}
+export interface CuentaEditada {
+  id: string;
+  identifier: string;
+  /** Solo si se corrigió el correo de una cuenta sin verificar: el acceso temporal nuevo. */
+  passwordTemporal: string | null;
+  expiraEn: number;
 }
 export interface CandidatoCuenta {
   id: string;

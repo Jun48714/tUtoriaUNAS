@@ -22,6 +22,10 @@ public sealed class CuentasController(CuentasAdminService cuentas) : ControllerB
     public async Task<IActionResult> Vincular(string id, VincularCuentaInput input, CancellationToken ct) { await cuentas.Vincular(id, input.Version, ct); return NoContent(); }
     [HttpPut("{id}/coordinador-escuela"), RequierePermiso("cuentas", "editar")]
     public async Task<IActionResult> Coordinador(string id, AccesoInput input, CancellationToken ct) { await cuentas.Coordinador(id, input.Version, input.Activo, ct); return NoContent(); }
+    [HttpPut("{id}/datos"), RequierePermiso("cuentas", "editar")]
+    public Task<CuentaEditadaDto> Editar(string id, EditarCuentaInput input, CancellationToken ct) => cuentas.Editar(id, input, ct);
+    [HttpDelete("{id}"), RequierePermiso("cuentas", "eliminar")]
+    public async Task<IActionResult> Eliminar(string id, [FromQuery] int version, CancellationToken ct) { await cuentas.Eliminar(id, version, ct); return NoContent(); }
     [HttpPut("{id}/estado"), RequierePermiso("cuentas", "editar")]
     public async Task<IActionResult> Estado(string id, AccesoInput input, CancellationToken ct) { await cuentas.Estado(id, input.Version, input.Activo, ct); return NoContent(); }
 }

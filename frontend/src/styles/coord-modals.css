@@ -154,3 +154,20 @@
     padding-inline: 18px;
   }
 }
+
+/* Acción destructiva (p. ej. eliminar estudiante): el tema reducido no incluye btn-danger. */
+.btn.btn-peligro {
+  --falcon-btn-bg: var(--danger);
+  --falcon-btn-border-color: var(--danger);
+  --falcon-btn-color: #fff;
+  --falcon-btn-hover-bg: #7d302d;
+  --falcon-btn-hover-border-color: #7d302d;
+  --falcon-btn-hover-color: #fff;
+  --falcon-btn-active-bg: #6a2826;
+  --falcon-btn-active-border-color: #6a2826;
+  --falcon-btn-active-color: #fff;
+  --falcon-btn-disabled-bg: var(--danger);
+  --falcon-btn-disabled-border-color: var(--danger);
+  --falcon-btn-disabled-color: #fff;
+  color: #fff;
+}

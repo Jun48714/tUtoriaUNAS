@@ -329,21 +329,23 @@ export function CrearCuenta({ onClose, rolInicial }: { onClose(): void; rolInici
                   />
                 </label>
               </div>
-              {!persona && (
+              {(!persona || (rol === 'estudiante' && persona.ciclo === null)) && (
                 <div className="coord-modal-grid">
-                  <label className="field">
-                    {rol === 'estudiante' ? 'Código de alumno' : 'Código de docente'} (opcional)
-                    <input
-                      className="form-control"
-                      maxLength={40}
-                      disabled={ocupado}
-                      value={codigo}
-                      onChange={(e) => setCodigo(e.target.value)}
-                    />
-                  </label>
+                  {!persona && (
+                    <label className="field">
+                      {rol === 'estudiante' ? 'Código de alumno' : 'Código de docente'} (opcional)
+                      <input
+                        className="form-control"
+                        maxLength={40}
+                        disabled={ocupado}
+                        value={codigo}
+                        onChange={(e) => setCodigo(e.target.value)}
+                      />
+                    </label>
+                  )}
                   {rol === 'estudiante' && (
                     <label className="field">
-                      Ciclo (opcional)
+                      Ciclo
                       <input
                         className="form-control"
                         type="number"

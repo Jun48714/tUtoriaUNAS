@@ -15,6 +15,7 @@ import { usePermiso } from '../../hooks/usePermiso';
 import { useFiltro, type DefinicionSelect } from '../../hooks/useFiltro';
 import type { Role } from '../../types/auth';
 import { CrearCuenta } from './CrearCuenta';
+import { EditarCuenta } from './EditarCuenta';
 import { useSistema } from '../../hooks/useSistema';
 import { useAuth } from '../../hooks/useAuth';
 import { escuelaDe } from '../../data/personas';
@@ -60,7 +61,12 @@ export function GestionCuentas() {
   const [mensaje, setMensaje] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [renovada, setRenovada] = useState<CuentaCreada | null>(null);
+  const [editando, setEditando] = useState<CuentaAdmin | null>(null);
+  const [aEliminar, setAEliminar] = useState<CuentaAdmin | null>(null);
+  const [errorEliminar, setErrorEliminar] = useState('');
   const puedeCrear = usePermiso('cuentas', 'crear');
+  const puedeEditar = usePermiso('cuentas', 'editar');
+  const puedeEliminar = usePermiso('cuentas', 'eliminar');
   const esAdmin = Boolean(useAuth().user?.adminInstitucional);
   async function actualizar() {
     await queryClient.invalidateQueries({ queryKey: ['cuentas-administracion'] });
@@ -101,6 +107,21 @@ export function GestionCuentas() {
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cambiar la designación.');
+    } finally {
+      setOcupado(false);
+    }
+  }
+  async function eliminar(c: CuentaAdmin) {
+    setOcupado(true);
+    setErrorEliminar('');
+    setMensaje('');
+    try {
+      await apiJson(`/api/cuentas/${encodeURIComponent(c.id)}?version=${c.version}`, 'DELETE');
+      setAEliminar(null);
+      await actualizar();
+      setMensaje(`Se eliminó a ${c.nombre} y todos sus datos.`);
+    } catch (e) {
+      setErrorEliminar(e instanceof Error ? e.message : 'No se pudo eliminar al estudiante.');
     } finally {
       setOcupado(false);
     }
@@ -276,6 +297,31 @@ export function GestionCuentas() {
                   : 'Designar coordinador de escuela'}
               </button>
             )}
+            {puedeEditar && !c.pendienteVinculacion && c.rol !== 'coordinacion' && (
+              <button
+                type="button"
+                className="btn btn-falcon-default btn-sm"
+                disabled={ocupado}
+                aria-label={`Editar datos · ${c.identifier}`}
+                onClick={() => setEditando(c)}
+              >
+                Editar
+              </button>
+            )}
+            {puedeEliminar && c.rol === 'estudiante' && (
+              <button
+                type="button"
+                className="btn btn-link btn-sm"
+                disabled={ocupado}
+                aria-label={`Eliminar estudiante · ${c.identifier}`}
+                onClick={() => {
+                  setErrorEliminar('');
+                  setAEliminar(c);
+                }}
+              >
+                Eliminar
+              </button>
+            )}
             {c.verificada === false && c.activo && (
               <button
                 type="button"
@@ -368,6 +414,50 @@ export function GestionCuentas() {
         </CardBody>
       </Card>
       {crear && <CrearCuenta onClose={() => setCrear(false)} />}
+      {editando && <EditarCuenta cuenta={editando} onClose={() => setEditando(null)} />}
+      {aEliminar && (
+        <Sheet
+          title="Eliminar estudiante"
+          onClose={() => setAEliminar(null)}
+          footer={
+            <>
+              <button
+                type="button"
+                className="btn btn-link"
+                disabled={ocupado}
+                onClick={() => setAEliminar(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-peligro"
+                disabled={ocupado}
+                onClick={() => void eliminar(aEliminar)}
+              >
+                {ocupado ? 'Eliminando…' : 'Eliminar definitivamente'}
+              </button>
+            </>
+          }
+        >
+          <div className="stack">
+            <p>
+              Vas a eliminar a <strong>{aEliminar.nombre}</strong> ({aEliminar.correo}). Se borran
+              su cuenta, su ficha, su asignación de tutor, sus matrículas, horarios y formularios
+              pendientes. Esta acción no se puede deshacer.
+            </p>
+            <p className="small muted">
+              Si el estudiante ya envió formularios o tuvo sesiones realizadas, no se elimina para
+              conservar su historial: en ese caso usa «Deshabilitar».
+            </p>
+            {errorEliminar && (
+              <Alert tone="riesgo" title="No se eliminó">
+                {errorEliminar}
+              </Alert>
+            )}
+          </div>
+        </Sheet>
+      )}
       {renovada && (
         <Sheet title="Acceso temporal renovado" onClose={() => setRenovada(null)}>
           <div className="stack">
