@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import math
 import os
-import shutil
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
@@ -24,7 +23,11 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 RAIZ = Path(__file__).resolve().parents[2]
 ORIGEN = Path(__file__).resolve().parent
 SALIDA = RAIZ / "backend/TutoriaUNAS.Api/Correo/Recursos"
-S = 2  # escala de alta densidad
+S = 2  # escala de dibujo
+# Peso del sello: se dibuja a 2x y se guarda a esta escala, con estos cuadros y colores.
+ESCALA_SELLO = float(os.environ.get("CORREO_SELLO_ESCALA", "1.5"))
+CUADROS = int(os.environ.get("CORREO_CUADROS", "16"))
+COLORES = int(os.environ.get("CORREO_COLORES", "64"))
 
 PAPEL = (255, 254, 250)
 VERDE = (43, 125, 60)
@@ -187,18 +190,19 @@ def sello(tipo: str, archivo_emoji: str, anim: str):
     texto_espaciado(d, ix0 + iw / 2, iy0 + (ih - bloque) / 2 + 60 * S + 7 * S, "UNAS", f, VERDE_OSCURO, 1.6 * S)
     marca = matasellos()
     duracion, _, _ = ANIM[anim]
-    n = 24
+    n = CUADROS
+    final = (round(166 * ESCALA_SELLO), round(150 * ESCALA_SELLO))
     cuadros = []
     for i in range(n):
         c = base.copy()
         emoji_en(c, emoji, anim, i / n)
         c.alpha_composite(marca)
-        cuadros.append(c.convert("RGB"))
+        cuadros.append(c.convert("RGB").resize(final, Image.LANCZOS))
     # Paleta única para todos los cuadros (sin tramado: así el fondo quieto no parpadea).
-    muestra = Image.new("RGB", (ANCHO, ALTO * 4))
+    muestra = Image.new("RGB", (final[0], final[1] * 4))
     for k, idx in enumerate((0, n // 4, n // 2, 3 * n // 4)):
-        muestra.paste(cuadros[idx], (0, ALTO * k))
-    paleta = muestra.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
+        muestra.paste(cuadros[idx], (0, final[1] * k))
+    paleta = muestra.quantize(colors=COLORES, method=Image.Quantize.MEDIANCUT)
     gif = [c.quantize(palette=paleta, dither=Image.Dither.NONE) for c in cuadros]
     gif[0].save(SALIDA / f"sello-{tipo}.gif", save_all=True, append_images=gif[1:], loop=0,
                 duration=round(duracion * 1000 / n), disposal=1, optimize=True)
@@ -248,7 +252,11 @@ def main():
     for viejo in SALIDA.glob("*"):
         viejo.unlink()
     franja()
-    shutil.copy(RAIZ / "frontend/src/assets/unas-logo-mark-120.png", SALIDA / "escudo.png")
+    # Escudo a 2x de su tamaño en el correo (46×54) y con paleta reducida: de 36 KB a unos pocos KB.
+    escudo = Image.open(RAIZ / "frontend/src/assets/unas-logo-mark-120.png").convert("RGBA").resize((92, 108), Image.LANCZOS)
+    fondo = Image.new("RGBA", escudo.size, PAPEL + (255,))
+    fondo.alpha_composite(escudo)
+    fondo.convert("RGB").quantize(colors=64, method=Image.Quantize.MEDIANCUT).save(SALIDA / "escudo.png", optimize=True)
     medidas = {"marca": texto_png("Tutoría UNAS", "marca.png", 31, VERDE_OSCURO, 400, 1.0)}
     for tipo, (titulo, archivo, anim) in TIPOS.items():
         medidas[f"titulo-{tipo}"] = texto_png(titulo, f"titulo-{tipo}.png", 28, TINTA, 346)
