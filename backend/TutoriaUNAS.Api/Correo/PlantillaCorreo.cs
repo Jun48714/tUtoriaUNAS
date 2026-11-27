@@ -49,16 +49,9 @@ public static class PlantillaCorreo
     private const string Estilos = """
             <style>
               @media (max-width:520px) {
-                .pc-outer { padding:12px 8px !important; }
-                .pc-pad { padding-left:18px !important; padding-right:18px !important; }
-                .pc-escudo { width:38px !important; height:auto !important; }
-                .pc-marca { width:150px !important; height:auto !important; }
-                .pc-sello-img { width:104px !important; height:auto !important; }
-                .pc-sello { width:104px !important; }
-                .pc-desk { display:none !important; }
-                .pc-mob { display:block !important; max-height:none !important; overflow:visible !important; }
-                .pc-titulo { max-width:100% !important; height:auto !important; }
-                .pc-etq { display:block !important; width:auto !important; padding-bottom:2px !important; }
+                .pc-outer { padding:10px 6px !important; }
+                .pc-pad { padding-left:16px !important; padding-right:16px !important; }
+                .pc-etq { width:108px !important; }
               }
             </style>
         """;
@@ -85,7 +78,7 @@ public static class PlantillaCorreo
         var (anchoMarca, altoMarca) = Medidas.Value["marca"];
         var (anchoTitulo, altoTitulo) = Medidas.Value["titulo-" + m.Tipo];
         var saludo = $"""<p style="margin:0;font-size:14.5px;line-height:1.5;color:#5b7363">{(string.IsNullOrWhiteSpace(m.Nombre) ? "Hola:" : $"Hola, {E(m.Nombre)}:")}</p>""";
-        var tituloImg = $"""<img class="pc-titulo" src="cid:titulo" width="{anchoTitulo}" height="{altoTitulo}" alt="{E(titulo)}" style="display:block;border:0;margin:6px 0 0;max-width:100%;font-family:{Cuerpo};font-size:24px;font-weight:800;color:#0b2e19">""";
+        var tituloImg = $"""<img src="cid:titulo" width="{anchoTitulo}" height="{altoTitulo}" alt="{E(titulo)}" style="display:block;border:0;margin:6px 0 0;width:100%;max-width:{anchoTitulo}px;height:auto;font-family:{Cuerpo};font-size:24px;font-weight:800;color:#0b2e19">""";
         var h = new StringBuilder(9000);
         h.Append($"""
             <!doctype html>
@@ -96,26 +89,26 @@ public static class PlantillaCorreo
             <div style="display:none;max-height:0;overflow:hidden;opacity:0">{E(m.Texto)}</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#dce8de" style="background:#dce8de">
             <tr><td class="pc-outer" align="center" style="padding:24px 12px">
-            <table role="presentation" width="580" cellpadding="0" cellspacing="0" border="0" bgcolor="#fffefa" style="width:100%;max-width:580px;background:#fffefa;border-radius:6px;border:1px solid #c3d4c6">
-            <tr><td style="line-height:0;font-size:0"><img src="cid:franja" width="580" height="8" alt="" style="display:block;width:100%;max-width:580px;height:8px;border:0;border-radius:6px 6px 0 0"></td></tr>
-            <tr><td class="pc-pad" style="padding:16px 22px 0 28px">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                <td valign="top" style="padding-top:10px">
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-                    <td valign="middle" style="padding-right:12px"><img class="pc-escudo" src="cid:escudo" width="46" height="54" alt="Escudo UNAS" style="display:block;border:0"></td>
-                    <td valign="middle">
-                      <img class="pc-marca" src="cid:marca" width="{anchoMarca}" height="{altoMarca}" alt="Tutoría UNAS" style="display:block;border:0;font-family:{Cuerpo};font-size:26px;font-weight:800;color:#0e5a32">
-                      <div style="margin-top:4px;font-family:{Cuerpo};font-size:12px;line-height:1.3;color:#5b7363">Universidad Nacional Agraria de la Selva</div>
-                    </td>
-                  </tr></table>
-                  <div class="pc-desk" style="padding-top:18px;font-family:{Cuerpo}">{saludo}{tituloImg}</div>
-                </td>
-                <td class="pc-sello" valign="top" align="right" width="166" style="width:166px">
-                  <img class="pc-sello-img" src="cid:sello" width="166" height="150" alt="" style="display:block;border:0">
+            <!--[if mso]><table role="presentation" width="580" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+            <div style="max-width:580px;margin:0 auto">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#fffefa" style="width:100%;background:#fffefa;border-radius:6px;border:1px solid #c3d4c6">
+            <tr><td style="line-height:0;font-size:0">
+              <!--[if mso]><img src="cid:franja" width="580" height="8" alt="" style="display:block;border:0"><![endif]-->
+              <!--[if !mso]><!--><img src="cid:franja" alt="" style="display:block;width:100%;height:8px;border:0;border-radius:6px 6px 0 0"><!--<![endif]-->
+            </td></tr>
+            <tr><td class="pc-pad" style="padding:16px 22px 0 28px;font-family:{Cuerpo}">
+              <img src="cid:sello" align="right" width="166" height="150" alt="" style="float:right;width:42%;max-width:166px;height:auto;margin:0 0 4px 10px;border:0">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px"><tr>
+                <td valign="middle" style="padding-right:11px"><img src="cid:escudo" width="46" height="54" alt="Escudo UNAS" style="display:block;border:0"></td>
+                <td valign="middle">
+                  <img src="cid:marca" width="{anchoMarca}" height="{altoMarca}" alt="Tutoría UNAS" style="display:block;width:100%;max-width:{anchoMarca}px;height:auto;border:0;font-family:{Cuerpo};font-size:26px;font-weight:800;color:#0e5a32">
+                  <div style="margin-top:4px;font-size:12px;line-height:1.3;color:#5b7363">Universidad Nacional Agraria de la Selva</div>
                 </td>
               </tr></table>
+              <div style="padding-top:16px">{saludo}</div>
+              {tituloImg}
+              <div style="clear:both;font-size:0;line-height:0;height:0">&nbsp;</div>
             </td></tr>
-            <!--[if !mso]><!--><tr><td class="pc-pad" style="padding:0 28px"><div class="pc-mob" style="display:none;max-height:0;overflow:hidden;padding-top:6px;font-family:{Cuerpo}">{saludo}{tituloImg}</div></td></tr><!--<![endif]-->
             <tr><td class="pc-pad" style="padding:14px 28px 0"><div style="border-top:2px dashed #c8d9cc;font-size:0;line-height:0">&nbsp;</div></td></tr>
             <tr><td class="pc-pad" style="padding:16px 28px 26px;font-family:{Cuerpo};color:#2f4437">
               <p style="margin:0;font-size:15.5px;line-height:1.62;color:#2f4437">{E(m.Texto)}</p>
@@ -139,8 +132,8 @@ public static class PlantillaCorreo
                     : $"""<span style="font-size:15px;font-weight:700;color:#11261a;{(r.Mono ? $"font-family:{Mono};font-size:14px;letter-spacing:.5px;" : "")}">{E(r.Valor)}</span>""";
                 h.Append($"""
                     <tr>
-                      <td class="pc-etq" valign="baseline" width="132" style="width:132px;padding:10px 12px 8px 0;border-bottom:1.5px solid #c8d9cc;font-size:11.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:{(r.Alerta ? "#a3302b" : "#5b7363")}">{E(r.Etiqueta)}</td>
-                      <td valign="baseline" style="padding:10px 0 8px;border-bottom:1.5px solid #c8d9cc">{valor}</td>
+                      <td class="pc-etq" valign="top" width="132" style="width:132px;padding:10px 12px 8px 0;border-bottom:1.5px solid #c8d9cc;font-size:11.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:{(r.Alerta ? "#a3302b" : "#5b7363")}">{E(r.Etiqueta)}</td>
+                      <td valign="top" style="padding:10px 0 8px;border-bottom:1.5px solid #c8d9cc">{valor}</td>
                     </tr>
                     """);
             }
@@ -160,6 +153,8 @@ public static class PlantillaCorreo
               <p style="margin:16px 0 0;font-size:13.5px;line-height:1.5;color:#2f4437">Un saludo,<br><b style="color:#11261a">Coordinación de Tutoría · UNAS</b></p>
             </td></tr>
             </table>
+            </div>
+            <!--[if mso]></td></tr></table><![endif]-->
             <p style="max-width:580px;margin:12px auto 0;padding:0 4px;font-family:{Cuerpo};font-size:11.5px;line-height:1.6;color:#5b7363;text-align:left">Universidad Nacional Agraria de la Selva · Tingo María · Mensaje automático, no respondas a este correo.</p>
             </td></tr></table>
             </body></html>
