@@ -44,7 +44,7 @@ public sealed partial class PlantillaCorreoTests
         var acceso = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "acceso").Mensaje, "Tu acceso").Html;
         Assert.Contains("UNAS-7F3A9C21B4D8E5A0C1B2D3F4", acceso);   // la contraseña temporal sí: sin ella no se puede entrar
         Assert.Contains("href=\"https://tutoria.example.invalid/copiar-codigo.html#clave=UNAS-7F3A9C21B4D8E5A0C1B2D3F4\"", acceso);
-        Assert.True(acceso.IndexOf("Copiar contraseña", StringComparison.Ordinal) > acceso.IndexOf(">UNAS-7F3A9C21B4D8E5A0C1B2D3F4<", StringComparison.Ordinal), "el botón va debajo de la contraseña");
+        Assert.True(acceso.IndexOf("Copiar contrase", StringComparison.Ordinal) > acceso.IndexOf(">UNAS-7F3A9C21B4D8E5A0C1B2D3F4<", StringComparison.Ordinal), "el botón va debajo de la contraseña");
         Assert.DoesNotContain("ana.perez", acceso);
         Assert.DoesNotContain("Perfil", acceso);
         Assert.Contains("href=\"https://tutoria.example.invalid/login\"", acceso);
@@ -85,45 +85,52 @@ public sealed partial class PlantillaCorreoTests
     }
 }
 
-/// <summary>Los avisos reales se encolan con la plantilla Postal y conservan su texto alternativo.</summary>
+/// <summary>Qué correos salen: el código de verificación sí; la contraseña temporal que crea o renueva coordinación, no.</summary>
 public sealed class PlantillaCorreoColaTests(CuentasFixture fixture) : IClassFixture<CuentasFixture>
 {
-    [PostgresFact]
-    public async Task ElCodigoDeVerificacionSeEncolaConLaPlantillaYElTextoAlternativo()
+    private async Task<List<(string Asunto, string Texto, MensajeCorreo? Plantilla)>> Cola(string correo)
     {
-        using var admin = await fixture.Admin();
-        var correo = "postal-" + Guid.NewGuid().ToString("N") + "@unas.edu.pe";
-        var creada = await admin.PostAsJsonAsync("/api/cuentas", new CrearCuentaInput(correo, "estudiante", "María José", "Ficticia Prueba"));
-        Assert.True(creada.IsSuccessStatusCode, await creada.Content.ReadAsStringAsync());
-        var reto = await fixture.App.CreateClient().PostAsJsonAsync("/api/auth/codigo", new SolicitarCodigoInput(correo, "registro", "estudiante"));
-        Assert.True(reto.IsSuccessStatusCode, await reto.Content.ReadAsStringAsync());
-
         var leidos = new List<(string Asunto, string Texto, MensajeCorreo? Plantilla)>();
         await fixture.Modificar(async db =>
         {
             var protector = fixture.App.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector(ColaCorreoCuenta.Purpose);
-            foreach (var m in await db.CorreosCuenta.Where(m => m.Destinatario == correo && m.Enviado == null).ToArrayAsync())
+            foreach (var m in await db.CorreosCuenta.Where(m => m.Destinatario == correo).ToArrayAsync())
             {
-                var (texto, plantilla) = PlantillaCorreo.Leer(protector.Unprotect(m.ContenidoProtegido));
+                var (texto, plantilla) = m.ContenidoProtegido.Length == 0 ? ("", null) : PlantillaCorreo.Leer(protector.Unprotect(m.ContenidoProtegido));
                 leidos.Add((m.Asunto, texto, plantilla));
             }
         });
-        var acceso = Assert.Single(leidos, l => l.Asunto.StartsWith("Tu acceso temporal", StringComparison.Ordinal));
-        Assert.Equal("acceso", acceso.Plantilla!.Tipo);
-        Assert.Null(acceso.Plantilla.Nombre);
-        Assert.DoesNotContain(acceso.Plantilla.Renglones!, r => r.Valor == correo);
-        Assert.Contains(acceso.Plantilla.Renglones!, r => r.Etiqueta == "Contraseña temporal" && r.Mono && r.EnlaceCopiar!.Contains("#clave=UNAS-", StringComparison.Ordinal));
-        var verificacion = leidos.SingleOrDefault(l => l.Asunto.StartsWith("Verifica tu cuenta", StringComparison.Ordinal));
-        if (verificacion.Plantilla is not null)
-        {
-            Assert.Equal("verificacion", verificacion.Plantilla.Tipo);
-            Assert.Contains(verificacion.Plantilla.Codigo!, verificacion.Texto);   // el texto alternativo lleva el mismo código
-            var html = PlantillaCorreo.Renderizar(verificacion.Plantilla, verificacion.Asunto).Html;
-            Assert.Contains(">" + verificacion.Plantilla.Codigo + "<", html);
-            Assert.Contains("/copiar-codigo.html#" + verificacion.Plantilla.Codigo, html);
-        }
-        // El despachador entrega el texto alternativo a un remitente sin soporte HTML (el de las pruebas).
+        return leidos;
+    }
+
+    [PostgresFact]
+    public async Task CoordinacionCreaYRenuevaLaContrasenaTemporalSinEnviarCorreo()
+    {
+        using var admin = await fixture.Admin();
+        var correo = "sin-correo-" + Guid.NewGuid().ToString("N") + "@unas.edu.pe";
+        var creada = await admin.PostAsJsonAsync("/api/cuentas", new CrearCuentaInput(correo, "estudiante", "María José", "Ficticia Prueba"));
+        Assert.True(creada.IsSuccessStatusCode, await creada.Content.ReadAsStringAsync());
+        var cuenta = (await creada.Content.ReadFromJsonAsync<CuentaCreadaDto>())!;
+        Assert.StartsWith("UNAS-", cuenta.PasswordTemporal, StringComparison.Ordinal);   // se muestra a coordinación
+        var renovada = await admin.PostAsJsonAsync($"/api/cuentas/{cuenta.Id}/temporal", new VincularCuentaInput(1));
+        Assert.True(renovada.IsSuccessStatusCode, await renovada.Content.ReadAsStringAsync());
+        Assert.Empty(await Cola(correo));
+    }
+
+    [PostgresFact]
+    public async Task QuienCreaSuCuentaRecibeElCodigoConLaPlantillaYElTextoAlternativo()
+    {
+        var correo = "registro-" + Guid.NewGuid().ToString("N") + "@unas.edu.pe";
+        await fixture.Persona(correo);
+        var reto = await fixture.App.CreateClient().PostAsJsonAsync("/api/auth/codigo", new SolicitarCodigoInput(correo, "registro", "estudiante"));
+        Assert.True(reto.IsSuccessStatusCode, await reto.Content.ReadAsStringAsync());
+        var verificacion = Assert.Single(await Cola(correo));
+        Assert.StartsWith("Verifica tu cuenta", verificacion.Asunto, StringComparison.Ordinal);
+        Assert.Equal("verificacion", verificacion.Plantilla!.Tipo);
+        Assert.Contains(verificacion.Plantilla.Codigo!, verificacion.Texto);   // el texto alternativo lleva el mismo código
+        var html = PlantillaCorreo.Renderizar(verificacion.Plantilla, verificacion.Asunto).Html;
+        Assert.Contains(">" + verificacion.Plantilla.Codigo + "<", html);
         await fixture.Drenar();
-        Assert.Contains(fixture.Correo.Mensajes, m => m.Para == correo && m.Contenido.Contains("Contraseña temporal", StringComparison.Ordinal));
+        Assert.Contains(fixture.Correo.Mensajes, m => m.Para == correo && m.Contenido.Contains(verificacion.Plantilla.Codigo!, StringComparison.Ordinal));
     }
 }

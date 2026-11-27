@@ -71,8 +71,9 @@ export function EditarCuenta({ cuenta, onClose }: { cuenta: CuentaAdmin; onClose
       {editada ? (
         <div className="stack">
           <p role="status">
-            Cambiaste el correo de una cuenta que aún no verificó su acceso. El acceso temporal
-            anterior dejó de funcionar y el nuevo quedó en la cola de correo. Vence en 48 horas.
+            Cambiaste el correo de una cuenta que aún no verificó su acceso. La contraseña temporal
+            anterior dejó de funcionar. Entrega la nueva en persona: no se envía por correo. Vence
+            en 48 horas.
           </p>
           <dl className="def-list">
             <div>

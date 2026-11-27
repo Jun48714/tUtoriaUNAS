@@ -467,8 +467,8 @@ export function GestionCuentas() {
               <input className="form-control mono" readOnly value={renovada.passwordTemporal} />
             </label>
             <p>
-              La clave anterior dejó de funcionar. El nuevo acceso vence en 48 horas y quedó en la
-              cola de correo.
+              La clave anterior dejó de funcionar. Entrega la nueva en persona: no se envía por
+              correo. Vence en 48 horas.
             </p>
           </div>
         </Sheet>

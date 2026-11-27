@@ -95,17 +95,11 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         TutoriaError.Exigir(!input.CoordinadorEscuela || (actor.AdminInstitucional && input.Rol == "tutor"), "Solo la administración institucional designa coordinadores de escuela, y deben ser docentes.", 403);
         var user = credenciales.Crear(persona, email, input.Rol, password, true);
         user.CoordinadorEscuela = input.CoordinadorEscuela;
-        var ahora = clock.GetUtcNow();
-        EncolarInvitacion(user, email, password, ahora, ColaCorreoCuenta.PrimerNombre(persona.DatosJson));
+        // La contraseña temporal solo se muestra a coordinación, que la entrega en persona: no se envía por correo.
         context.Auditar(actor, "crear-cuenta-" + input.Rol, user.Id, user.Version);
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
-        return new(user.Id, user.Identificador, password, 172800, "pendiente");
+        return new(user.Id, user.Identificador, password, 172800, "sin-envio");
     }
-    private void EncolarInvitacion(UsuarioEntity user, string email, string password, DateTimeOffset ahora, string? nombre) =>
-        cola.Agregar(email, "Tu acceso temporal · Tutoría UNAS", $"Coordinación preparó tu acceso a Tutoría UNAS.\n\nPerfil: {user.Rol}\nUsuario: {email}\nContraseña temporal: {password}\nVence en 48 horas.\n\nIngresa en {options.Value.UrlAcceso}, pulsa Verificar cuenta, confirma el código recibido en este correo y establece tu contraseña personal. No compartas tus credenciales.", ahora.AddHours(48), user.Id, plantilla: new MensajeCorreo("acceso", null, "Coordinación creó tu cuenta. Entra con esta contraseña temporal y luego elige la tuya.",
-            [new("Contraseña temporal", password, Mono: true, EnlaceCopiar: PlantillaCorreo.EnlaceCopiarClave(options.Value.UrlAcceso, password))], Vigencia: "48 horas",
-            Boton: "Ir a Tutoría UNAS", Enlace: options.Value.UrlAcceso, Nota: "No la compartas con nadie."));
-
     public async Task<CuentaCreadaDto> RenovarTemporal(string id, int version, CancellationToken ct)
     {
         var actor = await Actor("editar", ct);
@@ -119,9 +113,9 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
         credenciales.CambiarPassword(cred, password); cred.TemporalHasta = ahora.AddHours(48); cred.IntentosFallidos = 0; cred.BloqueadaHasta = null; user.Version++;
         await cola.CancelarRetos(email, "activacion", ahora, ct);
         foreach (var pendiente in await db.CorreosCuenta.Where(m => m.UsuarioId == id && m.Enviado == null && m.Cancelado == null).ToArrayAsync(ct)) { pendiente.Cancelado = ahora; pendiente.ContenidoProtegido = ""; }
-        EncolarInvitacion(user, email, password, ahora, await cola.NombreDe(user.PersonaId, ct)); context.Auditar(actor, "renovar-acceso-temporal", id, user.Version);
+        context.Auditar(actor, "renovar-acceso-temporal", id, user.Version);   // sin correo: coordinación la entrega en persona
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
-        return new(user.Id, user.Identificador, password, 172800, "pendiente");
+        return new(user.Id, user.Identificador, password, 172800, "sin-envio");
     }
     public async Task Vincular(string id, int version, CancellationToken ct)
     {
@@ -197,11 +191,10 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
             u.Identificador = email; cred.CorreoNormalizado = email;
             await cola.CancelarRetos(emailActual, "activacion", ahora, ct);
             if (cred.Verificada == false)
-            {   // El acceso temporal iba al correo anterior: se emite uno nuevo para el correo corregido.
+            {   // Con el correo corregido se emite un acceso temporal nuevo; se muestra a coordinación y no se envía por correo.
                 temporal = "UNAS-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(12));
                 credenciales.CambiarPassword(cred, temporal); cred.TemporalHasta = ahora.AddHours(48); cred.IntentosFallidos = 0; cred.BloqueadaHasta = null;
                 foreach (var pendiente in await db.CorreosCuenta.Where(m => m.UsuarioId == id && m.Enviado == null && m.Cancelado == null).ToArrayAsync(ct)) { pendiente.Cancelado = ahora; pendiente.ContenidoProtegido = ""; }
-                EncolarInvitacion(u, email, temporal, ahora, ColaCorreoCuenta.PrimerNombre(p.DatosJson));
             }
         }
         u.Version++;   // al subir la versión, su sesión se renueva y toma los datos nuevos

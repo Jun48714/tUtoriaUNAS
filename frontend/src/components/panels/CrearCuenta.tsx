@@ -134,7 +134,8 @@ export function CrearCuenta({ onClose, rolInicial }: { onClose(): void; rolInici
       {creada ? (
         <div className="stack">
           <p role="status">
-            La cuenta se creó y el acceso temporal quedó en la cola de correo. Vence en 48 horas.
+            La cuenta se creó. Entrega esta contraseña temporal a la persona: no se envía por
+            correo. Vence en 48 horas.
           </p>
           <dl className="def-list">
             <div>
@@ -361,7 +362,10 @@ export function CrearCuenta({ onClose, rolInicial }: { onClose(): void; rolInici
               )}
             </>
           )}
-          <p className="small muted">Se enviará un acceso temporal al correo institucional.</p>
+          <p className="small muted">
+            Se generará una contraseña temporal para que la entregues en persona; no se envía por
+            correo.
+          </p>
           {error && (
             <Alert tone="riesgo" title="No se creó la cuenta">
               {error}
