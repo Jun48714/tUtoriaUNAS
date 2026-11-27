@@ -278,7 +278,7 @@ export async function asignarTutorApi(input: {
   estudianteId: string;
   tutorId: string;
   grupo: string | null;
-  referencia: string;
+  referencia?: string;
   version?: number;
 }) {
   await apiJson('/api/tutoria/asignaciones', 'POST', input);

@@ -152,7 +152,9 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
         var e = await db.Personas.FindAsync([request.EstudianteId], ct);
         var tutor = await db.Personas.FindAsync([request.TutorId], ct);
         TutoriaError.Exigir(e?.Tipo == "estudiante" && e.Activa && tutor?.Tipo == "tutor" && e.EscuelaId == actor.EscuelaId && tutor.EscuelaId == actor.EscuelaId && tutor.Activa, "El estudiante y el tutor deben estar activos y pertenecer a tu escuela.", 403);
-        TutoriaError.Exigir(!string.IsNullOrWhiteSpace(request.Referencia) && request.Referencia.Length <= 200 && (request.Grupo?.Length ?? 0) <= 100, "Registra la referencia de aprobación y un grupo válido.");
+        var referencia = request.Referencia?.Trim() ?? "";
+        // La referencia de aprobación es opcional al asignar; solo la respuesta a una solicitud de cambio la exige.
+        TutoriaError.Exigir((referencia.Length > 0 || request.SolicitudId is null) && referencia.Length <= 200 && (request.Grupo?.Length ?? 0) <= 100, request.SolicitudId is null ? "Revisa la referencia de aprobación y el grupo: superan el largo permitido." : "Registra la respuesta de la solicitud de cambio.");
         var a = await db.Asignaciones.SingleOrDefaultAsync(a => a.EstudianteId == request.EstudianteId && a.EscuelaId == actor.EscuelaId && a.SemestreId == periodo.SemestreId && a.Activa, ct);
         if (a is null) { TutoriaError.Exigir(request.Version is null or 0, "La asignación cambió.", 409); a = new() { Id = "ASG-" + Guid.NewGuid(), EstudianteId = request.EstudianteId, TutorId = request.TutorId, EscuelaId = actor.EscuelaId, SemestreId = periodo.SemestreId }; db.Asignaciones.Add(a); }
         else TutoriaContext.Version(request.Version ?? -1, a.Version);
@@ -162,7 +164,7 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
             var s = await db.SolicitudesCambio.SingleOrDefaultAsync(s => s.Id == sid && s.EscuelaId == actor.EscuelaId && s.EstudianteId == a.EstudianteId && s.SemestreId == a.SemestreId, ct) ?? throw new TutoriaError(404, "Solicitud no disponible.");
             TutoriaContext.Version(request.SolicitudVersion ?? -1, s.Version);
             TutoriaError.Exigir(s.Estado == "pendiente" && s.TutorActualId == anterior && request.TutorId != anterior, "La solicitud o su asignación ya cambió.", 409);
-            s.Estado = "aprobada"; s.Respuesta = request.Referencia.Trim(); s.ResueltoPor = actor.Usuario.Id; s.Resuelto = context.Ahora; s.Version++;
+            s.Estado = "aprobada"; s.Respuesta = referencia; s.ResueltoPor = actor.Usuario.Id; s.Resuelto = context.Ahora; s.Version++;
             context.Auditar(actor, "aprobar-cambio-tutor", s.Id, s.Version);
         }
         a.TutorId = request.TutorId; a.Grupo = request.Grupo; a.Version++;
@@ -170,9 +172,9 @@ public sealed class EstadoTutoriaService(TutoriaDbContext db, TutoriaContext con
         datos["id"] = a.Id; datos["estudianteId"] = a.EstudianteId; datos["tutorId"] = a.TutorId;
         datos["semestreId"] = a.SemestreId; datos["escuelaId"] = a.EscuelaId; datos["grupo"] = a.Grupo;
         datos["estado"] = "activa"; datos["fechaInicio"] = datos.GetValueOrDefault("fechaInicio") ?? context.Hoy;
-        datos["fechaFin"] = null; datos["criterio"] = "asignación directiva"; datos["referenciaAprobacion"] = request.Referencia.Trim(); datos["version"] = a.Version;
+        datos["fechaFin"] = null; datos["criterio"] = "asignación directiva"; datos["referenciaAprobacion"] = referencia; datos["version"] = a.Version;
         var historia = JsonDatos.Elemento(a.DatosJson).TryGetProperty("historial", out var h) && h.ValueKind == JsonValueKind.Array ? h.Deserialize<List<object>>()! : [];
-        historia.Add(new { fecha = context.Hoy, tutorAnteriorId = anterior, tutorNuevoId = a.TutorId, motivo = request.Referencia.Trim(), responsable = actor.Dto.Name }); datos["historial"] = historia;
+        historia.Add(new { fecha = context.Hoy, tutorAnteriorId = anterior, tutorNuevoId = a.TutorId, motivo = referencia.Length > 0 ? referencia : "Asignación registrada por la coordinación de tutoría", responsable = actor.Dto.Name }); datos["historial"] = historia;
         a.DatosJson = JsonDatos.Serializar(datos);
         foreach (var d in await db.Instrumentos.Where(d => d.EstudianteId == a.EstudianteId && d.SemestreId == a.SemestreId && (d.Formato == "F03" || d.Formato == "F04" || d.Formato == "F05")).ToListAsync(ct)) { d.TutorId = a.TutorId; d.Version++; }
         if (e!.Ciclo is { } ciclo)

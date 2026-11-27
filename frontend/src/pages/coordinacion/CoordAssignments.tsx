@@ -217,7 +217,6 @@ export function CoordAssignments() {
   const puedeRegistrar = Boolean(
     estudianteElegido &&
     docenteElegido?.escuelaId === estudianteElegido.escuelaId &&
-    nuevaReferencia.trim() &&
     cuposLibres > 0,
   );
 
@@ -820,7 +819,7 @@ export function CoordAssignments() {
               </div>
               <div className="field">
                 <label htmlFor={`${idFormulario}-referencia`}>
-                  Referencia de aprobación <span className="field__required">*</span>
+                  Referencia de aprobación <span className="assignment-optional">· Opcional</span>
                 </label>
                 <input
                   id={`${idFormulario}-referencia`}

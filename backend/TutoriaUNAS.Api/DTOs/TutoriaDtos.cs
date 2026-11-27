@@ -28,5 +28,5 @@ public sealed record CrearInstrumentoDto(string Formato, string? EstudianteId, s
 public sealed record GuardarInstrumentoDto([property: JsonRequired] int Version, Dictionary<string, string> Respuestas, [property: JsonRequired] bool Enviar, int? VersionFormato = null);
 public sealed record RevisarInstrumentoDto([property: JsonRequired] int Version, string Decision, string Comentario);
 public sealed record CambiarMomentoDto([property: JsonRequired] int Version, string Momento);
-public sealed record AsignarTutorDto(string EstudianteId, string TutorId, string? Grupo, string Referencia, int? Version = null, string? SolicitudId = null, int? SolicitudVersion = null);
+public sealed record AsignarTutorDto(string EstudianteId, string TutorId, string? Grupo, string? Referencia, int? Version = null, string? SolicitudId = null, int? SolicitudVersion = null);
 public sealed record LoginLocalDto(string Identifier, string Password, string? Role = null, bool IncluirEstado = false);

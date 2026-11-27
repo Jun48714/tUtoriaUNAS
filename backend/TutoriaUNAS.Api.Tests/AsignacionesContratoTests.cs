@@ -49,6 +49,11 @@ public sealed class AsignacionesContratoTests(PostgresFixture fixture) : IClassF
             var despues = (await coord.GetFromJsonAsync<EstadoTutoriaDto>("/api/tutoria/estado"))!;
             var actualizado = despues.Asignaciones.Single(a => a.GetProperty("estudianteId").GetString() == "EST-2023010456");
             Assert.Equal("Acuerdo ficticio", Assert.Single(actualizado.GetProperty("historial").EnumerateArray()).GetProperty("motivo").GetString());
+
+            // La referencia de aprobación es opcional: sin ella la asignación también se guarda.
+            var sinReferencia = await coord.PostAsJsonAsync("/api/tutoria/asignaciones", new AsignarTutorDto(
+                "EST-2023010456", "DOC-0421", "Grupo ficticio", null, actualizado.GetProperty("version").GetInt32()));
+            Assert.Equal(HttpStatusCode.NoContent, sinReferencia.StatusCode);
         }
     }
 }
