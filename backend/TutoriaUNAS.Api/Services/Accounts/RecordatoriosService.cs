@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TutoriaUNAS.Api.Configuration;
+using TutoriaUNAS.Api.Correo;
 using TutoriaUNAS.Api.Data;
 using TutoriaUNAS.Api.Domain;
 using TutoriaUNAS.Api.Entities;
@@ -24,6 +25,8 @@ public sealed class RecordatoriosService(TutoriaDbContext db, ColaCorreoCuenta c
     private static readonly string[] Cerrados = ["enviado", "aprobado"];
     public static DateOnly HoyLima(DateTimeOffset ahora) => DateOnly.FromDateTime(ahora.ToOffset(Lima).DateTime);
     private static string Fecha(DateOnly f) => f.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+    /// <summary>«4 dic», para la etiqueta del renglón de la postal.</summary>
+    private static string Corta(DateOnly f) => f.ToString("d MMM", CultureInfo.GetCultureInfo("es-PE")).TrimEnd('.');
 
     private sealed record Registro(string UsuarioId, string Clave, DateTimeOffset PrimerAviso, DateTimeOffset UltimoAviso, int Veces, DateOnly Vence);
     private sealed class FilaRegistro
@@ -153,7 +156,13 @@ public sealed class RecordatoriosService(TutoriaDbContext db, ColaCorreoCuenta c
             var para = destino ?? cuenta.Correo;
             detalle.Add($"{u.Rol,-10} {Enmascarar(cuenta.Correo)} → {aAvisar.Length} pendiente(s)");
             if (simular) { correos++; continue; }
-            cola.Agregar(para, "Tienes actividades pendientes · Tutoría UNAS", cuerpo, ahora.AddDays(1), destino is null ? u.Id : null);
+            var renglones = aAvisar.Select(i => new RenglonCorreo(
+                i.Vence < hoy ? $"Venció el {Corta(i.Vence)}" : i.Vence == hoy ? "Vence hoy" : $"Vence el {Corta(i.Vence)}",
+                i.Pendiente.Texto, Alerta: i.Vence <= hoy)).ToArray();
+            cola.Agregar(para, "Tienes actividades pendientes · Tutoría UNAS", cuerpo, ahora.AddDays(1), destino is null ? u.Id : null, null,
+                new MensajeCorreo("pendientes", ColaCorreoCuenta.PrimerNombre(persona.DatosJson),
+                    $"Estas tareas esperan tu atención en Tutoría UNAS. El plazo es de {o.DiasPlazo} días desde el primer aviso.", renglones,
+                    Boton: "Completar ahora", Enlace: cuentas.Value.UrlAcceso, Nota: "Es un aviso automático. Dejará de llegar cuando completes estas tareas."));
             correos++;
             if (!registrar) continue;
             foreach (var i in aAvisar)

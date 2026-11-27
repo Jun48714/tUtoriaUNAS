@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using TutoriaUNAS.Api.Configuration;
+using TutoriaUNAS.Api.Correo;
 
 namespace TutoriaUNAS.Api.Services.Accounts;
 
@@ -42,19 +43,27 @@ public sealed class GraphTokenCache
 /// <summary>Envío por Microsoft Graph (client credentials). Sin SMTP ni autenticación básica.</summary>
 public sealed class GraphCuentaSender(IHttpClientFactory httpFactory, IOptions<GraphCuentaOptions> options, GraphTokenCache cache, TimeProvider clock) : ICorreoCuentaSender
 {
-    public async Task Enviar(string destinatario, string asunto, string contenido, CancellationToken ct)
+    public Task Enviar(string destinatario, string asunto, string contenido, CancellationToken ct) => Enviar(destinatario, asunto, contenido, null, ct);
+    public async Task Enviar(string destinatario, string asunto, string contenido, CorreoHtml? html, CancellationToken ct)
     {
         var o = options.Value;
         if (!o.Configurado) throw new InvalidOperationException("Microsoft Graph no está configurado.");
         var http = httpFactory.CreateClient("graph-cuentas");
+        // Con plantilla: cuerpo HTML y sus imágenes como adjuntos en línea (cid:), que Outlook muestra sin pedir permiso.
+        var adjuntos = html?.Recursos.Select(r => new Dictionary<string, object>
+        {
+            ["@odata.type"] = "#microsoft.graph.fileAttachment", ["name"] = r.Nombre, ["contentType"] = r.TipoMime,
+            ["contentBytes"] = Convert.ToBase64String(r.Datos), ["contentId"] = r.Id, ["isInline"] = true,
+        }).ToArray();
         var payload = JsonSerializer.Serialize(new
         {
             message = new
             {
                 subject = asunto,
                 from = new { emailAddress = new { address = o.Remitente, name = o.Nombre } },
-                body = new { contentType = "Text", content = contenido },
+                body = html is null ? new { contentType = "Text", content = contenido } : new { contentType = "HTML", content = html.Html },
                 toRecipients = new[] { new { emailAddress = new { address = destinatario } } },
+                attachments = adjuntos ?? [],
             },
             saveToSentItems = false,
         });

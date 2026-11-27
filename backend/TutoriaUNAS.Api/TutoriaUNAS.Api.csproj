@@ -18,6 +18,7 @@
     <Content Update="**/*.local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
     <EmbeddedResource Include="Data/formatos.json" />
     <EmbeddedResource Include="Data/*.sql" />
+    <EmbeddedResource Include="Correo/Recursos/*" />
     <!-- El SDK Web ya incluye los .json como Content; Remove evita el error NETSDK1022 por duplicados. -->
     <Content Remove="Data/semilla-desarrollo.json;Data/semilla-sistema.json" />
     <Content Include="Data/semilla-desarrollo.json" CopyToOutputDirectory="PreserveNewest" />

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TutoriaUNAS.Api.Configuration;
+using TutoriaUNAS.Api.Correo;
 using TutoriaUNAS.Api.Data;
 using TutoriaUNAS.Api.Entities;
 
@@ -13,13 +15,16 @@ namespace TutoriaUNAS.Api.Services.Accounts;
 public interface ICorreoCuentaSender
 {
     Task Enviar(string destinatario, string asunto, string contenido, CancellationToken ct);
+    /// <summary>Envía la versión HTML (plantilla Postal) con sus imágenes incrustadas; quien no la soporte envía el texto.</summary>
+    Task Enviar(string destinatario, string asunto, string contenido, CorreoHtml? html, CancellationToken ct) => Enviar(destinatario, asunto, contenido, ct);
 }
 
 /// <summary>Adaptador SMTP aislado: STARTTLS obligatorio, validación TLS del sistema y secreto protegido.</summary>
 public sealed class SmtpCuentaSender(IOptions<SmtpCuentaOptions> options, IDataProtectionProvider protection) : ICorreoCuentaSender
 {
     public const string SecretPurpose = "TutoriaUNAS.Smtp.Password.v1";
-    public async Task Enviar(string destinatario, string asunto, string contenido, CancellationToken ct)
+    public Task Enviar(string destinatario, string asunto, string contenido, CancellationToken ct) => Enviar(destinatario, asunto, contenido, null, ct);
+    public async Task Enviar(string destinatario, string asunto, string contenido, CorreoHtml? html, CancellationToken ct)
     {
         var smtp = options.Value;
         if (smtp.Host.Length == 0 || smtp.Port != 587 || smtp.Usuario.Length == 0 || smtp.Remitente.Length == 0 || (smtp.PasswordFile.Length == 0 && smtp.Password.Length == 0))
@@ -34,6 +39,15 @@ public sealed class SmtpCuentaSender(IOptions<SmtpCuentaOptions> options, IDataP
         using var message = new MailMessage { From = new MailAddress(smtp.Remitente, smtp.Nombre, Encoding.UTF8),
             Subject = asunto, Body = contenido, BodyEncoding = Encoding.UTF8, SubjectEncoding = Encoding.UTF8, IsBodyHtml = false };
         message.To.Add(new MailAddress(destinatario));
+        if (html is not null)
+        {   // Texto y HTML como alternativas; las imágenes viajan dentro del mensaje (cid:).
+            message.Body = null;
+            message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(contenido, Encoding.UTF8, "text/plain"));
+            var vista = AlternateView.CreateAlternateViewFromString(html.Html, Encoding.UTF8, "text/html");
+            foreach (var r in html.Recursos)
+                vista.LinkedResources.Add(new LinkedResource(new MemoryStream(r.Datos), r.TipoMime) { ContentId = r.Id });
+            message.AlternateViews.Add(vista);
+        }
         using var client = new SmtpClient(smtp.Host, smtp.Port) { EnableSsl = true, UseDefaultCredentials = false,
             Credentials = new NetworkCredential(smtp.Usuario, password), DeliveryMethod = SmtpDeliveryMethod.Network };
         await client.SendMailAsync(message, ct);
@@ -43,12 +57,25 @@ public sealed class SmtpCuentaSender(IOptions<SmtpCuentaOptions> options, IDataP
 public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvider protection, TimeProvider clock)
 {
     public const string Purpose = "TutoriaUNAS.AccountMail.v1";
-    public void Agregar(string destinatario, string asunto, string cuerpo, DateTimeOffset caduca, string? usuario = null, string? reto = null)
+    /// <param name="plantilla">Versión con la plantilla Postal; <paramref name="cuerpo"/> queda como texto alternativo.</param>
+    public void Agregar(string destinatario, string asunto, string cuerpo, DateTimeOffset caduca, string? usuario = null, string? reto = null, MensajeCorreo? plantilla = null)
     {
         var ahora = clock.GetUtcNow();
+        var contenido = plantilla is null ? cuerpo : PlantillaCorreo.Serializar(cuerpo, plantilla);
         db.CorreosCuenta.Add(new() { Id = "MAIL-" + Guid.NewGuid().ToString("N"), UsuarioId = usuario, RetoId = reto,
-            Destinatario = destinatario, Asunto = asunto, ContenidoProtegido = protection.CreateProtector(Purpose).Protect(cuerpo),
+            Destinatario = destinatario, Asunto = asunto, ContenidoProtegido = protection.CreateProtector(Purpose).Protect(contenido),
             Creado = ahora, Caduca = caduca, ProximoIntento = ahora });
+    }
+    /// <summary>Primer nombre de la persona para el saludo de la postal; null si no hay ficha.</summary>
+    public async Task<string?> NombreDe(string? personaId, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(personaId)) return null;
+        return PrimerNombre(await db.Personas.AsNoTracking().Where(p => p.Id == personaId).Select(p => p.DatosJson).SingleOrDefaultAsync(ct));
+    }
+    public static string? PrimerNombre(string? datosJson)
+    {
+        var nombre = datosJson is null ? "" : JsonDatos.Texto(datosJson, "nombres").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+        return nombre.Length == 0 ? null : CultureInfo.GetCultureInfo("es-PE").TextInfo.ToTitleCase(nombre.ToLowerInvariant());
     }
     public const string AsuntoBaja = "Tu cuenta fue deshabilitada · Tutoría UNAS";
     public const string AsuntoRehabilitada = "Tu cuenta fue rehabilitada · Tutoría UNAS";
@@ -71,7 +98,10 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
         if (await YaAvisado(usuario.Id, AsuntoBaja, ahora, ct)) return;
         Agregar(cred.CorreoNormalizado, AsuntoBaja,
             $"Coordinación deshabilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}).\n\nMientras la cuenta esté deshabilitada no podrás iniciar sesión ni recibirás avisos del sistema. Este es el único mensaje que recibirás por este motivo.\n\nSi crees que se trata de un error, comunícate con la coordinación de tu escuela.\n\nTutoría UNAS",
-            ahora.AddDays(1), usuario.Id);
+            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo("baja", await NombreDe(usuario.PersonaId, ct),
+                $"Coordinación deshabilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}). Mientras esté deshabilitada no podrás iniciar sesión ni recibirás avisos del sistema.",
+                [new("Este aviso", "Es el único que recibirás por este motivo")],
+                Nota: "Si crees que se trata de un error, comunícate con la coordinación de tu escuela."));
     }
 
     /// <summary>
@@ -91,7 +121,9 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
             : $"Coordinación habilitó tu acceso a Tutoría UNAS (perfil {Perfil(usuario.Rol)}).";
         Agregar(cred.CorreoNormalizado, asunto,
             $"{intro}\n\nIngresa en {urlAcceso} con tu correo y tu contraseña de siempre. Si no la recuerdas, usa «¿Olvidaste tu clave?» en esa página.\n\nSi no esperabas este mensaje, comunícate con la coordinación de tu escuela. No compartas tu contraseña con nadie.\n\nTutoría UNAS",
-            ahora.AddDays(1), usuario.Id);
+            ahora.AddDays(1), usuario.Id, plantilla: new MensajeCorreo(rehabilitada ? "rehabilitada" : "habilitada", await NombreDe(usuario.PersonaId, ct),
+                $"{intro} Ingresa con tu correo y tu contraseña de siempre.", Boton: "Ingresar al portal", Enlace: urlAcceso,
+                Nota: "Si no recuerdas tu contraseña, usa «¿Olvidaste tu clave?» en la página de acceso. Si no esperabas este mensaje, comunícate con la coordinación de tu escuela. No compartas tu contraseña con nadie."));
     }
     public const string AsuntoCoordinador = "Fuiste designado coordinador de escuela · Tutoría UNAS";
     public const string AsuntoCoordinadorRetirado = "Ya no eres coordinador de escuela · Tutoría UNAS";
@@ -106,7 +138,14 @@ public sealed class ColaCorreoCuenta(TutoriaDbContext db, IDataProtectionProvide
         var cuerpo = designado
             ? $"La administración te designó coordinador de escuela en Tutoría UNAS. Además de tu panel de docente, ahora tienes el módulo «Monitoreo de escuela» (solo lectura): avance de estudiantes y docentes, formatos y derivaciones de tu escuela.\n\nVuelve a iniciar sesión para verlo: {urlAcceso}\n\nTutoría UNAS"
             : $"La administración retiró tu designación como coordinador de escuela. Sigues con tu panel de docente tutor.\n\nTutoría UNAS";
-        Agregar(cred.CorreoNormalizado, asunto, cuerpo, ahora.AddDays(1), usuario.Id);
+        var nombre = await NombreDe(usuario.PersonaId, ct);
+        var plantilla = designado
+            ? new MensajeCorreo("coordinador", nombre, "La administración te designó coordinador de escuela. Además de tu panel de docente, ahora tienes el módulo «Monitoreo de escuela», de solo lectura.",
+                [new("Podrás ver", "Avance de estudiantes y docentes"), new("También", "Formatos y derivaciones de tu escuela")],
+                Boton: "Ver el monitoreo", Enlace: urlAcceso, Nota: "Vuelve a iniciar sesión para que aparezca el módulo.")
+            : new MensajeCorreo("coordinador-retirado", nombre, "La administración retiró tu designación como coordinador de escuela. Sigues con tu panel de docente tutor.",
+                Nota: "Gracias por acompañar el monitoreo de tu escuela.");
+        Agregar(cred.CorreoNormalizado, asunto, cuerpo, ahora.AddDays(1), usuario.Id, plantilla: plantilla);
     }
     public async Task CancelarRetos(string correo, string proposito, DateTimeOffset ahora, CancellationToken ct)
     {
@@ -150,9 +189,10 @@ public sealed class DespachadorCorreoCuenta(IServiceScopeFactory scopes, ILogger
         }
         try
         {
-            var content = services.GetRequiredService<IDataProtectionProvider>().CreateProtector(ColaCorreoCuenta.Purpose).Unprotect(mail.ContenidoProtegido);
+            var (texto, plantilla) = PlantillaCorreo.Leer(services.GetRequiredService<IDataProtectionProvider>().CreateProtector(ColaCorreoCuenta.Purpose).Unprotect(mail.ContenidoProtegido));
+            var html = plantilla is null ? null : PlantillaCorreo.Renderizar(plantilla, mail.Asunto);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromSeconds(45));
-            await services.GetRequiredService<ICorreoCuentaSender>().Enviar(mail.Destinatario, mail.Asunto, content, timeout.Token);
+            await services.GetRequiredService<ICorreoCuentaSender>().Enviar(mail.Destinatario, mail.Asunto, texto, html, timeout.Token);
             mail.Enviado = clock.GetUtcNow(); mail.Error = null; mail.ContenidoProtegido = "";
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }

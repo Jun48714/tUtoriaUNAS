@@ -188,15 +188,41 @@ if (args.Contains("--recordatorios", StringComparer.Ordinal))
     Console.WriteLine($"Cuentas evaluadas: {resumen.Evaluados}. Con pendientes: {resumen.ConPendientes}. Correos {(simular ? "que se enviarían" : "encolados")}: {resumen.Correos}.");
     return;
 }
+if (args.Contains("--vista-plantillas", StringComparer.Ordinal))
+{
+    // Escribe el HTML real de cada aviso, con las imágenes en línea, para revisarlo en un navegador. No envía nada.
+    var carpeta = Environment.GetEnvironmentVariable("CORREO_VISTA_DIR") is { Length: > 0 } cv ? cv : "vista-correos";
+    Directory.CreateDirectory(carpeta);
+    foreach (var (asunto, mensaje) in TutoriaUNAS.Api.Correo.PlantillaCorreo.Ejemplos("https://tutoria.unas.edu.pe/login"))
+    {
+        var correo = TutoriaUNAS.Api.Correo.PlantillaCorreo.Renderizar(mensaje, asunto);
+        var html = correo.Recursos.Aggregate(correo.Html, (h, r) => h.Replace("cid:" + r.Id + "\"", $"data:{r.TipoMime};base64,{Convert.ToBase64String(r.Datos)}\"", StringComparison.Ordinal));
+        await File.WriteAllTextAsync(Path.Combine(carpeta, mensaje.Tipo + ".html"), html);
+    }
+    Console.WriteLine($"Vista de las plantillas en {carpeta}.");
+    return;
+}
 if (args.Contains("--probar-correo", StringComparer.Ordinal))
 {
     // Envía un único mensaje de prueba. Destino por defecto: el propio buzón de servicio. No imprime secretos.
     var graph = app.Configuration.GetSection("GraphCuentas").Get<GraphCuentaOptions>() ?? new();
     var destino = Environment.GetEnvironmentVariable("CORREO_PRUEBA_DESTINO") is { Length: > 0 } d ? d : graph.Remitente;
     await using var scopeCorreo = app.Services.CreateAsyncScope();
-    await scopeCorreo.ServiceProvider.GetRequiredService<ICorreoCuentaSender>().Enviar(destino, "Prueba de configuración · Tutoría UNAS",
-        "Mensaje de prueba del sistema Tutoría UNAS. Confirma que el envío por Microsoft Graph funciona. No requiere respuesta.", CancellationToken.None);
-    Console.WriteLine($"Correo de prueba enviado a {destino} con {scopeCorreo.ServiceProvider.GetRequiredService<ICorreoCuentaSender>().GetType().Name}.");
+    const string textoPrueba = "Mensaje de prueba del sistema Tutoría UNAS. Confirma que el envío por Microsoft Graph funciona. No requiere respuesta.";
+    var sender = scopeCorreo.ServiceProvider.GetRequiredService<ICorreoCuentaSender>();
+    if (args.Contains("--plantillas", StringComparer.Ordinal))
+    {
+        // Un ejemplo ficticio de cada aviso con la plantilla Postal, para revisarlos en un buzón real.
+        var url = app.Configuration["Cuentas:UrlAcceso"] ?? "";
+        foreach (var (asunto, mensaje) in TutoriaUNAS.Api.Correo.PlantillaCorreo.Ejemplos(url))
+            await sender.Enviar(destino, "[Ejemplo] " + asunto, mensaje.Texto, TutoriaUNAS.Api.Correo.PlantillaCorreo.Renderizar(mensaje, asunto), CancellationToken.None);
+        Console.WriteLine($"Ejemplos de la plantilla enviados a {destino} con {sender.GetType().Name}.");
+        return;
+    }
+    var prueba = new TutoriaUNAS.Api.Correo.MensajeCorreo("prueba", null, textoPrueba, Nota: "Si recibiste este mensaje, el envío de correos de Tutoría UNAS funciona.");
+    await sender.Enviar(destino, "Prueba de configuración · Tutoría UNAS", textoPrueba,
+        TutoriaUNAS.Api.Correo.PlantillaCorreo.Renderizar(prueba, "Prueba de configuración · Tutoría UNAS"), CancellationToken.None);
+    Console.WriteLine($"Correo de prueba enviado a {destino} con {sender.GetType().Name}.");
     return;
 }
 var bootstrap = args.Contains("--bootstrap", StringComparer.Ordinal);

@@ -1,0 +1,15 @@
+marca 190 38
+titulo-verificacion 317 34
+titulo-recuperacion 317 64
+titulo-acceso 250 34
+titulo-verificada 343 34
+titulo-habilitada 306 34
+titulo-rehabilitada 310 64
+titulo-baja 175 64
+titulo-coordinador 340 34
+titulo-coordinador-retirado 296 64
+titulo-pendientes 233 64
+titulo-cuenta-existente 263 34
+titulo-sin-cuenta 260 64
+titulo-fuera-padron 310 64
+titulo-prueba 203 34
