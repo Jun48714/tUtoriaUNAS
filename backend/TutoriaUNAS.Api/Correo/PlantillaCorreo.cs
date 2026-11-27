@@ -10,7 +10,7 @@ namespace TutoriaUNAS.Api.Correo;
 /// Un dato del aviso. Si <see cref="Mono"/> es verdadero (una contraseña temporal) se muestra en su recuadro, como el código;
 /// si no, como renglón centrado (tarea y su plazo). <see cref="Alerta"/> pinta la etiqueta en rojo.
 /// </summary>
-public sealed record RenglonCorreo(string Etiqueta, string Valor, bool Mono = false, bool Alerta = false);
+public sealed record RenglonCorreo(string Etiqueta, string Valor, bool Mono = false, bool Alerta = false, string? EnlaceCopiar = null);
 
 /// <summary>Contenido de un aviso. <see cref="Tipo"/> elige el título (ver <see cref="PlantillaCorreo.Tipos"/>).
 /// <see cref="Nombre"/> se conserva por compatibilidad con la cola, pero la plantilla no lo muestra.</summary>
@@ -90,7 +90,7 @@ public static class PlantillaCorreo
             <p style="margin:22px 0 6px;font-size:11.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#5b7363;text-align:center">{E(etiqueta)}</p>
             <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr>
               <td bgcolor="#eaf6ec" style="background:#eaf6ec;border:2px dashed #2b7d3c;border-radius:12px;padding:12px {12 + espacio / 2}px 12px {12 + espacio}px;text-align:center">
-                <span style="font-family:{Mono};font-size:{tamano}px;line-height:1;font-weight:700;letter-spacing:{espacio}px;color:#0e5a32;white-space:nowrap">{E(valor)}</span>
+                <span style="font-family:{Mono};font-size:{tamano}px;line-height:1;font-weight:700;letter-spacing:{espacio}px;color:#0e5a32;{(valor.Length > 12 ? "word-break:break-all" : "white-space:nowrap")}">{E(valor)}</span>
               </td></tr></table>
             """;
 
@@ -132,7 +132,11 @@ public static class PlantillaCorreo
             if (m.Boton is not null && m.Enlace is not null) h.Append(Boton(m.Boton, m.Enlace));
             h.Append(Recuadro("Tu código", m.Codigo, 34, 10));
         }
-        foreach (var r in m.Renglones?.Where(r => r.Mono) ?? []) h.Append(Recuadro(r.Etiqueta, r.Valor, 20, 2));
+        foreach (var r in m.Renglones?.Where(r => r.Mono) ?? [])
+        {
+            if (r.EnlaceCopiar is not null) h.Append(Boton("Copiar contraseña", r.EnlaceCopiar));
+            h.Append(Recuadro(r.Etiqueta, r.Valor, 18, 1));
+        }
         if (m.Vigencia is not null)
             h.Append($"""<p style="margin:10px 0 0;font-size:13px;font-weight:700;line-height:1.5;color:#7a5600;text-align:center">Vence en {E(m.Vigencia)}</p>""");
         foreach (var r in m.Renglones?.Where(r => !r.Mono) ?? [])
@@ -169,7 +173,7 @@ public static class PlantillaCorreo
     [
         ("Verifica tu cuenta · Tutoría UNAS", new("verificacion", null, "Ingresa este código en Tutoría UNAS para verificar tu cuenta.", Codigo: "482915", Vigencia: "10 minutos", Boton: "Copiar código", Enlace: EnlaceCopiar(url, "482915"), Nota: "Si no lo pediste, ignora este correo.")),
         ("Recupera tu contraseña · Tutoría UNAS", new("recuperacion", null, "Ingresa este código para elegir una contraseña nueva.", Codigo: "730264", Vigencia: "10 minutos", Boton: "Copiar código", Enlace: EnlaceCopiar(url, "730264"), Nota: "Si no lo pediste, ignora este correo.")),
-        ("Tu acceso temporal · Tutoría UNAS", new("acceso", null, "Coordinación creó tu cuenta. Entra con esta contraseña temporal y luego elige la tuya.", [new("Contraseña temporal", "UNAS-7F3A9C21B4D8", Mono: true)], Vigencia: "48 horas", Boton: "Ir a Tutoría UNAS", Enlace: url, Nota: "No la compartas con nadie.")),
+        ("Tu acceso temporal · Tutoría UNAS", new("acceso", null, "Coordinación creó tu cuenta. Entra con esta contraseña temporal y luego elige la tuya.", [new("Contraseña temporal", "UNAS-7F3A9C21B4D8E5A0C1B2D3F4", Mono: true, EnlaceCopiar: EnlaceCopiarClave(url, "UNAS-7F3A9C21B4D8E5A0C1B2D3F4"))], Vigencia: "48 horas", Boton: "Ir a Tutoría UNAS", Enlace: url, Nota: "No la compartas con nadie.")),
         ("Cuenta verificada · Tutoría UNAS", new("verificada", null, "Tu cuenta está lista. Ya puedes ingresar.", Boton: "Ingresar", Enlace: url)),
         ("Tu cuenta fue habilitada · Tutoría UNAS", new("habilitada", null, "Coordinación habilitó tu acceso. Ingresa con tu contraseña de siempre.", Boton: "Ingresar", Enlace: url)),
         ("Tu cuenta fue rehabilitada · Tutoría UNAS", new("rehabilitada", null, "Coordinación volvió a habilitar tu acceso. Ingresa con tu contraseña de siempre.", Boton: "Ingresar", Enlace: url)),
@@ -187,6 +191,11 @@ public static class PlantillaCorreo
     public static string? EnlaceCopiar(string urlAcceso, string codigo) =>
         Uri.TryCreate(urlAcceso, UriKind.Absolute, out var u) && u.Scheme is "https" or "http"
             ? u.GetLeftPart(UriPartial.Authority) + "/copiar-codigo.html#" + codigo : null;
+
+    /// <summary>La misma página, para la contraseña temporal del aviso de acceso («#clave=…», tampoco llega al servidor).</summary>
+    public static string? EnlaceCopiarClave(string urlAcceso, string clave) =>
+        Uri.TryCreate(urlAcceso, UriKind.Absolute, out var u) && u.Scheme is "https" or "http"
+            ? u.GetLeftPart(UriPartial.Authority) + "/copiar-codigo.html#clave=" + Uri.EscapeDataString(clave) : null;
 
     public static byte[] Recurso(string nombre) => Cache.GetOrAdd(nombre, n =>
     {

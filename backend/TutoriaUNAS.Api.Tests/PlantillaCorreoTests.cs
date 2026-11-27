@@ -42,7 +42,9 @@ public sealed partial class PlantillaCorreoTests
         Assert.True(codigo.IndexOf("Copiar código", StringComparison.Ordinal) < codigo.IndexOf(">482915<", StringComparison.Ordinal), "el botón va antes del código");
         Assert.DoesNotContain("Hola", codigo);
         var acceso = PlantillaCorreo.Renderizar(ejemplos.Single(e => e.Mensaje.Tipo == "acceso").Mensaje, "Tu acceso").Html;
-        Assert.Contains("UNAS-7F3A9C21B4D8", acceso);   // la contraseña temporal sí: sin ella no se puede entrar
+        Assert.Contains("UNAS-7F3A9C21B4D8E5A0C1B2D3F4", acceso);   // la contraseña temporal sí: sin ella no se puede entrar
+        Assert.Contains("href=\"https://tutoria.example.invalid/copiar-codigo.html#clave=UNAS-7F3A9C21B4D8E5A0C1B2D3F4\"", acceso);
+        Assert.True(acceso.IndexOf("Copiar contraseña", StringComparison.Ordinal) < acceso.IndexOf(">UNAS-7F3A9C21B4D8E5A0C1B2D3F4<", StringComparison.Ordinal), "el botón va antes de la contraseña");
         Assert.DoesNotContain("ana.perez", acceso);
         Assert.DoesNotContain("Perfil", acceso);
         Assert.Contains("href=\"https://tutoria.example.invalid/login\"", acceso);
@@ -110,7 +112,7 @@ public sealed class PlantillaCorreoColaTests(CuentasFixture fixture) : IClassFix
         Assert.Equal("acceso", acceso.Plantilla!.Tipo);
         Assert.Null(acceso.Plantilla.Nombre);
         Assert.DoesNotContain(acceso.Plantilla.Renglones!, r => r.Valor == correo);
-        Assert.Contains(acceso.Plantilla.Renglones!, r => r.Etiqueta == "Contraseña temporal" && r.Mono);
+        Assert.Contains(acceso.Plantilla.Renglones!, r => r.Etiqueta == "Contraseña temporal" && r.Mono && r.EnlaceCopiar!.Contains("#clave=UNAS-", StringComparison.Ordinal));
         var verificacion = leidos.SingleOrDefault(l => l.Asunto.StartsWith("Verifica tu cuenta", StringComparison.Ordinal));
         if (verificacion.Plantilla is not null)
         {

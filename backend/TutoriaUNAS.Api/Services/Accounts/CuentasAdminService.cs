@@ -103,7 +103,7 @@ public sealed class CuentasAdminService(TutoriaDbContext db, TutoriaContext cont
     }
     private void EncolarInvitacion(UsuarioEntity user, string email, string password, DateTimeOffset ahora, string? nombre) =>
         cola.Agregar(email, "Tu acceso temporal · Tutoría UNAS", $"Coordinación preparó tu acceso a Tutoría UNAS.\n\nPerfil: {user.Rol}\nUsuario: {email}\nContraseña temporal: {password}\nVence en 48 horas.\n\nIngresa en {options.Value.UrlAcceso}, pulsa Verificar cuenta, confirma el código recibido en este correo y establece tu contraseña personal. No compartas tus credenciales.", ahora.AddHours(48), user.Id, plantilla: new MensajeCorreo("acceso", null, "Coordinación creó tu cuenta. Entra con esta contraseña temporal y luego elige la tuya.",
-            [new("Contraseña temporal", password, Mono: true)], Vigencia: "48 horas",
+            [new("Contraseña temporal", password, Mono: true, EnlaceCopiar: PlantillaCorreo.EnlaceCopiarClave(options.Value.UrlAcceso, password))], Vigencia: "48 horas",
             Boton: "Ir a Tutoría UNAS", Enlace: options.Value.UrlAcceso, Nota: "No la compartas con nadie."));
 
     public async Task<CuentaCreadaDto> RenovarTemporal(string id, int version, CancellationToken ct)

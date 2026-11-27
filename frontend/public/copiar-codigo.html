@@ -104,6 +104,12 @@
         color: var(--tinta);
         text-wrap: balance;
       }
+      .codigo.clave {
+        font-size: 20px;
+        letter-spacing: 1px;
+        padding: 16px 14px;
+        word-break: break-all;
+      }
       .codigo {
         font:
           700 40px/1 'JetBrains Mono',
@@ -130,6 +136,10 @@
         min-height: 26px;
         font-weight: 700;
         color: var(--verde-osc);
+      }
+      .estado span {
+        text-align: left;
+        max-width: 28ch;
       }
       .estado[data-tipo='aviso'] {
         color: #7a5600;
@@ -200,8 +210,15 @@
     </main>
     <script>
       (function () {
-        var codigo = (location.hash || '').slice(1).replace(/\D/g, '');
-        // El código no queda en el historial ni en la barra de direcciones.
+        // #482915 → código de verificación; #clave=UNAS-… → contraseña temporal del aviso de acceso.
+        var fragmento = (location.hash || '').slice(1);
+        var esClave = fragmento.indexOf('clave=') === 0;
+        var codigo = esClave
+          ? decodeURIComponent(fragmento.slice(6)).trim()
+          : fragmento.replace(/\D/g, '');
+        var valido = esClave ? /^UNAS-[0-9A-F]{8,64}$/i.test(codigo) : codigo.length === 6;
+        var nombre = esClave ? 'contraseña' : 'código';
+        // El valor no queda en el historial ni en la barra de direcciones.
         try {
           history.replaceState(null, '', location.pathname);
         } catch (e) {
@@ -212,7 +229,7 @@
           boton = document.getElementById('copiar');
         var ok =
           '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2b7d3c"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        if (codigo.length !== 6) {
+        if (!valido) {
           document.getElementById('titulo').textContent = 'Este enlace no trae un código';
           caja.hidden = true;
           boton.hidden = true;
@@ -221,15 +238,30 @@
           return;
         }
         caja.textContent = codigo;
+        if (esClave) {
+          document.title = 'Copiar contraseña · Tutoría UNAS';
+          document.getElementById('titulo').textContent = 'Tu contraseña temporal';
+          caja.classList.add('clave');
+          boton.textContent = 'Copiar contraseña';
+          document.getElementById('nota').textContent =
+            'Vuelve a Tutoría UNAS y pégala en el campo Contraseña. Vence a las 48 horas de creada tu cuenta.';
+        }
         function avisar(copiado) {
           if (copiado) {
             estado.removeAttribute('data-tipo');
-            estado.innerHTML = ok + '<span>Código copiado. Ya puedes pegarlo.</span>';
+            estado.innerHTML =
+              ok +
+              '<span>' +
+              (esClave
+                ? 'Contraseña copiada. Ya puedes pegarla.'
+                : 'Código copiado. Ya puedes pegarlo.') +
+              '</span>';
             boton.textContent = 'Copiar otra vez';
           } else {
             estado.setAttribute('data-tipo', 'aviso');
-            estado.textContent =
-              'Toca «Copiar código» o mantén presionado el código para copiarlo.';
+            estado.textContent = esClave
+              ? 'Toca «Copiar contraseña» o mantén presionada la contraseña para copiarla.'
+              : 'Toca «Copiar código» o mantén presionado el código para copiarlo.';
           }
         }
         function respaldo() {
