@@ -1,0 +1,210 @@
+{
+  "variant": "before",
+  "startedUtc": "2026-11-27T18:05:33.549Z",
+  "commit": "c22fc213cb6a88cfca13650985ac3e13aeb5752e",
+  "stageSeconds": 6,
+  "loopbackPort": 5088,
+  "k6": "v2.4.0",
+  "stages": [
+    {
+      "stage": "base",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 6,
+      "requests": 54,
+      "requestsPerSecond": 7.324948383530391,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "max": 90.454,
+        "count": 54,
+        "p(50)": 15.782050000000002,
+        "p(95)": 65.92992999999998,
+        "p(99)": 78.66605799999996
+      },
+      "readsMs": {
+        "count": 46,
+        "p(50)": 14.87545,
+        "p(95)": 67.33465,
+        "p(99)": 80.44536999999993,
+        "max": 90.454,
+        "thresholds": {
+          "p(50)<150": false,
+          "p(95)<400": false,
+          "p(99)<1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "count": 3,
+        "p(50)": 6.5045,
+        "p(95)": 27.3647,
+        "p(99)": 29.21894,
+        "max": 29.6825,
+        "thresholds": {
+          "p(50)<800": false,
+          "p(95)<2000": false,
+          "p(99)<4000": false
+        }
+      }
+    },
+    {
+      "stage": "nominal",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 6,
+      "requests": 54,
+      "requestsPerSecond": 7.419865351153853,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 54,
+        "p(50)": 13.8714,
+        "p(95)": 35.812945,
+        "p(99)": 37.49734,
+        "max": 37.5832
+      },
+      "readsMs": {
+        "max": 18.3892,
+        "count": 46,
+        "p(50)": 13.64215,
+        "p(95)": 17.669999999999998,
+        "p(99)": 18.351309999999998,
+        "thresholds": {
+          "p(50)<150": false,
+          "p(95)<400": false,
+          "p(99)<1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "count": 3,
+        "p(50)": 4.251,
+        "p(95)": 6.43026,
+        "p(99)": 6.623972,
+        "max": 6.6724,
+        "thresholds": {
+          "p(50)<800": false,
+          "p(95)<2000": false,
+          "p(99)<4000": false
+        }
+      }
+    },
+    {
+      "stage": "alta",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 16,
+      "requests": 94,
+      "requestsPerSecond": 12.915567841527631,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 94,
+        "p(50)": 12.934999999999999,
+        "p(95)": 25.137614999999904,
+        "p(99)": 37.040848,
+        "max": 37.5955
+      },
+      "readsMs": {
+        "p(99)": 19.358075,
+        "max": 19.3721,
+        "count": 86,
+        "p(50)": 12.87555,
+        "p(95)": 18.150975,
+        "thresholds": {
+          "p(50)<150": false,
+          "p(95)<400": false,
+          "p(99)<1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "p(99)": 7.298306,
+        "max": 7.3749,
+        "count": 3,
+        "p(50)": 3.5452,
+        "p(95)": 6.99193,
+        "thresholds": {
+          "p(50)<800": false,
+          "p(95)<2000": false,
+          "p(99)<4000": false
+        }
+      }
+    },
+    {
+      "stage": "pico",
+      "exitCode": 0,
+      "activeSeconds": 18,
+      "maxUsersObserved": 41,
+      "requests": 422,
+      "requestsPerSecond": 22.76355723433374,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "max": 49.2543,
+        "count": 422,
+        "p(50)": 11.88675,
+        "p(95)": 17.533675,
+        "p(99)": 38.765925000000024
+      },
+      "readsMs": {
+        "max": 40.3368,
+        "count": 398,
+        "p(50)": 11.810649999999999,
+        "p(95)": 16.157705,
+        "p(99)": 17.745217999999987,
+        "thresholds": {
+          "p(50)<150": false,
+          "p(95)<400": false,
+          "p(99)<1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "p(50)": 4.5157,
+        "p(95)": 6.718459999999999,
+        "p(99)": 7.161692,
+        "max": 7.2725,
+        "count": 9,
+        "thresholds": {
+          "p(50)<800": false,
+          "p(95)<2000": false,
+          "p(99)<4000": false
+        }
+      }
+    },
+    {
+      "stage": "estres",
+      "exitCode": 0,
+      "activeSeconds": 24,
+      "maxUsersObserved": 116,
+      "requests": 1501,
+      "requestsPerSecond": 59.02200544836418,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 1501,
+        "p(50)": 11.8472,
+        "p(95)": 27.6562,
+        "p(99)": 42.268,
+        "max": 60.0327
+      },
+      "readsMs": {
+        "count": 1429,
+        "p(50)": 11.7004,
+        "p(95)": 18.018459999999997,
+        "p(99)": 28.018216000000013,
+        "max": 60.0327,
+        "thresholds": {
+          "p(50)<150": false,
+          "p(95)<400": false,
+          "p(99)<1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "count": 12,
+        "p(50)": 4.0310500000000005,
+        "p(95)": 4.688255,
+        "p(99)": 4.740131,
+        "max": 4.7531,
+        "thresholds": {
+          "p(50)<800": false,
+          "p(95)<2000": false,
+          "p(99)<4000": false
+        }
+      }
+    }
+  ]
+}

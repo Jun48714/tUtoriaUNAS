@@ -11,6 +11,7 @@ import {
 } from '../../services/apiTutoria';
 import type { EstadoApi } from '../../services/apiTutoria';
 import { API_MODE } from '../../services/apiConfig';
+import { cargarEstadoRestaurado } from '../../services/apiAuthService';
 import { apiJson, rutaEscuela, seleccionarEscuelaApi } from '../../services/apiClient';
 import { escuelaDe } from '../../data/personas';
 import { Alert } from '../ui/Alert';
@@ -40,7 +41,10 @@ export function ApiBoundary({
     let ultimaConsulta = 0;
     const consultar = () => {
       ultimaConsulta = Date.now();
-      void refrescarApi().catch(() => undefined);
+      const estadoActual = snapshotApi();
+      const carga =
+        estadoActual.datos || estadoActual.error ? refrescarApi() : cargarEstadoRestaurado();
+      void carga.catch(() => undefined);
     };
     // Una pestaña oculta no consulta: el estado se actualiza al volver a ella. El foco y el
     // cambio de visibilidad suelen llegar juntos; se atiende solo el primero.

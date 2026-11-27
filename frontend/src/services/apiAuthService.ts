@@ -1,5 +1,6 @@
 import type { AuthService, Role } from '../types/auth';
 import {
+  RUTA_ESTADO,
   RUTA_ESTADO_INICIAL,
   apiJson,
   apiJsonSiCambio,
@@ -16,6 +17,28 @@ import { esCorreo, esNumeroFinito, esObjeto, esRol, esTextoNoVacio } from '../ut
 let tutoria: typeof ApiTutoria | undefined;
 const cargarTutoria = () => import('./apiTutoria').then((modulo) => (tutoria = modulo));
 const vaciar = () => tutoria?.vaciarApi();
+
+let restaurando: { token: string; promesa: Promise<EstadoApi | undefined> } | undefined;
+
+export async function cargarEstadoRestaurado() {
+  const sesion = getApiSession();
+  if (!sesion?.user || tutoria?.snapshotApi().datos) return;
+  const token = sesion.accessToken;
+  if (restaurando?.token === token) return restaurando.promesa;
+
+  // El guard y el shell comparten el mismo GET mientras se descarga el portal.
+  const pedido = apiJsonSiCambio<EstadoApi>(RUTA_ESTADO, null);
+  pedido.catch(() => undefined);
+  const promesa = cargarTutoria()
+    .then((api) => {
+      if (getApiSession()?.accessToken === token) return api.refrescarApi(false, pedido);
+    })
+    .finally(() => {
+      if (restaurando?.promesa === promesa) restaurando = undefined;
+    });
+  restaurando = { token, promesa };
+  return promesa;
+}
 
 type RespuestaLogin =
   | { accessToken: string; expiresIn: number; estado?: EstadoApi }

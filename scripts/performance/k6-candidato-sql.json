@@ -1,0 +1,210 @@
+{
+  "variant": "after",
+  "startedUtc": "2026-11-27T18:23:45.2522691+00:00",
+  "commit": "c22fc213cb6a88cfca13650985ac3e13aeb5752e",
+  "stageSeconds": 6,
+  "loopbackPort": 5089,
+  "k6": "k6.exe v2.4.0 (commit/dd9395906d, go1.26.11, windows/amd64)",
+  "stages": [
+    {
+      "stage": "base",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 6,
+      "requests": 53,
+      "requestsPerSecond": 6.961432730105923,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "max": 134.3456,
+        "count": 53,
+        "p(50)": 20.293,
+        "p(95)": 119.46544,
+        "p(99)": 129.75701599999996
+      },
+      "readsMs": {
+        "count": 45,
+        "p(50)": 19.8737,
+        "p(95)": 120.15668,
+        "p(99)": 130.462952,
+        "max": 134.3456,
+        "thresholds": {
+          "p(50)<=150": false,
+          "p(95)<=400": false,
+          "p(99)<=1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "count": 3,
+        "p(50)": 9.0369,
+        "p(95)": 82.20861,
+        "p(99)": 88.712762,
+        "max": 90.3388,
+        "thresholds": {
+          "p(50)<=800": false,
+          "p(95)<=2000": false,
+          "p(99)<=4000": false
+        }
+      }
+    },
+    {
+      "stage": "nominal",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 6,
+      "requests": 54,
+      "requestsPerSecond": 7.3585223912614115,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 54,
+        "p(50)": 14.421,
+        "p(95)": 40.15063999999999,
+        "p(99)": 46.96222499999999,
+        "max": 51.503
+      },
+      "readsMs": {
+        "max": 33.6117,
+        "count": 46,
+        "p(50)": 14.28465,
+        "p(95)": 21.6234,
+        "p(99)": 29.705699999999975,
+        "thresholds": {
+          "p(50)<=150": false,
+          "p(95)<=400": false,
+          "p(99)<=1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "count": 3,
+        "p(50)": 4.7755,
+        "p(95)": 6.91489,
+        "p(99)": 7.105058,
+        "max": 7.1526,
+        "thresholds": {
+          "p(50)<=800": false,
+          "p(95)<=2000": false,
+          "p(99)<=4000": false
+        }
+      }
+    },
+    {
+      "stage": "alta",
+      "exitCode": 0,
+      "activeSeconds": 6,
+      "maxUsersObserved": 16,
+      "requests": 94,
+      "requestsPerSecond": 12.572691893853202,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "max": 86.6507,
+        "count": 94,
+        "p(50)": 17.8082,
+        "p(95)": 38.020454999999785,
+        "p(99)": 75.56779699999991
+      },
+      "readsMs": {
+        "count": 86,
+        "p(50)": 17.61175,
+        "p(95)": 23.333975,
+        "p(99)": 24.152350000000002,
+        "max": 24.4218,
+        "thresholds": {
+          "p(99)<=1000": false,
+          "p(50)<=150": false,
+          "p(95)<=400": false
+        }
+      },
+      "confirmedWritesMs": {
+        "p(95)": 6.36302,
+        "p(99)": 6.592124,
+        "max": 6.6494,
+        "count": 3,
+        "p(50)": 3.7856,
+        "thresholds": {
+          "p(50)<=800": false,
+          "p(95)<=2000": false,
+          "p(99)<=4000": false
+        }
+      }
+    },
+    {
+      "stage": "pico",
+      "exitCode": 0,
+      "activeSeconds": 18,
+      "maxUsersObserved": 41,
+      "requests": 422,
+      "requestsPerSecond": 22.51918433059657,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 422,
+        "p(50)": 15.239450000000001,
+        "p(95)": 30.220559999999992,
+        "p(99)": 65.06394800000002,
+        "max": 108.3143
+      },
+      "readsMs": {
+        "p(99)": 32.75565499999992,
+        "max": 49.0393,
+        "count": 398,
+        "p(50)": 15.03965,
+        "p(95)": 26.032764999999998,
+        "thresholds": {
+          "p(50)<=150": false,
+          "p(95)<=400": false,
+          "p(99)<=1000": false
+        }
+      },
+      "confirmedWritesMs": {
+        "max": 7.0586,
+        "count": 9,
+        "p(50)": 4.3111,
+        "p(95)": 6.38064,
+        "p(99)": 6.923008,
+        "thresholds": {
+          "p(50)<=800": false,
+          "p(95)<=2000": false,
+          "p(99)<=4000": false
+        }
+      }
+    },
+    {
+      "stage": "estres",
+      "exitCode": 0,
+      "activeSeconds": 24,
+      "maxUsersObserved": 116,
+      "requests": 1490,
+      "requestsPerSecond": 58.883480838560516,
+      "errorRate": 0,
+      "allRequestsMs": {
+        "count": 1490,
+        "p(50)": 15.02215,
+        "p(95)": 28.00786999999999,
+        "p(99)": 67.06699099999999,
+        "max": 155.6102
+      },
+      "readsMs": {
+        "p(95)": 23.150074999999998,
+        "p(99)": 28.07714199999998,
+        "max": 155.6102,
+        "count": 1418,
+        "p(50)": 14.823550000000001,
+        "thresholds": {
+          "p(99)<=1000": false,
+          "p(50)<=150": false,
+          "p(95)<=400": false
+        }
+      },
+      "confirmedWritesMs": {
+        "max": 5.5278,
+        "count": 12,
+        "p(50)": 4.23545,
+        "p(95)": 5.5224649999999995,
+        "p(99)": 5.526733,
+        "thresholds": {
+          "p(50)<=800": false,
+          "p(95)<=2000": false,
+          "p(99)<=4000": false
+        }
+      }
+    }
+  ]
+}

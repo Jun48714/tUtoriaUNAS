@@ -1,0 +1,60 @@
+{
+  "stage": "before",
+  "appId": "/assets/index-B6o6K-sD.js",
+  "measuredAt": "2026-11-27T18:19:24.016Z",
+  "Mbps": 5,
+  "rttMs": 150,
+  "cpu": 4,
+  "intervalMs": 60,
+  "chromium": "156.0.8078.4",
+  "cases": [
+    {
+      "profile": "administracion-institucional",
+      "endpoint": "/api/padron",
+      "rapid": {
+        "readyFromRequestMs": 193,
+        "readyFromInputMs": 128,
+        "requests": [
+          {
+            "term": "z",
+            "outcome": "complete"
+          },
+          {
+            "term": "zz",
+            "outcome": "complete"
+          },
+          {
+            "term": "zzq",
+            "outcome": "complete"
+          },
+          {
+            "term": "zzqf",
+            "outcome": "complete"
+          },
+          {
+            "term": "zzqfp",
+            "outcome": "complete"
+          },
+          {
+            "term": "zzqfpr",
+            "outcome": "complete"
+          }
+        ]
+      },
+      "interrupted": {
+        "readyFromRequestMs": 182,
+        "readyFromInputMs": 190,
+        "requests": [
+          {
+            "term": "zzqpra",
+            "outcome": "complete"
+          },
+          {
+            "term": "zzqprb",
+            "outcome": "complete"
+          }
+        ]
+      }
+    }
+  ]
+}

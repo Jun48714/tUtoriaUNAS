@@ -8,6 +8,8 @@ import {
   MonitoreoDerivaciones,
   MonitoreoFormatos,
   MonitoreoSesiones,
+  StudentInstrumentFill,
+  StudentInstruments,
   preloadPortalRoute,
 } from './portalPages';
 
@@ -23,6 +25,19 @@ vi.mock('../hooks/usePortal', () => ({
 }));
 
 describe('integración multi-rol en precarga y barra superior', () => {
+  it('precarga la bandeja y el formulario al abrir un instrumento por enlace directo', () => {
+    const componente = { default: () => <></> };
+    const bandeja = vi.spyOn(StudentInstruments, 'preload').mockResolvedValue(componente);
+    const formulario = vi.spyOn(StudentInstrumentFill, 'preload').mockResolvedValue(componente);
+
+    preloadPortalRoute('/estudiante/instrumentos/formato-01?estado=pendiente');
+
+    expect(bandeja).toHaveBeenCalledOnce();
+    expect(formulario).toHaveBeenCalledOnce();
+    bandeja.mockRestore();
+    formulario.mockRestore();
+  });
+
   it('precarga padrón de coordinación y todas las vistas de monitoreo del coordinador de escuela', () => {
     const espias = [
       vi.spyOn(CoordPadron, 'preload').mockResolvedValue({ default: () => <></> }),

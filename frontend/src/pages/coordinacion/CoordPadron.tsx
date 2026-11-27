@@ -1,6 +1,6 @@
 import { DirectoryDisclosure, DirectoryPage } from '../../components/ui/DirectoryPage';
 import { DirectorySearch } from '../../components/ui/DirectoryToolbar';
-import { useDeferredValue, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeading } from '../../components/ui/PageHeading';
@@ -12,6 +12,7 @@ import { Alert } from '../../components/ui/Alert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { apiJson } from '../../services/apiClient';
 import { API_MODE } from '../../services/apiConfig';
+import { snapshotApi, suscribirApi } from '../../services/apiTutoria';
 import type { Docente, Escuela, Estudiante } from '../../types/domain';
 import { FichaEstudiante } from '../../components/panels/FichaEstudiante';
 import { ImportarPadron } from '../../components/panels/ImportarPadron';
@@ -57,14 +58,32 @@ export function CoordPadron() {
   const clientes = useQueryClient();
   // Importar cambia datos de toda la institución: solo la administración institucional.
   const puedeImportar = API_MODE && user?.adminInstitucional === true;
-  const consulta = useDeferredValue(buscar);
+  const texto = buscar.trim();
+  const [textoConfirmado, confirmarTexto] = useState('');
+  useEffect(() => {
+    const timer = window.setTimeout(() => confirmarTexto(texto), 180);
+    return () => window.clearTimeout(timer);
+  }, [texto]);
+  const consulta = !texto || texto === textoConfirmado ? texto : null;
+  const { datos: estado } = useSyncExternalStore(suscribirApi, snapshotApi, snapshotApi);
+  const ambito = JSON.stringify([
+    user?.role,
+    user?.id,
+    estado?.consultaInstitucional,
+    estado?.escuelaId,
+    estado?.semestreId,
+  ]);
   const padron = useQuery({
-    queryKey: ['padron', tipo, consulta, escuela, pagina],
-    queryFn: () =>
+    queryKey: ['padron', ambito, tipo, consulta, escuela, pagina],
+    queryFn: ({ signal }) =>
       apiJson<Padron>(
-        `/api/padron?${new URLSearchParams({ tipo, buscar: consulta, escuelaId: escuela, pagina: String(pagina) })}`,
+        `/api/padron?${new URLSearchParams({ tipo, buscar: consulta ?? '', escuelaId: escuela, pagina: String(pagina) })}`,
+        'GET',
+        undefined,
+        signal,
       ),
-    enabled: API_MODE,
+    enabled: API_MODE && consulta !== null,
+    placeholderData: (anterior, query) => (query?.queryKey[1] === ambito ? anterior : undefined),
   });
   const detalle = useDetallePadron(id, API_MODE);
   const datos = padron.data;
@@ -224,7 +243,7 @@ export function CoordPadron() {
               </label>
             )}
           </div>
-          {padron.isPending ? (
+          {padron.isPending || padron.isPlaceholderData ? (
             <p role="status">Cargando padrón…</p>
           ) : padron.isError ? (
             <Alert tone="riesgo" title="No se pudo consultar el padrón">

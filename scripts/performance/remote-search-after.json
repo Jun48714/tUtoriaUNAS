@@ -1,0 +1,70 @@
+{
+  "stage": "after",
+  "appId": "/assets/index-BPfw3V9I.js",
+  "measuredAt": "2026-11-27T18:24:49.997Z",
+  "Mbps": 5,
+  "rttMs": 150,
+  "cpu": 4,
+  "intervalMs": 60,
+  "chromium": "156.0.8078.4",
+  "cases": [
+    {
+      "profile": "administracion-institucional",
+      "endpoint": "/api/padron",
+      "rapid": {
+        "readyFromRequestMs": 194,
+        "readyFromInputMs": 466,
+        "requests": [
+          {
+            "term": "zzqfpr",
+            "outcome": "complete"
+          }
+        ]
+      },
+      "interrupted": {
+        "readyFromRequestMs": 193,
+        "readyFromInputMs": 397,
+        "requests": [
+          {
+            "term": "zzqpra",
+            "outcome": "cancelled",
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "term": "zzqprb",
+            "outcome": "complete"
+          }
+        ]
+      }
+    },
+    {
+      "profile": "coordinacion-escuela",
+      "endpoint": "/api/padron",
+      "rapid": {
+        "readyFromRequestMs": 206,
+        "readyFromInputMs": 417,
+        "requests": [
+          {
+            "term": "zzqfpr",
+            "outcome": "complete"
+          }
+        ]
+      },
+      "interrupted": {
+        "readyFromRequestMs": 202,
+        "readyFromInputMs": 787,
+        "requests": [
+          {
+            "term": "zzqpra",
+            "outcome": "cancelled",
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "term": "zzqprb",
+            "outcome": "complete"
+          }
+        ]
+      }
+    }
+  ]
+}

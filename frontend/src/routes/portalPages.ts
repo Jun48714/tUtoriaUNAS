@@ -221,17 +221,18 @@ const pages: Record<string, Record<string, { preload(): Promise<unknown> }>> = {
 
 /** Solo descarga la pantalla señalada; conserva la carga diferida del resto. */
 export function preloadPortalRoute(path: string) {
-  const [, role = '', module = '', detail] = path.split('?')[0]!.split('/');
+  const [, role = '', module = 'dashboard', detail] = path.split('?')[0]!.split('/');
   const page =
     role === 'tutor' && module === 'tutorados' && detail
       ? TuteeRecord
       : role === 'tutor' && module === 'monitoreo' && detail
         ? (monitoreoSubvistas[detail] ?? MonitoreoAvance)
-        : role === 'estudiante' && module === 'instrumentos' && detail
-          ? StudentInstrumentFill
-          : pages[role]?.[module];
+        : pages[role]?.[module || 'dashboard'];
   // Una precarga fallida no interrumpe la página actual. El clic puede reintentar.
   void page?.preload().catch(() => undefined);
+  if (role === 'estudiante' && module === 'instrumentos' && detail) {
+    void StudentInstrumentFill.preload().catch(() => undefined);
+  }
 }
 
 /** Los tres paneles son pequeños y comparten sus dependencias. Se descargan al enviar el acceso. */

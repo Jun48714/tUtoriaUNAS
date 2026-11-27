@@ -660,3 +660,17 @@ contenedores aparte (ya eliminados) y Playwright con red simulada Perú → VPS 
 - Pendiente sugerido: con 2 Mbps aún domina la descarga de los 3 700 estudiantes (≈ 190 KB). Bajarla
   exige pedir la lista por pantalla/escuela en lugar de dentro del estado. Brotli calidad 6 en lugar
   de 4 ahorraría ~13 % más a cambio de ~15 ms de CPU por respuesta 200.
+
+## 25. Rendimiento transversal local (27 de noviembre de 2026)
+
+- Inventario actual, scripts y comparaciones en [scripts/performance](performance/README.md).
+  En perfil, las cinco cuentas de prueba mejoraron a 2 y 5 Mbps con RTT de 150 ms y CPU 4×.
+  La precarga de la foto se restringió al acceso y el estado restaurado comparte una solicitud por sesión.
+- El padrón redujo seis GET por seis pulsaciones a uno en la muestra institucional. Al sustituir
+  una búsqueda en vuelo, Chromium registró la cancelación en los dos perfiles de coordinación.
+- Una unión de identidad redujo las consultas SQL por solicitud. Se retiró al subir p95 bajo carga.
+  Los planes y ensayos se conservan en la carpeta de rendimiento.
+- Playwright verificó la evaluación enviada desde el portal, la conservación de la edición ante
+  conflicto y desconexión, y la preparación auditada del Formato 01 en un esquema sintético.
+- El usuario indicó ejecutar las etapas locales sin confirmación adicional. Se actualizó esa regla
+  en CLAUDE.md y AGENTS.md. Los cambios se publican cuando el usuario lo solicita expresamente.

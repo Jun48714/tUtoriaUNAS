@@ -66,7 +66,8 @@ export function seleccionarEscuelaApi(escuelaId: string | undefined) {
   escuelaAdministrada = escuelaId;
 }
 /** Primera carga del estado tras el login; administración abre en la vista de todas las escuelas. */
-export const RUTA_ESTADO_INICIAL = '/api/tutoria/estado?inicio=true';
+export const RUTA_ESTADO = '/api/tutoria/estado';
+export const RUTA_ESTADO_INICIAL = `${RUTA_ESTADO}?inicio=true`;
 export function rutaEscuela(path: string, escuela: string) {
   return `${path}${path.includes('?') ? '&' : '?'}${new URLSearchParams({ ambitoEscuela: escuela })}`;
 }
@@ -159,7 +160,7 @@ async function solicitar<T>(
     comprobarCuenta();
     if (
       (response.status === 401 ||
-        (response.status === 403 && path.split('?')[0] === '/api/tutoria/estado')) &&
+        (response.status === 403 && path.split('?')[0] === RUTA_ESTADO)) &&
       !path.endsWith('/login')
     ) {
       setApiSession(null);

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-const api = 'http://127.0.0.1:5080';
+const api = process.env.TUTORIA_E2E_ORIGIN || 'http://127.0.0.1:5080';
 async function login(
   page: Page,
   role: 'estudiante' | 'tutor' | 'coordinacion',

@@ -93,10 +93,10 @@ es arreglarlo, no agregar más pantallas.
 
 1. **Leer primero.** Cada sesión y cada llamada empieza leyendo `CLAUDE.md` y `AGENTS.md`. No se ejecuta ni se cambia nada antes de eso.
 2. **Alcance.** Solo se edita dentro de la carpeta `~/tutoria`. Prohibido editar cualquier archivo fuera de ella.
-3. **Flujo de publicación.** Primero se edita y se verifica en local. Después se pregunta siempre al usuario si quiere subirlo a GitHub. Solo se sube con su respuesta afirmativa.
+3. **Flujo de publicación.** Primero edita y verifica en local. Publica cambios en GitHub solo si el usuario lo solicita expresamente.
 4. **Sin código basura.** No agregar código muerto, duplicado, archivos sobrantes ni versiones paralelas. Si la lógica ya existe, se edita esa lógica.
 5. **Reutilizar el frontend.** Seguir los patrones y componentes existentes (`src/components/ui`). En elementos repetidos, extraer un componente reutilizable en lugar de copiar. Prohibido usar el frontend de forma distinta a lo establecido.
 6. **Buenas prácticas de ingeniería.** Código legible, nombres claros, sin duplicación, con estados y errores manejados explícitamente.
 7. **Comentarios.** Prohibido escribir comentarios que expliquen lo obvio o que describan el código como malo. Solo se comenta el porqué cuando no es evidente.
 8. **Datos personales.** No publicar ni subir datos personales de estudiantes o docentes. Antes de cualquier subida a GitHub, se verifica que no existan.
-9. **Confirmación por tarea.** Antes de ejecutar cada tarea y antes de cada subida a GitHub (commit que se publique, push o PR), se pregunta al usuario y se espera su respuesta en el chat. Una autorización anterior no cubre tareas nuevas.
+9. **Ejecución local.** Inicia y completa las tareas solicitadas sin pedir confirmación adicional por cada etapa.

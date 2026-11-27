@@ -13,7 +13,13 @@ import { estudiantes, docentes } from '../data/personas';
 import { asignaciones } from '../data/tutoria';
 import { matriculas, horariosAcademicos } from '../data/academico';
 import { semestreVigente } from '../data/catalogos';
-import { RUTA_ESTADO_INICIAL, apiJson, apiJsonSiCambio, getApiSession } from './apiClient';
+import {
+  RUTA_ESTADO,
+  RUTA_ESTADO_INICIAL,
+  apiJson,
+  apiJsonSiCambio,
+  getApiSession,
+} from './apiClient';
 import type { MomentoTutoria } from '../utils/instrumentos';
 import type { ProgramacionSesion } from './sessionWorkspace';
 import type { EvidenciaAsistencia } from './evidenciaAsistencia';
@@ -148,7 +154,7 @@ export async function refrescarApi(inicio = false, pedido?: Promise<RespuestaEst
   try {
     const respuesta = await (pedido ??
       apiJsonSiCambio<EstadoApi>(
-        inicio ? RUTA_ESTADO_INICIAL : '/api/tutoria/estado',
+        inicio ? RUTA_ESTADO_INICIAL : RUTA_ESTADO,
         estado.datos ? etagEstado : null,
       ));
     if (getApiSession()?.accessToken !== token || revision !== revisionCarga) return;

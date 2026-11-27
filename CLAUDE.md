@@ -12,7 +12,7 @@ ANALIZAR → PLANIFICAR → CREAR TAREAS → EJECUTAR → VERIFICAR → COMPLETA
    archivos relevantes antes de modificar algo.
 2. **Crear una lista visible de tareas.** Divide la solicitud en pasos concretos, ordenados y
    verificables. Usa `mcp__ccd_turn__update_plan` (la lista que la app muestra bajo el mensaje),
-   no solo un plan escrito en el texto.
+   si está disponible. Si la herramienta falta, registra la lista y el progreso en el chat.
 3. **Mostrar el progreso.** Mantén los estados (pendiente, en progreso, completada) durante toda la
    ejecución. Avanza la lista al empezar cada paso.
 4. **Ejecutar el plan completo.** Si el usuario pide implementar, corregir, configurar o resolver
@@ -31,7 +31,7 @@ ANALIZAR → PLANIFICAR → CREAR TAREAS → EJECUTAR → VERIFICAR → COMPLETA
 
 Este protocolo no reemplaza `AGENTS.md`: sus zonas exclusivas de QA y sus reglas duras siguen vigentes.
 
-**Confirmación por tarea.** Antes de ejecutar cada tarea y antes de cada subida a GitHub (commit que se publique, push o PR), pregunta al usuario y espera su respuesta en el chat. Una autorización anterior no cubre tareas nuevas.
+**Ejecución local.** Las tareas solicitadas se ejecutan y verifican en local sin confirmación adicional. Publica cambios en GitHub solo si el usuario lo solicita expresamente.
 
 Este es el repositorio de **Tutoría UNAS**. Contexto actualizado al **10 de noviembre de 2026**.
 

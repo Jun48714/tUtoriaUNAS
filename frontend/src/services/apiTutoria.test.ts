@@ -17,6 +17,7 @@ vi.mock('./apiClient', () => {
   const apiJson = vi.fn();
   return {
     apiJson,
+    RUTA_ESTADO: '/api/tutoria/estado',
     // Por defecto la consulta condicional devuelve el estado completo sin etiqueta.
     apiJsonSiCambio: vi.fn(async (path: string) => ({ datos: await apiJson(path), etag: null })),
     getApiSession: () => ({ accessToken: 'cuenta-ficticia' }),

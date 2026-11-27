@@ -10,13 +10,22 @@
     />
     <link rel="icon" href="/favicon-64.png" />
     <link
+      id="auth-photo-preload"
       rel="preload"
       as="image"
       type="image/avif"
+      media="not all"
       imagesrcset="/src/assets/selva-1000.avif 1000w, /src/assets/selva-1400.avif 1400w"
       imagesizes="(max-width: 991px) min(100vw, 510px), 1000px"
       fetchpriority="high"
     />
+    <script>
+      if (
+        /^\/(?:login|recuperar-clave|crear-cuenta|verificar-cuenta)?\/?$/i.test(location.pathname)
+      ) {
+        document.getElementById('auth-photo-preload').removeAttribute('media');
+      }
+    </script>
     <title>Tutoría UNAS · Demostración</title>
   </head>
   <body>

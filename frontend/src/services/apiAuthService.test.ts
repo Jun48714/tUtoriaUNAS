@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiAuthService } from './apiAuthService';
+import { apiAuthService, cargarEstadoRestaurado } from './apiAuthService';
 import { getApiSession, setApiSession } from './apiClient';
 import { ActivacionRequerida, borrarActivacion, leerActivacion } from './cuentas';
 const api = vi.hoisted(() => ({ aplicar: vi.fn(), refrescar: vi.fn(), vaciar: vi.fn() }));
 vi.mock('./apiTutoria', () => ({
   aplicarEstadoApi: api.aplicar,
   refrescarApi: api.refrescar,
+  snapshotApi: () => ({ datos: null }),
   vaciarApi: api.vaciar,
 }));
 const credentials = {
@@ -29,6 +30,47 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('acceso institucional del cliente', () => {
+  const cuentaRestaurada = {
+    id: 'TUTOR-FICTICIO',
+    role: 'tutor' as const,
+    identifier: credentials.identifier,
+    name: 'Docente de prueba',
+    email: credentials.identifier,
+  };
+
+  it('comparte el GET de una sesión restaurada entre el guard y el shell', async () => {
+    const estado = { usuario: cuentaRestaurada };
+    respuesta(estado);
+    api.refrescar.mockImplementationOnce(async (_inicio, pedido) => (await pedido).datos);
+    setApiSession({
+      accessToken: 'token-restaurado',
+      expiresAt: Date.now() + 10000,
+      user: cuentaRestaurada,
+    });
+
+    const guard = cargarEstadoRestaurado();
+    const shell = cargarEstadoRestaurado();
+
+    expect(fetch).toHaveBeenCalledOnce();
+    await expect(Promise.all([guard, shell])).resolves.toEqual([estado, estado]);
+    expect(api.refrescar).toHaveBeenCalledOnce();
+  });
+
+  it('descarta la consulta de la cuenta anterior si la sesión cambia durante la carga', async () => {
+    respuesta({ usuario: cuentaRestaurada });
+    setApiSession({
+      accessToken: 'token-anterior',
+      expiresAt: Date.now() + 10000,
+      user: cuentaRestaurada,
+    });
+
+    const anterior = cargarEstadoRestaurado();
+    apiAuthService.logout();
+
+    await expect(anterior).resolves.toBeUndefined();
+    expect(api.refrescar).not.toHaveBeenCalled();
+  });
+
   it('aplica el estado inicial sin pedirlo una segunda vez', async () => {
     const usuario = {
       id: 'DOC-FICTICIO',
